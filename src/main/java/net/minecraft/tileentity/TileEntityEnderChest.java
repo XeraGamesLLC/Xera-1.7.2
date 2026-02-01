@@ -17,7 +17,7 @@ public class TileEntityEnderChest extends TileEntity
 
         if (++this.field_145974_k % 20 * 4 == 0)
         {
-            this.worldObj.func_147452_c(this.xCoord, this.yCoord, this.zCoord, Blocks.ender_chest, 1, this.field_145973_j);
+            this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, Blocks.ender_chest, 1, this.field_145973_j);
         }
 
         this.field_145975_i = this.field_145972_a;
@@ -78,9 +78,6 @@ public class TileEntityEnderChest extends TileEntity
         }
     }
 
-    /**
-     * invalidates a tile entity
-     */
     public void invalidate()
     {
         this.updateContainingBlockInfo();
@@ -90,13 +87,13 @@ public class TileEntityEnderChest extends TileEntity
     public void func_145969_a()
     {
         ++this.field_145973_j;
-        this.worldObj.func_147452_c(this.xCoord, this.yCoord, this.zCoord, Blocks.ender_chest, 1, this.field_145973_j);
+        this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, Blocks.ender_chest, 1, this.field_145973_j);
     }
 
     public void func_145970_b()
     {
         --this.field_145973_j;
-        this.worldObj.func_147452_c(this.xCoord, this.yCoord, this.zCoord, Blocks.ender_chest, 1, this.field_145973_j);
+        this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, Blocks.ender_chest, 1, this.field_145973_j);
     }
 
     public boolean func_145971_a(EntityPlayer p_145971_1_)

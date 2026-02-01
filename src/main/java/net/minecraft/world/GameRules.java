@@ -1,7 +1,6 @@
 package net.minecraft.world;
 
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import net.minecraft.nbt.NBTTagCompound;
@@ -9,7 +8,6 @@ import net.minecraft.nbt.NBTTagCompound;
 public class GameRules
 {
     private TreeMap theGameRules = new TreeMap();
-    private static final String __OBFID = "CL_00000136";
 
     public GameRules()
     {
@@ -24,9 +22,6 @@ public class GameRules
         this.addGameRule("doDaylightCycle", "true");
     }
 
-    /**
-     * Define a game rule and its default value.
-     */
     public void addGameRule(String par1Str, String par2Str)
     {
         this.theGameRules.put(par1Str, new GameRules.Value(par2Str));
@@ -46,27 +41,18 @@ public class GameRules
         }
     }
 
-    /**
-     * Gets the string Game Rule value.
-     */
     public String getGameRuleStringValue(String par1Str)
     {
         GameRules.Value var2 = (GameRules.Value)this.theGameRules.get(par1Str);
         return var2 != null ? var2.getGameRuleStringValue() : "";
     }
 
-    /**
-     * Gets the boolean Game Rule value.
-     */
     public boolean getGameRuleBooleanValue(String par1Str)
     {
         GameRules.Value var2 = (GameRules.Value)this.theGameRules.get(par1Str);
         return var2 != null ? var2.getGameRuleBooleanValue() : false;
     }
 
-    /**
-     * Return the defined game rules as NBT.
-     */
     public NBTTagCompound writeGameRulesToNBT()
     {
         NBTTagCompound var1 = new NBTTagCompound();
@@ -82,9 +68,6 @@ public class GameRules
         return var1;
     }
 
-    /**
-     * Set defined game rules from NBT.
-     */
     public void readGameRulesFromNBT(NBTTagCompound par1NBTTagCompound)
     {
         Set var2 = par1NBTTagCompound.func_150296_c();
@@ -98,17 +81,11 @@ public class GameRules
         }
     }
 
-    /**
-     * Return the defined game rules.
-     */
     public String[] getRules()
     {
         return (String[])((String[])this.theGameRules.keySet().toArray(new String[0]));
     }
 
-    /**
-     * Return whether the specified game rule is defined.
-     */
     public boolean hasRule(String par1Str)
     {
         return this.theGameRules.containsKey(par1Str);
@@ -120,7 +97,6 @@ public class GameRules
         private boolean valueBoolean;
         private int valueInteger;
         private double valueDouble;
-        private static final String __OBFID = "CL_00000137";
 
         public Value(String par1Str)
         {
@@ -129,8 +105,6 @@ public class GameRules
 
         public void setValue(String par1Str)
         {
-            if (Objects.equals(valueString, par1Str)) return;
-
             this.valueString = par1Str;
 
             if (par1Str != null)

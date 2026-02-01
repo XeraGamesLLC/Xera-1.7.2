@@ -8,11 +8,11 @@ import net.minecraft.network.play.INetHandlerPlayClient;
 
 public class S08PacketPlayerPosLook extends Packet
 {
-    private double x;
-    private double y;
-    private double z;
-    private float yaw;
-    private float pitch;
+    public double x;
+    public double y;
+    public double z;
+    public float yaw;
+    public float pitch;
     private boolean field_148935_f;
     private static final String __OBFID = "CL_00001273";
 
@@ -28,9 +28,6 @@ public class S08PacketPlayerPosLook extends Packet
         this.field_148935_f = p_i45164_9_;
     }
 
-    /**
-     * Reads the raw packet data from the data stream.
-     */
     public void readPacketData(PacketBuffer p_148837_1_) throws IOException
     {
         this.x = p_148837_1_.readDouble();
@@ -41,9 +38,6 @@ public class S08PacketPlayerPosLook extends Packet
         this.field_148935_f = p_148837_1_.readBoolean();
     }
 
-    /**
-     * Writes the raw packet data to the data stream.
-     */
     public void writePacketData(PacketBuffer p_148840_1_) throws IOException
     {
         p_148840_1_.writeDouble(this.x);
@@ -79,17 +73,9 @@ public class S08PacketPlayerPosLook extends Packet
         return this.yaw;
     }
 
-    public void setYaw(float yaw) {
-        this.yaw = yaw;
-    }
-
     public float func_148930_g()
     {
         return this.pitch;
-    }
-
-    public void setPitch(float pitch) {
-        this.pitch = pitch;
     }
 
     public boolean func_148929_h()

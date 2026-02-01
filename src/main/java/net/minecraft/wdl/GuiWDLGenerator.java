@@ -24,7 +24,7 @@ public class GuiWDLGenerator extends GuiScreen
         int var1 = this.width / 2;
         int var2 = this.height / 4;
         int var3 = var2 - 15;
-        this.seedField = new GuiTextField(this.fontRendererObj, this.width / 2 - 70, var3, 168, 18);
+        this.seedField = new GuiTextField(this.fontRenderer, this.width / 2 - 70, var3, 168, 18);
         this.seedField.setText("ERROR");
         this.updateSeed(false);
         var3 += 22;
@@ -80,8 +80,8 @@ public class GuiWDLGenerator extends GuiScreen
     public void drawScreen(int var1, int var2, float var3)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, this.title, this.width / 2, this.height / 4 - 40, 16777215);
-        this.drawString(this.fontRendererObj, "Seed:", this.width / 2 - 99, this.height / 4 - 10, 16777215);
+        this.drawCenteredString(this.fontRenderer, this.title, this.width / 2, this.height / 4 - 40, 16777215);
+        this.drawString(this.fontRenderer, "Seed:", this.width / 2 - 99, this.height / 4 - 10, 16777215);
         this.seedField.drawTextBox();
         super.drawScreen(var1, var2, var3);
     }

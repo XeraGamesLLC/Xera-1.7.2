@@ -44,7 +44,7 @@ public class GuiWDL extends GuiScreen
                 WDL.baseProps.setProperty("ServerName", WDL.getServerName());
             }
 
-            this.worldName = new GuiTextField(this.fontRendererObj, this.width / 2 - 70, hi, 168, 18);
+            this.worldName = new GuiTextField(this.fontRenderer, this.width / 2 - 70, hi, 168, 18);
             this.updateServerName(false);
             hi += 22;
             this.autoStartBtn = new GuiButton(1, w - 100, hi, "Start Download: ERROR");
@@ -123,8 +123,8 @@ public class GuiWDL extends GuiScreen
     public void drawScreen(int var1, int var2, float var3)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, this.title, this.width / 2, this.height / 4 - 40, 16777215);
-        this.drawString(this.fontRendererObj, "Name:", this.width / 2 - 99, this.height / 4 - 10, 16777215);
+        this.drawCenteredString(this.fontRenderer, this.title, this.width / 2, this.height / 4 - 40, 16777215);
+        this.drawString(this.fontRenderer, "Name:", this.width / 2 - 99, this.height / 4 - 10, 16777215);
         this.worldName.drawTextBox();
         super.drawScreen(var1, var2, var3);
     }

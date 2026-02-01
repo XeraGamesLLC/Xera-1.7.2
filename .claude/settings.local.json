@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-ChildItem -Path ''src\\\\main\\\\java'' -Filter ''*.java'' -Recurse | ForEach-Object { \\(Get-Content $_FullName -Raw\\) -replace ''wtf\\\\.nebula'', ''dev.xera'' | Set-Content $_FullName -NoNewline }\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''.\\\\src\\\\main\\\\java'' -Filter ''*.java'' -Recurse | ForEach-Object { $content = Get-Content $_FullName -Raw; $content = $content -replace ''wtf\\\\.nebula'', ''dev.xera''; Set-Content -Path $_FullName -Value $content -NoNewline }\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"G:\\\\.Minecraft\\\\Xera Client - 1.7.2\\\\rename_script.ps1\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"G:\\\\.Minecraft\\\\Xera Client - 1.7.2\\\\rename_class.ps1\")",
+      "Bash(gradlew.bat build:*)",
+      "Bash(cmd.exe /c \"cd /d \"\"G:\\\\.Minecraft\\\\Xera Client - 1.7.2\"\" && gradlew.bat build\")",
+      "Bash(./gradlew build:*)"
+    ]
+  }
+}

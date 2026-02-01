@@ -237,9 +237,6 @@ public class TileEntityBeacon extends TileEntity implements IInventory
         }
     }
 
-    /**
-     * Overriden in a sign to provide the text.
-     */
     public Packet getDescriptionPacket()
     {
         NBTTagCompound var1 = new NBTTagCompound();
@@ -268,26 +265,16 @@ public class TileEntityBeacon extends TileEntity implements IInventory
         p_145841_1_.setInteger("Levels", this.field_146012_l);
     }
 
-    /**
-     * Returns the number of slots in the inventory.
-     */
     public int getSizeInventory()
     {
         return 1;
     }
 
-    /**
-     * Returns the stack in slot i
-     */
     public ItemStack getStackInSlot(int par1)
     {
         return par1 == 0 ? this.field_146011_o : null;
     }
 
-    /**
-     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
-     * new stack.
-     */
     public ItemStack decrStackSize(int par1, int par2)
     {
         if (par1 == 0 && this.field_146011_o != null)
@@ -310,10 +297,6 @@ public class TileEntityBeacon extends TileEntity implements IInventory
         }
     }
 
-    /**
-     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
-     * like when you close a workbench GUI.
-     */
     public ItemStack getStackInSlotOnClosing(int par1)
     {
         if (par1 == 0 && this.field_146011_o != null)
@@ -328,9 +311,6 @@ public class TileEntityBeacon extends TileEntity implements IInventory
         }
     }
 
-    /**
-     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
-     */
     public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
     {
         if (par1 == 0)
@@ -339,17 +319,11 @@ public class TileEntityBeacon extends TileEntity implements IInventory
         }
     }
 
-    /**
-     * Returns the name of the inventory
-     */
     public String getInventoryName()
     {
         return this.isInventoryNameLocalized() ? this.field_146008_p : "container.beacon";
     }
 
-    /**
-     * Returns if the inventory name is localized
-     */
     public boolean isInventoryNameLocalized()
     {
         return this.field_146008_p != null && this.field_146008_p.length() > 0;
@@ -360,17 +334,11 @@ public class TileEntityBeacon extends TileEntity implements IInventory
         this.field_146008_p = p_145999_1_;
     }
 
-    /**
-     * Returns the maximum stack size for a inventory slot.
-     */
     public int getInventoryStackLimit()
     {
         return 1;
     }
 
-    /**
-     * Do not make give this method the name canInteractWith because it clashes with Container
-     */
     public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
     {
         return this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord) != this ? false : par1EntityPlayer.getDistanceSq((double)this.xCoord + 0.5D, (double)this.yCoord + 0.5D, (double)this.zCoord + 0.5D) <= 64.0D;
@@ -380,9 +348,6 @@ public class TileEntityBeacon extends TileEntity implements IInventory
 
     public void closeInventory() {}
 
-    /**
-     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot.
-     */
     public boolean isItemValidForSlot(int par1, ItemStack par2ItemStack)
     {
         return par2ItemStack.getItem() == Items.emerald || par2ItemStack.getItem() == Items.diamond || par2ItemStack.getItem() == Items.gold_ingot || par2ItemStack.getItem() == Items.iron_ingot;

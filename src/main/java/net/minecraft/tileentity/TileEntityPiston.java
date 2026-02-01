@@ -33,7 +33,7 @@ public class TileEntityPiston extends TileEntity
         this.field_145872_l = p_i45444_5_;
     }
 
-    public Block func_145861_a()
+    public Block getStoredBlockID()
     {
         return this.field_145869_a;
     }
@@ -43,12 +43,12 @@ public class TileEntityPiston extends TileEntity
         return this.field_145876_i;
     }
 
-    public boolean func_145868_b()
+    public boolean isExtending()
     {
         return this.field_145875_k;
     }
 
-    public int func_145864_c()
+    public int getPistonOrientation()
     {
         return this.field_145874_j;
     }
@@ -116,7 +116,7 @@ public class TileEntityPiston extends TileEntity
         }
     }
 
-    public void func_145866_f()
+    public void clearPistonTileEntity()
     {
         if (this.field_145870_n < 1.0F && this.worldObj != null)
         {
@@ -127,7 +127,7 @@ public class TileEntityPiston extends TileEntity
             if (this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord) == Blocks.piston_extension)
             {
                 this.worldObj.setBlock(this.xCoord, this.yCoord, this.zCoord, this.field_145869_a, this.field_145876_i, 3);
-                this.worldObj.func_147460_e(this.xCoord, this.yCoord, this.zCoord, this.field_145869_a);
+                this.worldObj.notifyBlockOfNeighborChange(this.xCoord, this.yCoord, this.zCoord, this.field_145869_a);
             }
         }
     }
@@ -145,7 +145,7 @@ public class TileEntityPiston extends TileEntity
             if (this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord) == Blocks.piston_extension)
             {
                 this.worldObj.setBlock(this.xCoord, this.yCoord, this.zCoord, this.field_145869_a, this.field_145876_i, 3);
-                this.worldObj.func_147460_e(this.xCoord, this.yCoord, this.zCoord, this.field_145869_a);
+                this.worldObj.notifyBlockOfNeighborChange(this.xCoord, this.yCoord, this.zCoord, this.field_145869_a);
             }
         }
         else

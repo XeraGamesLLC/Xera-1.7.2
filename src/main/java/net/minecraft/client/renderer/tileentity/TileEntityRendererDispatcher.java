@@ -23,6 +23,9 @@ import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.ReportedException;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
+import dev.xera.client.core.XeraClient;
+import dev.xera.client.impl.event.base.Era;
+import dev.xera.client.impl.event.impl.render.EventRenderTileEntity;
 
 public class TileEntityRendererDispatcher
 {
@@ -85,7 +88,7 @@ public class TileEntityRendererDispatcher
         return p_147547_1_ == null ? null : this.getSpecialRendererByClass(p_147547_1_.getClass());
     }
 
-    public void func_147542_a(World p_147542_1_, TextureManager p_147542_2_, FontRenderer p_147542_3_, EntityLivingBase p_147542_4_, float p_147542_5_)
+    public void cacheActiveRenderInfo(World p_147542_1_, TextureManager p_147542_2_, FontRenderer p_147542_3_, EntityLivingBase p_147542_4_, float p_147542_5_)
     {
         if (this.field_147550_f != p_147542_1_)
         {
@@ -102,7 +105,7 @@ public class TileEntityRendererDispatcher
         this.field_147558_l = p_147542_4_.lastTickPosZ + (p_147542_4_.posZ - p_147542_4_.lastTickPosZ) * (double)p_147542_5_;
     }
 
-    public void func_147544_a(TileEntity p_147544_1_, float p_147544_2_)
+    public void renderTileEntity(TileEntity p_147544_1_, float p_147544_2_)
     {
         if (p_147544_1_.getDistanceFrom(this.field_147560_j, this.field_147561_k, this.field_147558_l) < p_147544_1_.getMaxRenderDistanceSquared())
         {
@@ -123,7 +126,13 @@ public class TileEntityRendererDispatcher
         {
             try
             {
+                if (XeraClient.BUS.post(new EventRenderTileEntity(Era.PRE, p_147549_1_))) {
+                    return;
+                }
+
                 var9.renderTileEntityAt(p_147549_1_, p_147549_2_, p_147549_4_, p_147549_6_, p_147549_8_);
+
+                XeraClient.BUS.post(new EventRenderTileEntity(Era.POST, p_147549_1_));
             }
             catch (Throwable var13)
             {
@@ -151,7 +160,7 @@ public class TileEntityRendererDispatcher
         }
     }
 
-    public FontRenderer func_147548_a()
+    public FontRenderer getFontRenderer()
     {
         return this.field_147557_n;
     }

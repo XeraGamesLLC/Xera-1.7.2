@@ -21,7 +21,7 @@ public class TileEntityRendererPiston extends TileEntitySpecialRenderer
 
     public void renderTileEntityAt(TileEntityPiston p_147515_1_, double p_147515_2_, double p_147515_4_, double p_147515_6_, float p_147515_8_)
     {
-        Block var9 = p_147515_1_.func_145861_a();
+        Block var9 = p_147515_1_.getStoredBlockID();
 
         if (var9.getMaterial() != Material.air && p_147515_1_.func_145860_a(p_147515_8_) < 1.0F)
         {
@@ -49,9 +49,9 @@ public class TileEntityRendererPiston extends TileEntitySpecialRenderer
             {
                 this.field_147516_b.renderPistonExtensionAllFaces(var9, p_147515_1_.xCoord, p_147515_1_.yCoord, p_147515_1_.zCoord, false);
             }
-            else if (p_147515_1_.func_145867_d() && !p_147515_1_.func_145868_b())
+            else if (p_147515_1_.func_145867_d() && !p_147515_1_.isExtending())
             {
-                Blocks.piston_head.func_150086_a(((BlockPistonBase)var9).func_150073_e());
+                Blocks.piston_head.func_150086_a(((BlockPistonBase)var9).getPistonExtensionTexture());
                 this.field_147516_b.renderPistonExtensionAllFaces(Blocks.piston_head, p_147515_1_.xCoord, p_147515_1_.yCoord, p_147515_1_.zCoord, p_147515_1_.func_145860_a(p_147515_8_) < 0.5F);
                 Blocks.piston_head.func_150087_e();
                 var10.setTranslation((double)((float)p_147515_2_ - (float)p_147515_1_.xCoord), (double)((float)p_147515_4_ - (float)p_147515_1_.yCoord), (double)((float)p_147515_6_ - (float)p_147515_1_.zCoord));

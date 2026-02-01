@@ -1,8 +1,9 @@
 package net.minecraft.util;
 
-import lol.nebula.Nebula;
-import lol.nebula.listener.events.input.EventUpdateMoveState;
 import net.minecraft.client.settings.GameSettings;
+import dev.xera.client.core.XeraClient;
+import dev.xera.client.impl.event.impl.input.EventInputUpdate;
+import dev.xera.client.impl.event.impl.move.EventMoveForward;
 
 public class MovementInputFromOptions extends MovementInput
 {
@@ -16,12 +17,14 @@ public class MovementInputFromOptions extends MovementInput
 
     public void updatePlayerMoveState()
     {
-        if (Nebula.getBus().dispatch(new EventUpdateMoveState(this))) return;
+        if (XeraClient.BUS.post(new EventInputUpdate(this))) {
+            return;
+        }
 
         this.moveStrafe = 0.0F;
         this.moveForward = 0.0F;
 
-        if (this.gameSettings.keyBindForward.getIsKeyPressed())
+        if (this.gameSettings.keyBindForward.getIsKeyPressed() || XeraClient.BUS.post(new EventMoveForward(this)))
         {
             ++this.moveForward;
         }

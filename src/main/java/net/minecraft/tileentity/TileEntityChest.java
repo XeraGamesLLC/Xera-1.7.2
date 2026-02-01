@@ -39,26 +39,16 @@ public class TileEntityChest extends TileEntity implements IInventory
         this.field_145982_r = par1;
     }
 
-    /**
-     * Returns the number of slots in the inventory.
-     */
     public int getSizeInventory()
     {
         return 27;
     }
 
-    /**
-     * Returns the stack in slot i
-     */
     public ItemStack getStackInSlot(int par1)
     {
         return this.field_145985_p[par1];
     }
 
-    /**
-     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
-     * new stack.
-     */
     public ItemStack decrStackSize(int par1, int par2)
     {
         if (this.field_145985_p[par1] != null)
@@ -91,10 +81,6 @@ public class TileEntityChest extends TileEntity implements IInventory
         }
     }
 
-    /**
-     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
-     * like when you close a workbench GUI.
-     */
     public ItemStack getStackInSlotOnClosing(int par1)
     {
         if (this.field_145985_p[par1] != null)
@@ -109,9 +95,6 @@ public class TileEntityChest extends TileEntity implements IInventory
         }
     }
 
-    /**
-     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
-     */
     public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
     {
         this.field_145985_p[par1] = par2ItemStack;
@@ -124,17 +107,11 @@ public class TileEntityChest extends TileEntity implements IInventory
         this.onInventoryChanged();
     }
 
-    /**
-     * Returns the name of the inventory
-     */
     public String getInventoryName()
     {
         return this.isInventoryNameLocalized() ? this.field_145981_s : "container.chest";
     }
 
-    /**
-     * Returns if the inventory name is localized
-     */
     public boolean isInventoryNameLocalized()
     {
         return this.field_145981_s != null && this.field_145981_s.length() > 0;
@@ -151,7 +128,7 @@ public class TileEntityChest extends TileEntity implements IInventory
         NBTTagList var2 = p_145839_1_.getTagList("Items", 10);
         this.field_145985_p = new ItemStack[this.getSizeInventory()];
 
-        if (p_145839_1_.func_150297_b("CustomName", 8))
+        if (p_145839_1_.hasKey("CustomName", 8))
         {
             this.field_145981_s = p_145839_1_.getString("CustomName");
         }
@@ -192,17 +169,11 @@ public class TileEntityChest extends TileEntity implements IInventory
         }
     }
 
-    /**
-     * Returns the maximum stack size for a inventory slot.
-     */
     public int getInventoryStackLimit()
     {
         return 64;
     }
 
-    /**
-     * Do not make give this method the name canInteractWith because it clashes with Container
-     */
     public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
     {
         return this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord) != this ? false : par1EntityPlayer.getDistanceSq((double)this.xCoord + 0.5D, (double)this.yCoord + 0.5D, (double)this.zCoord + 0.5D) <= 64.0D;
@@ -433,7 +404,7 @@ public class TileEntityChest extends TileEntity implements IInventory
         }
 
         ++this.field_145987_o;
-        this.worldObj.func_147452_c(this.xCoord, this.yCoord, this.zCoord, this.getBlockType(), 1, this.field_145987_o);
+        this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, this.getBlockType(), 1, this.field_145987_o);
         this.worldObj.notifyBlocksOfNeighborChange(this.xCoord, this.yCoord, this.zCoord, this.getBlockType());
         this.worldObj.notifyBlocksOfNeighborChange(this.xCoord, this.yCoord - 1, this.zCoord, this.getBlockType());
     }
@@ -443,23 +414,17 @@ public class TileEntityChest extends TileEntity implements IInventory
         if (this.getBlockType() instanceof BlockChest)
         {
             --this.field_145987_o;
-            this.worldObj.func_147452_c(this.xCoord, this.yCoord, this.zCoord, this.getBlockType(), 1, this.field_145987_o);
+            this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, this.getBlockType(), 1, this.field_145987_o);
             this.worldObj.notifyBlocksOfNeighborChange(this.xCoord, this.yCoord, this.zCoord, this.getBlockType());
             this.worldObj.notifyBlocksOfNeighborChange(this.xCoord, this.yCoord - 1, this.zCoord, this.getBlockType());
         }
     }
 
-    /**
-     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot.
-     */
     public boolean isItemValidForSlot(int par1, ItemStack par2ItemStack)
     {
         return true;
     }
 
-    /**
-     * invalidates a tile entity
-     */
     public void invalidate()
     {
         super.invalidate();

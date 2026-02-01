@@ -1,6 +1,5 @@
 package net.minecraft.client.multiplayer;
 
-import java.net.IDN;
 import java.util.Hashtable;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.InitialDirContext;
@@ -19,12 +18,7 @@ public class ServerAddress
 
     public String getIP()
     {
-        try {
-            return IDN.toASCII(this.ipAddress);
-        } catch (IllegalArgumentException e) {
-            return "";
-        }
-        //return this.ipAddress;
+        return this.ipAddress;
     }
 
     public int getPort()
@@ -82,9 +76,6 @@ public class ServerAddress
         }
     }
 
-    /**
-     * Returns a server's address and port for the specified hostname, looking up the SRV record if possible
-     */
     private static String[] getServerAddress(String par0Str)
     {
         try

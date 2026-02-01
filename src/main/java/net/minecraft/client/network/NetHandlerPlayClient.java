@@ -14,9 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
-
-import lol.nebula.Nebula;
-import lol.nebula.listener.events.world.EventServerDisconnect;
 import net.minecraft.block.Block;
 import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.Minecraft;
@@ -24,6 +21,7 @@ import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiDisconnected;
+import net.minecraft.client.gui.GuiDownloadTerrain;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiMerchant;
 import net.minecraft.client.gui.GuiMultiplayer;
@@ -192,60 +190,22 @@ import net.minecraft.world.storage.MapData;
 import net.minecraft.world.storage.MapStorage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import dev.xera.client.core.XeraClient;
+import dev.xera.client.impl.event.impl.network.EventPlayerConnection;
 
 public class NetHandlerPlayClient implements INetHandlerPlayClient
 {
     private static final Logger logger = LogManager.getLogger();
-
-    /**
-     * The NetworkManager instance used to communicate with the server (used only by handlePlayerPosLook to update
-     * positioning and handleJoinGame to inform the server of the client distribution/mods)
-     */
     private final NetworkManager netManager;
-
-    /**
-     * Reference to the Minecraft instance, which many handler methods operate on
-     */
     private Minecraft gameController;
-
-    /**
-     * Reference to the current ClientWorld instance, which many handler methods operate on
-     */
     private WorldClient clientWorldController;
-
-    /**
-     * True if the client has finished downloading terrain and may spawn. Set upon receipt of S08PacketPlayerPosLook,
-     * reset upon respawning
-     */
     private boolean doneLoadingTerrain;
-
-    /**
-     * Origin of the central MapStorage serving as a public reference for WorldClient. Not used in this class
-     */
     public MapStorage mapStorageOrigin = new MapStorage((ISaveHandler)null);
-
-    /**
-     * A mapping from player names to their respective GuiPlayerInfo (specifies the clients response time to the server)
-     */
     private Map playerInfoMap = new HashMap();
-
-    /**
-     * An ArrayList of GuiPlayerInfo (includes all the players' GuiPlayerInfo on the current server)
-     */
-    public List playerInfoList = new ArrayList();
+    public List<GuiPlayerInfo> playerInfoList = new ArrayList<>();
     public int currentServerMaxPlayers = 20;
-
-    /**
-     * Seems to be either null (integrated server) or an instance of either GuiMultiplayer (when connecting to a server)
-     * or GuiScreenReamlsTOS (when connecting to MCO server)
-     */
     private GuiScreen guiScreenServer;
     private boolean field_147308_k = false;
-
-    /**
-     * Just an ordinary random number generator, used to randomize audio pitch of item/orb pickup and randomize both
-     * particlespawn offset and velocity
-     */
     private Random avRandomizer = new Random();
     private static final String __OBFID = "CL_00000878";
 
@@ -256,24 +216,13 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         this.netManager = p_i45061_3_;
     }
 
-    /**
-     * Clears the WorldClient instance associated with this NetHandlerPlayClient
-     */
     public void cleanup()
     {
         this.clientWorldController = null;
     }
 
-    /**
-     * For scheduled network tasks. Used in NetHandlerPlayServer to send keep-alive packets and in NetHandlerLoginServer
-     * for a login-timeout
-     */
     public void onNetworkTick() {}
 
-    /**
-     * Registers some server properties (gametype,hardcore-mode,terraintype,difficulty,player limit), creates a new
-     * WorldClient and sets the player initial dimension
-     */
     public void handleJoinGame(S01PacketJoinGame p_147282_1_)
     {
         this.gameController.playerController = new PlayerControllerMP(this.gameController, this);
@@ -281,7 +230,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         this.clientWorldController.isClient = true;
         this.gameController.loadWorld(this.clientWorldController);
         this.gameController.thePlayer.dimension = p_147282_1_.func_149194_f();
-        //this.gameController.displayGuiScreen(new GuiDownloadTerrain(this));
+        this.gameController.displayGuiScreen(new GuiDownloadTerrain(this));
         this.gameController.thePlayer.setEntityId(p_147282_1_.func_149197_c());
         this.currentServerMaxPlayers = p_147282_1_.func_149193_h();
         this.gameController.playerController.setGameType(p_147282_1_.func_149198_e());
@@ -289,9 +238,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         this.netManager.scheduleOutboundPacket(new C17PacketCustomPayload("MC|Brand", ClientBrandRetriever.getClientModName().getBytes(Charsets.UTF_8)), new GenericFutureListener[0]);
     }
 
-    /**
-     * Spawns an instance of the objecttype indicated by the packet and sets its position and momentum
-     */
     public void handleSpawnObject(S0EPacketSpawnObject p_147235_1_)
     {
         double var2 = (double)p_147235_1_.func_148997_d() / 32.0D;
@@ -299,11 +245,11 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         double var6 = (double)p_147235_1_.func_148994_f() / 32.0D;
         Object var8 = null;
 
-        if (p_147235_1_.func_148993_l() == 10)
+        if (p_147235_1_.getType() == 10)
         {
             var8 = EntityMinecart.createMinecart(this.clientWorldController, var2, var4, var6, p_147235_1_.func_149009_m());
         }
-        else if (p_147235_1_.func_148993_l() == 90)
+        else if (p_147235_1_.getType() == 90)
         {
             Entity var9 = this.clientWorldController.getEntityByID(p_147235_1_.func_149009_m());
 
@@ -314,82 +260,82 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
 
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 60)
+        else if (p_147235_1_.getType() == 60)
         {
             var8 = new EntityArrow(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 61)
+        else if (p_147235_1_.getType() == 61)
         {
             var8 = new EntitySnowball(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 71)
+        else if (p_147235_1_.getType() == 71)
         {
             var8 = new EntityItemFrame(this.clientWorldController, (int)var2, (int)var4, (int)var6, p_147235_1_.func_149009_m());
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 77)
+        else if (p_147235_1_.getType() == 77)
         {
             var8 = new EntityLeashKnot(this.clientWorldController, (int)var2, (int)var4, (int)var6);
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 65)
+        else if (p_147235_1_.getType() == 65)
         {
             var8 = new EntityEnderPearl(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 72)
+        else if (p_147235_1_.getType() == 72)
         {
             var8 = new EntityEnderEye(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 76)
+        else if (p_147235_1_.getType() == 76)
         {
             var8 = new EntityFireworkRocket(this.clientWorldController, var2, var4, var6, (ItemStack)null);
         }
-        else if (p_147235_1_.func_148993_l() == 63)
+        else if (p_147235_1_.getType() == 63)
         {
             var8 = new EntityLargeFireball(this.clientWorldController, var2, var4, var6, (double)p_147235_1_.func_149010_g() / 8000.0D, (double)p_147235_1_.func_149004_h() / 8000.0D, (double)p_147235_1_.func_148999_i() / 8000.0D);
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 64)
+        else if (p_147235_1_.getType() == 64)
         {
             var8 = new EntitySmallFireball(this.clientWorldController, var2, var4, var6, (double)p_147235_1_.func_149010_g() / 8000.0D, (double)p_147235_1_.func_149004_h() / 8000.0D, (double)p_147235_1_.func_148999_i() / 8000.0D);
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 66)
+        else if (p_147235_1_.getType() == 66)
         {
             var8 = new EntityWitherSkull(this.clientWorldController, var2, var4, var6, (double)p_147235_1_.func_149010_g() / 8000.0D, (double)p_147235_1_.func_149004_h() / 8000.0D, (double)p_147235_1_.func_148999_i() / 8000.0D);
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 62)
+        else if (p_147235_1_.getType() == 62)
         {
             var8 = new EntityEgg(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 73)
+        else if (p_147235_1_.getType() == 73)
         {
             var8 = new EntityPotion(this.clientWorldController, var2, var4, var6, p_147235_1_.func_149009_m());
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 75)
+        else if (p_147235_1_.getType() == 75)
         {
             var8 = new EntityExpBottle(this.clientWorldController, var2, var4, var6);
             p_147235_1_.func_149002_g(0);
         }
-        else if (p_147235_1_.func_148993_l() == 1)
+        else if (p_147235_1_.getType() == 1)
         {
             var8 = new EntityBoat(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 50)
+        else if (p_147235_1_.getType() == 50)
         {
             var8 = new EntityTNTPrimed(this.clientWorldController, var2, var4, var6, (EntityLivingBase)null);
         }
-        else if (p_147235_1_.func_148993_l() == 51)
+        else if (p_147235_1_.getType() == 51)
         {
             var8 = new EntityEnderCrystal(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 2)
+        else if (p_147235_1_.getType() == 2)
         {
             var8 = new EntityItem(this.clientWorldController, var2, var4, var6);
         }
-        else if (p_147235_1_.func_148993_l() == 70)
+        else if (p_147235_1_.getType() == 70)
         {
             var8 = new EntityFallingBlock(this.clientWorldController, var2, var4, var6, Block.getBlockById(p_147235_1_.func_149009_m() & 65535), p_147235_1_.func_149009_m() >> 16);
             p_147235_1_.func_149002_g(0);
@@ -406,7 +352,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
 
             if (var12 != null)
             {
-                int var10 = p_147235_1_.func_149001_c() - ((Entity)var8).getEntityId();
+                int var10 = p_147235_1_.getEntityId() - ((Entity)var8).getEntityId();
 
                 for (int var11 = 0; var11 < var12.length; ++var11)
                 {
@@ -414,12 +360,12 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
                 }
             }
 
-            ((Entity)var8).setEntityId(p_147235_1_.func_149001_c());
-            this.clientWorldController.addEntityToWorld(p_147235_1_.func_149001_c(), (Entity)var8);
+            ((Entity)var8).setEntityId(p_147235_1_.getEntityId());
+            this.clientWorldController.addEntityToWorld(p_147235_1_.getEntityId(), (Entity)var8);
 
             if (p_147235_1_.func_149009_m() > 0)
             {
-                if (p_147235_1_.func_148993_l() == 60)
+                if (p_147235_1_.getType() == 60)
                 {
                     Entity var13 = this.clientWorldController.getEntityByID(p_147235_1_.func_149009_m());
 
@@ -435,9 +381,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Spawns an experience orb and sets its value (amount of XP)
-     */
     public void handleSpawnExperienceOrb(S11PacketSpawnExperienceOrb p_147286_1_)
     {
         EntityXPOrb var2 = new EntityXPOrb(this.clientWorldController, (double)p_147286_1_.func_148984_d(), (double)p_147286_1_.func_148983_e(), (double)p_147286_1_.func_148982_f(), p_147286_1_.func_148986_g());
@@ -450,9 +393,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         this.clientWorldController.addEntityToWorld(p_147286_1_.func_148985_c(), var2);
     }
 
-    /**
-     * Handles globally visible entities. Used in vanilla for lightning bolts
-     */
     public void handleSpawnGlobalEntity(S2CPacketSpawnGlobalEntity p_147292_1_)
     {
         double var2 = (double)p_147292_1_.func_149051_d() / 32.0D;
@@ -477,18 +417,12 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Handles the spawning of a painting object
-     */
     public void handleSpawnPainting(S10PacketSpawnPainting p_147288_1_)
     {
         EntityPainting var2 = new EntityPainting(this.clientWorldController, p_147288_1_.func_148964_d(), p_147288_1_.func_148963_e(), p_147288_1_.func_148962_f(), p_147288_1_.func_148966_g(), p_147288_1_.func_148961_h());
         this.clientWorldController.addEntityToWorld(p_147288_1_.func_148965_c(), var2);
     }
 
-    /**
-     * Sets the velocity of the specified entity to the specified value
-     */
     public void handleEntityVelocity(S12PacketEntityVelocity p_147244_1_)
     {
         Entity var2 = this.clientWorldController.getEntityByID(p_147244_1_.func_149412_c());
@@ -499,10 +433,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Invoked when the server registers new proximate objects in your watchlist or when objects in your watchlist have
-     * changed -> Registers any changes locally
-     */
     public void handleEntityMetadata(S1CPacketEntityMetadata p_147284_1_)
     {
         Entity var2 = this.clientWorldController.getEntityByID(p_147284_1_.func_149375_d());
@@ -513,9 +443,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Handles the creation of a nearby player entity, sets the position and held item
-     */
     public void handleSpawnPlayer(S0CPacketSpawnPlayer p_147237_1_)
     {
         double var2 = (double)p_147237_1_.func_148942_f() / 32.0D;
@@ -548,9 +475,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates an entity's position and rotation as specified by the packet
-     */
     public void handleEntityTeleport(S18PacketEntityTeleport p_147275_1_)
     {
         Entity var2 = this.clientWorldController.getEntityByID(p_147275_1_.func_149451_c());
@@ -569,9 +493,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates which hotbar slot of the player is currently selected
-     */
     public void handleHeldItemChange(S09PacketHeldItemChange p_147257_1_)
     {
         if (p_147257_1_.func_149385_c() >= 0 && p_147257_1_.func_149385_c() < InventoryPlayer.getHotbarSize())
@@ -580,11 +501,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates the specified entity's position by the specified relative moment and absolute rotation. Note that
-     * subclassing of the packet allows for the specification of a subset of this data (e.g. only rel. position, abs.
-     * rotation or both).
-     */
     public void handleEntityMovement(S14PacketEntity p_147259_1_)
     {
         Entity var2 = p_147259_1_.func_149065_a(this.clientWorldController);
@@ -603,10 +519,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates the direction in which the specified entity is looking, normally this head rotation is independent of the
-     * rotation of the entity itself
-     */
     public void handleEntityHeadLook(S19PacketEntityHeadLook p_147267_1_)
     {
         Entity var2 = p_147267_1_.func_149381_a(this.clientWorldController);
@@ -618,11 +530,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Locally eliminates the entities. Invoked by the server when the items are in fact destroyed, or the player is no
-     * longer registered as required to monitor them. The latter  happens when distance between the player and item
-     * increases beyond a certain treshold (typically the viewing distance)
-     */
     public void handleDestroyEntities(S13PacketDestroyEntities p_147238_1_)
     {
         for (int var2 = 0; var2 < p_147238_1_.func_149098_c().length; ++var2)
@@ -631,11 +538,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Handles changes in player positioning and rotation such as when travelling to a new dimension, (re)spawning,
-     * mounting horses etc. Seems to immediately reply to the server with the clients post-processing perspective on the
-     * player positioning
-     */
     public void handlePlayerPosLook(S08PacketPlayerPosLook p_147258_1_)
     {
         EntityClientPlayerMP var2 = this.gameController.thePlayer;
@@ -659,11 +561,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Received from the servers PlayerManager if between 1 and 64 blocks in a chunk are changed. If only one block
-     * requires an update, the server sends S23PacketBlockChange and if 64 or more blocks are changed, the server sends
-     * S21PacketChunkData
-     */
     public void handleMultiBlockChange(S22PacketMultiBlockChange p_147287_1_)
     {
         int var2 = p_147287_1_.func_148920_c().chunkXPos * 16;
@@ -694,9 +591,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates the specified chunk with the supplied data, marks it for re-rendering and lighting recalculation
-     */
     public void handleChunkData(S21PacketChunkData p_147263_1_)
     {
         if (p_147263_1_.func_149274_i())
@@ -721,20 +615,13 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates the block and metadata and generates a blockupdate (and notify the clients)
-     */
     public void handleBlockChange(S23PacketBlockChange p_147234_1_)
     {
         this.clientWorldController.func_147492_c(p_147234_1_.func_148879_d(), p_147234_1_.func_148878_e(), p_147234_1_.func_148877_f(), p_147234_1_.func_148880_c(), p_147234_1_.func_148881_g());
     }
 
-    /**
-     * Closes the network channel
-     */
     public void handleDisconnect(S40PacketDisconnect p_147253_1_)
     {
-        Nebula.getBus().dispatch(new EventServerDisconnect());
         if (WDL.downloading)
         {
             WDL.stop();
@@ -748,12 +635,10 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
                 ;
             }
         }
+
         this.netManager.closeChannel(p_147253_1_.func_149165_c());
     }
 
-    /**
-     * Invoked when disconnecting, the parameter is a ChatComponent describing the reason for termination
-     */
     public void onDisconnect(IChatComponent p_147231_1_)
     {
         if (WDL.downloading)
@@ -769,8 +654,20 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
                 ;
             }
         }
+
         this.gameController.loadWorld((WorldClient)null);
-        this.gameController.displayGuiScreen(new GuiDisconnected(new GuiMultiplayer(new GuiMainMenu()), "disconnect.lost", p_147231_1_));
+
+        GuiScreen screen = guiScreenServer != null ? guiScreenServer : new GuiMultiplayer(new GuiMainMenu());
+        gameController.displayGuiScreen(new GuiDisconnected(screen, "disconnect.lost", p_147231_1_));
+
+//        if (this.guiScreenServer != null)
+//        {
+//            this.gameController.displayGuiScreen(new GuiScreenDisconnectedOnline(this.guiScreenServer, "disconnect.lost", p_147231_1_));
+//        }
+//        else
+//        {
+//            this.gameController.displayGuiScreen(new GuiDisconnected(new GuiMultiplayer(new GuiMainMenu()), "disconnect.lost", p_147231_1_));
+//        }
     }
 
     public void addToSendQueue(Packet p_147297_1_)
@@ -778,9 +675,8 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         this.netManager.scheduleOutboundPacket(p_147297_1_, new GenericFutureListener[0]);
     }
 
-    public void addToSendQueueNoEvent(Packet p_147297_1_)
-    {
-        this.netManager.scheduleOutboundPacketNoEvent(p_147297_1_, new GenericFutureListener[0]);
+    public void addToSendQueueSilent(Packet packet) {
+        netManager.dispatchPacket(packet, new GenericFutureListener[0]);
     }
 
     public void handleCollectItem(S0DPacketCollectItem p_147246_1_)
@@ -809,19 +705,12 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Prints a chatmessage in the chat GUI
-     */
     public void handleChat(S02PacketChat p_147251_1_)
     {
         WDL.handleServerSeedMessage(p_147251_1_.func_148915_c().getFormattedText());
-        this.gameController.ingameGUI.getChatGUI().func_146227_a(p_147251_1_.func_148915_c());
+        this.gameController.ingameGUI.getChatGui().printChatMessage(p_147251_1_.func_148915_c());
     }
 
-    /**
-     * Renders a specified animation: Waking up a player, a living entity swinging its currently held item, being hurt
-     * or receiving a critical hit by normal or magical means
-     */
     public void handleAnimation(S0BPacketAnimation p_147279_1_)
     {
         Entity var2 = this.clientWorldController.getEntityByID(p_147279_1_.func_148978_c());
@@ -854,19 +743,11 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Retrieves the player identified by the packet, puts him to sleep if possible (and flags whether all players are
-     * asleep)
-     */
     public void handleUseBed(S0APacketUseBed p_147278_1_)
     {
         p_147278_1_.func_149091_a(this.clientWorldController).sleepInBedAt(p_147278_1_.func_149092_c(), p_147278_1_.func_149090_d(), p_147278_1_.func_149089_e());
     }
 
-    /**
-     * Spawns the mob entity at the specified location, with the specified rotation, momentum and type. Updates the
-     * entities Datawatchers with the entity metadata specified in the packet
-     */
     public void handleSpawnMob(S0FPacketSpawnMob p_147281_1_)
     {
         double var2 = (double)p_147281_1_.func_149023_f() / 32.0D;
@@ -968,12 +849,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Invokes the entities' handleUpdateHealth method which is implemented in LivingBase (hurt/death),
-     * MinecartMobSpawner (spawn delay), FireworkRocket & MinecartTNT (explosion), IronGolem (throwing,...), Witch
-     * (spawn particles), Zombie (villager transformation), Animal (breeding mode particles), Horse (breeding/smoke
-     * particles), Sheep (...), Tameable (...), Villager (particles for breeding mode, angry and happy), Wolf (...)
-     */
     public void handleEntityStatus(S19PacketEntityStatus p_147236_1_)
     {
         Entity var2 = p_147236_1_.func_149161_a(this.clientWorldController);
@@ -1007,30 +882,23 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
             this.clientWorldController.isClient = true;
             this.gameController.loadWorld(this.clientWorldController);
             this.gameController.thePlayer.dimension = p_147280_1_.func_149082_c();
-            // this.gameController.displayGuiScreen(new GuiDownloadTerrain(this));
+            this.gameController.displayGuiScreen(new GuiDownloadTerrain(this));
         }
 
         this.gameController.setDimensionAndSpawnPlayer(p_147280_1_.func_149082_c());
         this.gameController.playerController.setGameType(p_147280_1_.func_149083_e());
     }
 
-    /**
-     * Initiates a new explosion (sound, particles, drop spawn) for the affected blocks indicated by the packet.
-     */
     public void handleExplosion(S27PacketExplosion p_147283_1_)
     {
-        Explosion var2 = new Explosion(this.gameController.theWorld, (Entity)null, p_147283_1_.func_149148_f(), p_147283_1_.func_149143_g(), p_147283_1_.func_149145_h(), p_147283_1_.func_149146_i());
+        Explosion var2 = new Explosion(this.gameController.theWorld, (Entity)null, p_147283_1_.getX(), p_147283_1_.getY(), p_147283_1_.getZ(), p_147283_1_.func_149146_i());
         var2.affectedBlockPositions = p_147283_1_.func_149150_j();
         var2.doExplosionB(true);
-        this.gameController.thePlayer.motionX += (double)p_147283_1_.func_149149_c();
-        this.gameController.thePlayer.motionY += (double)p_147283_1_.func_149144_d();
-        this.gameController.thePlayer.motionZ += (double)p_147283_1_.func_149147_e();
+        this.gameController.thePlayer.motionX += (double)p_147283_1_.getMotionX();
+        this.gameController.thePlayer.motionY += (double)p_147283_1_.getMotionY();
+        this.gameController.thePlayer.motionZ += (double)p_147283_1_.getMotionZ();
     }
 
-    /**
-     * Displays a GUI by ID. In order starting from id 0: Chest, Workbench, Furnace, Dispenser, Enchanting table,
-     * Brewing stand, Villager merchant, Beacon, Anvil, Hopper, Dropper, Horse
-     */
     public void handleOpenWindow(S2DPacketOpenWindow p_147265_1_)
     {
         EntityClientPlayerMP var2 = this.gameController.thePlayer;
@@ -1145,9 +1013,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Handles pickin up an ItemStack or dropping one in your inventory or an open (non-creative) container
-     */
     public void handleSetSlot(S2FPacketSetSlot p_147266_1_)
     {
         EntityClientPlayerMP var2 = this.gameController.thePlayer;
@@ -1184,10 +1049,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Verifies that the server and client are synchronized with respect to the inventory/container opened by the player
-     * and confirms if it is the case.
-     */
     public void handleConfirmTransaction(S32PacketConfirmTransaction p_147239_1_)
     {
         Container var2 = null;
@@ -1208,9 +1069,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Handles the placement of a specified ItemStack in a specified container/inventory slot
-     */
     public void handleWindowItems(S30PacketWindowItems p_147241_1_)
     {
         EntityClientPlayerMP var2 = this.gameController.thePlayer;
@@ -1225,9 +1083,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Creates a sign in the specified location if it didn't exist and opens the GUI to edit its text
-     */
     public void handleSignEditorOpen(S36PacketSignEditorOpen p_147268_1_)
     {
         Object var2 = this.clientWorldController.getTileEntity(p_147268_1_.func_149129_c(), p_147268_1_.func_149128_d(), p_147268_1_.func_149127_e());
@@ -1244,9 +1099,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         this.gameController.thePlayer.func_146100_a((TileEntity)var2);
     }
 
-    /**
-     * Updates a specified sign with the specified text lines
-     */
     public void handleUpdateSign(S33PacketUpdateSign p_147248_1_)
     {
         boolean var2 = false;
@@ -1279,10 +1131,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates the NBTTagCompound metadata of instances of the following entitytypes: Mob spawners, command blocks,
-     * beacons, skulls, flowerpot
-     */
     public void handleUpdateTileEntity(S35PacketUpdateTileEntity p_147273_1_)
     {
         if (this.gameController.theWorld.blockExists(p_147273_1_.func_148856_c(), p_147273_1_.func_148855_d(), p_147273_1_.func_148854_e()))
@@ -1315,9 +1163,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Sets the progressbar of the opened window to the specified value
-     */
     public void handleWindowProperty(S31PacketWindowProperty p_147245_1_)
     {
         EntityClientPlayerMP var2 = this.gameController.thePlayer;
@@ -1338,27 +1183,16 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Resets the ItemStack held in hand and closes the window that is opened
-     */
     public void handleCloseWindow(S2EPacketCloseWindow p_147276_1_)
     {
         this.gameController.thePlayer.closeScreenNoPacket();
     }
 
-    /**
-     * Triggers Block.onBlockEventReceived, which is implemented in BlockPistonBase for extension/retraction, BlockNote
-     * for setting the instrument (including audiovisual feedback) and in BlockContainer to set the number of players
-     * accessing a (Ender)Chest
-     */
     public void handleBlockAction(S24PacketBlockAction p_147261_1_)
     {
-        this.gameController.theWorld.func_147452_c(p_147261_1_.func_148867_d(), p_147261_1_.func_148866_e(), p_147261_1_.func_148865_f(), p_147261_1_.func_148868_c(), p_147261_1_.func_148869_g(), p_147261_1_.func_148864_h());
+        this.gameController.theWorld.addBlockEvent(p_147261_1_.func_148867_d(), p_147261_1_.func_148866_e(), p_147261_1_.func_148865_f(), p_147261_1_.func_148868_c(), p_147261_1_.func_148869_g(), p_147261_1_.func_148864_h());
     }
 
-    /**
-     * Updates all registered IWorldAccess instances with destroyBlockInWorldPartially
-     */
     public void handleBlockBreakAnim(S25PacketBlockBreakAnim p_147294_1_)
     {
         this.gameController.theWorld.destroyBlockInWorldPartially(p_147294_1_.func_148845_c(), p_147294_1_.func_148844_d(), p_147294_1_.func_148843_e(), p_147294_1_.func_148842_f(), p_147294_1_.func_148846_g());
@@ -1423,15 +1257,15 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
             }
             else if (var4 == 101.0F)
             {
-                this.gameController.ingameGUI.getChatGUI().func_146227_a(new ChatComponentTranslation("demo.help.movement", new Object[] {GameSettings.getKeyDisplayString(var6.keyBindForward.getKeyCode()), GameSettings.getKeyDisplayString(var6.keyBindLeft.getKeyCode()), GameSettings.getKeyDisplayString(var6.keyBindBack.getKeyCode()), GameSettings.getKeyDisplayString(var6.keyBindRight.getKeyCode())}));
+                this.gameController.ingameGUI.getChatGui().printChatMessage(new ChatComponentTranslation("demo.help.movement", new Object[] {GameSettings.getKeyDisplayString(var6.keyBindForward.getKeyCode()), GameSettings.getKeyDisplayString(var6.keyBindLeft.getKeyCode()), GameSettings.getKeyDisplayString(var6.keyBindBack.getKeyCode()), GameSettings.getKeyDisplayString(var6.keyBindRight.getKeyCode())}));
             }
             else if (var4 == 102.0F)
             {
-                this.gameController.ingameGUI.getChatGUI().func_146227_a(new ChatComponentTranslation("demo.help.jump", new Object[] {GameSettings.getKeyDisplayString(var6.keyBindJump.getKeyCode())}));
+                this.gameController.ingameGUI.getChatGui().printChatMessage(new ChatComponentTranslation("demo.help.jump", new Object[] {GameSettings.getKeyDisplayString(var6.keyBindJump.getKeyCode())}));
             }
             else if (var4 == 103.0F)
             {
-                this.gameController.ingameGUI.getChatGUI().func_146227_a(new ChatComponentTranslation("demo.help.inventory", new Object[] {GameSettings.getKeyDisplayString(var6.keyBindInventory.getKeyCode())}));
+                this.gameController.ingameGUI.getChatGui().printChatMessage(new ChatComponentTranslation("demo.help.inventory", new Object[] {GameSettings.getKeyDisplayString(var6.keyBindInventory.getKeyCode())}));
             }
         }
         else if (var3 == 6)
@@ -1448,10 +1282,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates the worlds MapStorage with the specified MapData for the specified map-identifier and invokes a
-     * MapItemRenderer for it
-     */
     public void handleMaps(S34PacketMaps p_147264_1_)
     {
         MapData var2 = ItemMap.func_150912_a(p_147264_1_.func_149188_c(), this.gameController.theWorld);
@@ -1463,17 +1293,14 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
     {
         if (p_147277_1_.func_149244_c())
         {
-            this.gameController.theWorld.playBroadcastSound(p_147277_1_.func_149242_d(), p_147277_1_.func_149240_f(), p_147277_1_.func_149243_g(), p_147277_1_.func_149239_h(), p_147277_1_.func_149241_e());
+            this.gameController.theWorld.playBroadcastSound(p_147277_1_.getEffectId(), p_147277_1_.getX(), p_147277_1_.getY(), p_147277_1_.getZ(), p_147277_1_.func_149241_e());
         }
         else
         {
-            this.gameController.theWorld.playAuxSFX(p_147277_1_.func_149242_d(), p_147277_1_.func_149240_f(), p_147277_1_.func_149243_g(), p_147277_1_.func_149239_h(), p_147277_1_.func_149241_e());
+            this.gameController.theWorld.playAuxSFX(p_147277_1_.getEffectId(), p_147277_1_.getX(), p_147277_1_.getY(), p_147277_1_.getZ(), p_147277_1_.func_149241_e());
         }
     }
 
-    /**
-     * Updates the players statistics or achievements
-     */
     public void handleStatistics(S37PacketStatistics p_147293_1_)
     {
         boolean var2 = false;
@@ -1547,10 +1374,14 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
             var2 = new GuiPlayerInfo(p_147256_1_.func_149122_c());
             this.playerInfoMap.put(p_147256_1_.func_149122_c(), var2);
             this.playerInfoList.add(var2);
+
+            XeraClient.BUS.post(new EventPlayerConnection(EventPlayerConnection.Action.JOIN, p_147256_1_.username));
         }
 
         if (var2 != null && !p_147256_1_.func_149121_d())
         {
+            XeraClient.BUS.post(new EventPlayerConnection(EventPlayerConnection.Action.LEAVE, p_147256_1_.username));
+
             this.playerInfoMap.remove(p_147256_1_.func_149122_c());
             this.playerInfoList.remove(var2);
         }
@@ -1566,10 +1397,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         this.addToSendQueue(new C00PacketKeepAlive(p_147272_1_.func_149134_c()));
     }
 
-    /**
-     * Allows validation of the connection state transition. Parameters: from, to (connection state). Typically throws
-     * IllegalStateException or UnsupportedOperationException if validation fails
-     */
     public void onConnectionStateTransition(EnumConnectionState p_147232_1_, EnumConnectionState p_147232_2_)
     {
         throw new IllegalStateException("Unexpected protocol change!");
@@ -1586,9 +1413,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         var2.capabilities.setPlayerWalkSpeed(p_147270_1_.func_149107_h());
     }
 
-    /**
-     * Displays the available command-completion options the server knows of
-     */
     public void handleTabComplete(S3APacketTabComplete p_147274_1_)
     {
         String[] var2 = p_147274_1_.func_149630_c();
@@ -1602,15 +1426,9 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
 
     public void handleSoundEffect(S29PacketSoundEffect p_147255_1_)
     {
-        this.gameController.theWorld.playSound(p_147255_1_.getX(), p_147255_1_.getY(), p_147255_1_.getZ(), p_147255_1_.getSoundName(), p_147255_1_.func_149208_g(), p_147255_1_.func_149209_h(), false);
+        this.gameController.theWorld.playSound(p_147255_1_.getX(), p_147255_1_.getY(), p_147255_1_.getZ(), p_147255_1_.func_149212_c(), p_147255_1_.func_149208_g(), p_147255_1_.func_149209_h(), false);
     }
 
-    /**
-     * Handles packets that have room for a channel specification. Vanilla implemented channels are "MC|TrList" to
-     * acquire a MerchantRecipeList trades for a villager merchant, "MC|Brand" which sets the server brand? on the
-     * player instance and finally "MC|RPack" which the server uses to communicate the identifier of the default server
-     * resourcepack for the client to load.
-     */
     public void handleCustomPayload(S3FPacketCustomPayload p_147240_1_)
     {
         if ("MC|TrList".equals(p_147240_1_.func_149169_c()))
@@ -1676,9 +1494,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * May create a scoreboard objective, remove an objective from the scoreboard or update an objectives' displayname
-     */
     public void handleScoreboardObjective(S3BPacketScoreboardObjective p_147291_1_)
     {
         Scoreboard var2 = this.clientWorldController.getScoreboard();
@@ -1704,9 +1519,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Either updates the score with a specified value or removes the score for an objective
-     */
     public void handleUpdateScore(S3CPacketUpdateScore p_147250_1_)
     {
         Scoreboard var2 = this.clientWorldController.getScoreboard();
@@ -1723,10 +1535,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Removes or sets the ScoreObjective to be displayed at a particular scoreboard position (list, sidebar, below
-     * name)
-     */
     public void handleDisplayScoreboard(S3DPacketDisplayScoreboard p_147254_1_)
     {
         Scoreboard var2 = this.clientWorldController.getScoreboard();
@@ -1742,10 +1550,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates a team managed by the scoreboard: Create/Remove the team registration, Register/Remove the player-team-
-     * memberships, Set team displayname/prefix/suffix and/or whether friendly fire is enabled
-     */
     public void handleTeams(S3EPacketTeams p_147247_1_)
     {
         Scoreboard var2 = this.clientWorldController.getScoreboard();
@@ -1799,10 +1603,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Spawns a specified number of particles at the specified location with a randomized displacement according to
-     * specified bounds
-     */
     public void handleParticles(S2APacketParticles p_147289_1_)
     {
         if (p_147289_1_.func_149222_k() == 0)
@@ -1827,11 +1627,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Updates en entity's attributes and their respective modifiers, which are used for speed bonusses (player
-     * sprinting, animals fleeing, baby speed), weapon/tool attackDamage, hostiles followRange randomization, zombie
-     * maxHealth and knockback resistance as well as reinforcement spawning chance.
-     */
     public void handleEntityProperties(S20PacketEntityProperties p_147290_1_)
     {
         Entity var2 = this.clientWorldController.getEntityByID(p_147290_1_.func_149442_c());
@@ -1871,9 +1666,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
     }
 
-    /**
-     * Returns this the NetworkManager instance registered with this NetworkHandlerPlayClient
-     */
     public NetworkManager getNetworkManager()
     {
         return this.netManager;

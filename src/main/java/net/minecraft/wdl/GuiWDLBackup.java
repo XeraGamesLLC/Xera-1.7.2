@@ -26,7 +26,7 @@ public class GuiWDLBackup extends GuiScreen
         this.backupBtn = new GuiButton(10, w - 100, h + 105, "Backup: ERROR");
         this.buttonList.add(this.backupBtn);
         this.updateBackup(false);
-        this.commandField = new GuiTextField(this.fontRendererObj, w - 98, h + 126, 196, 17);
+        this.commandField = new GuiTextField(this.fontRenderer, w - 98, h + 126, 196, 17);
         this.buttonList.add(new GuiButton(100, w - 100, h + 150, "Done"));
     }
 
@@ -70,8 +70,8 @@ public class GuiWDLBackup extends GuiScreen
     public void drawScreen(int var1, int var2, float var3)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, this.title, this.width / 2, this.height / 4 - 40, 16777215);
-        this.drawString(this.fontRendererObj, "Name:", this.width / 2 - 99, 50, 16777215);
+        this.drawCenteredString(this.fontRenderer, this.title, this.width / 2, this.height / 4 - 40, 16777215);
+        this.drawString(this.fontRenderer, "Name:", this.width / 2 - 99, 50, 16777215);
 
         if (this.cmdBox)
         {

@@ -55,9 +55,6 @@ public class TileEntityCommandBlock extends TileEntity
         this.field_145994_a.func_145759_b(p_145839_1_);
     }
 
-    /**
-     * Overriden in a sign to provide the text.
-     */
     public Packet getDescriptionPacket()
     {
         NBTTagCompound var1 = new NBTTagCompound();

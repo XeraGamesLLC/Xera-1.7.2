@@ -15,18 +15,11 @@ public class ClickEvent
         this.value = p_i45156_2_;
     }
 
-    /**
-     * Gets the action to perform when this event is raised.
-     */
     public ClickEvent.Action getAction()
     {
         return this.action;
     }
 
-    /**
-     * Gets the value to perform the action on when this event is raised.  For example, if the action is "open URL",
-     * this would be the URL to open.
-     */
     public String getValue()
     {
         return this.value;
@@ -86,7 +79,8 @@ public class ClickEvent
         OPEN_URL("OPEN_URL", 0, "open_url", true),
         OPEN_FILE("OPEN_FILE", 1, "open_file", false),
         RUN_COMMAND("RUN_COMMAND", 2, "run_command", true),
-        SUGGEST_COMMAND("SUGGEST_COMMAND", 3, "suggest_command", true);
+        SUGGEST_COMMAND("SUGGEST_COMMAND", 3, "suggest_command", true),
+        EVENT("EVENT", 4, "event", true);
         private static final Map nameMapping = Maps.newHashMap();
         private final boolean allowedInChat;
         private final String canonicalName;

@@ -10,34 +10,28 @@ import net.minecraft.world.World;
 
 public class C02PacketUseEntity extends Packet
 {
-    private int field_149567_a;
-    private C02PacketUseEntity.Action field_149566_b;
+    public int entityId;
+    public C02PacketUseEntity.Action action;
     private static final String __OBFID = "CL_00001357";
 
     public C02PacketUseEntity() {}
 
     public C02PacketUseEntity(Entity p_i45251_1_, C02PacketUseEntity.Action p_i45251_2_)
     {
-        this.field_149567_a = p_i45251_1_.getEntityId();
-        this.field_149566_b = p_i45251_2_;
+        this.entityId = p_i45251_1_.getEntityId();
+        this.action = p_i45251_2_;
     }
 
-    /**
-     * Reads the raw packet data from the data stream.
-     */
     public void readPacketData(PacketBuffer p_148837_1_) throws IOException
     {
-        this.field_149567_a = p_148837_1_.readInt();
-        this.field_149566_b = C02PacketUseEntity.Action.field_151421_c[p_148837_1_.readByte() % C02PacketUseEntity.Action.field_151421_c.length];
+        this.entityId = p_148837_1_.readInt();
+        this.action = C02PacketUseEntity.Action.field_151421_c[p_148837_1_.readByte() % C02PacketUseEntity.Action.field_151421_c.length];
     }
 
-    /**
-     * Writes the raw packet data to the data stream.
-     */
     public void writePacketData(PacketBuffer p_148840_1_) throws IOException
     {
-        p_148840_1_.writeInt(this.field_149567_a);
-        p_148840_1_.writeByte(this.field_149566_b.field_151418_d);
+        p_148840_1_.writeInt(this.entityId);
+        p_148840_1_.writeByte(this.action.field_151418_d);
     }
 
     public void processPacket(INetHandlerPlayServer p_149563_1_)
@@ -45,14 +39,14 @@ public class C02PacketUseEntity extends Packet
         p_149563_1_.processUseEntity(this);
     }
 
-    public Entity getEntity(World p_149564_1_)
+    public Entity func_149564_a(World p_149564_1_)
     {
-        return p_149564_1_.getEntityByID(this.field_149567_a);
+        return p_149564_1_.getEntityByID(this.entityId);
     }
 
     public C02PacketUseEntity.Action getAction()
     {
-        return this.field_149566_b;
+        return this.action;
     }
 
     public void processPacket(INetHandler p_148833_1_)

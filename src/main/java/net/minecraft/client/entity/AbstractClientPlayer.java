@@ -1,8 +1,6 @@
 package net.minecraft.client.entity;
 
 import com.mojang.authlib.GameProfile;
-import lol.nebula.Nebula;
-import lol.nebula.listener.events.entity.move.EventMove;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IImageBuffer;
 import net.minecraft.client.renderer.ImageBufferDownload;
@@ -10,11 +8,16 @@ import net.minecraft.client.renderer.ThreadDownloadImageData;
 import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.src.Config;
+import net.minecraft.src.PlayerConfigurations;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
 import net.minecraft.world.World;
-import optifine.Config;
-import optifine.PlayerConfigurations;
+import dev.xera.client.core.XeraClient;
+import dev.xera.client.impl.manager.CapeManager;
+import dev.xera.client.impl.module.active.Capes;
+
+import java.awt.*;
 
 public abstract class AbstractClientPlayer extends EntityPlayer
 {
@@ -23,7 +26,6 @@ public abstract class AbstractClientPlayer extends EntityPlayer
     private ThreadDownloadImageData downloadImageCape;
     private ResourceLocation locationSkin;
     private ResourceLocation locationCape;
-    private static final String __OBFID = "CL_00000935";
     private String nameClear = null;
 
     public AbstractClientPlayer(World p_i45074_1_, GameProfile p_i45074_2_)
@@ -38,15 +40,6 @@ public abstract class AbstractClientPlayer extends EntityPlayer
         }
 
         PlayerConfigurations.getPlayerConfiguration(this);
-    }
-
-    @Override
-    public void moveEntity(double par1, double par3, double par5) {
-
-        EventMove event = new EventMove(par1, par3, par5);
-        Nebula.getBus().dispatch(event);
-
-        super.moveEntity(event.getX(), event.getY(), event.getZ());
     }
 
     protected void setupCustomSkin()
@@ -81,6 +74,11 @@ public abstract class AbstractClientPlayer extends EntityPlayer
     public ResourceLocation getLocationCape()
     {
         return this.locationCape;
+    }
+
+    public boolean hasCape() {
+        return XeraClient.getInstance().getCapeManager().hasCape(getCommandSenderName())
+                && XeraClient.getInstance().getModuleManager().getModule(Capes.class).isRunning();
     }
 
     public static ThreadDownloadImageData getDownloadImageSkin(ResourceLocation par0ResourceLocation, String par1Str)
@@ -127,8 +125,7 @@ public abstract class AbstractClientPlayer extends EntityPlayer
         return new ResourceLocation("cloaks/" + StringUtils.stripControlCodes(par0Str));
     }
 
-    public static ResourceLocation getLocationSkull(String par0Str)
-    {
+    public static ResourceLocation getLocationSkull(String par0Str) {
         return new ResourceLocation("skull/" + StringUtils.stripControlCodes(par0Str));
     }
 

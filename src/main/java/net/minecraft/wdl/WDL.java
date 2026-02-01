@@ -1,6 +1,21 @@
 package net.minecraft.wdl;
 
-import net.minecraft.block.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.lang.reflect.Field;
+import java.net.URLDecoder;
+import java.util.HashSet;
+import java.util.Properties;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockBrewingStand;
+import net.minecraft.block.BlockChest;
+import net.minecraft.block.BlockDispenser;
+import net.minecraft.block.BlockFurnace;
+import net.minecraft.block.BlockNote;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.gui.GuiScreen;
@@ -12,11 +27,28 @@ import net.minecraft.entity.item.EntityMinecart;
 import net.minecraft.entity.item.EntityMinecartChest;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.init.Blocks;
-import net.minecraft.inventory.*;
+import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ContainerBrewingStand;
+import net.minecraft.inventory.ContainerChest;
+import net.minecraft.inventory.ContainerDispenser;
+import net.minecraft.inventory.ContainerFurnace;
+import net.minecraft.inventory.ContainerMerchant;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryEnderChest;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagDouble;
+import net.minecraft.nbt.NBTTagFloat;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.tileentity.*;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityBrewingStand;
+import net.minecraft.tileentity.TileEntityChest;
+import net.minecraft.tileentity.TileEntityDispenser;
+import net.minecraft.tileentity.TileEntityEnderChest;
+import net.minecraft.tileentity.TileEntityFurnace;
+import net.minecraft.tileentity.TileEntityNote;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.LongHashMap;
 import net.minecraft.util.MovingObjectPosition;
@@ -29,12 +61,6 @@ import net.minecraft.world.chunk.storage.RegionFileCache;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.SaveHandler;
 import net.minecraft.world.storage.ThreadedFileIOBase;
-
-import java.io.*;
-import java.lang.reflect.Field;
-import java.net.URLDecoder;
-import java.util.HashSet;
-import java.util.Properties;
 
 public class WDL
 {
@@ -887,14 +913,14 @@ public class WDL
 
     public static void chatMsg(String msg)
     {
-        mc.ingameGUI.getChatGUI().func_146227_a(new ChatComponentText("\u00a7c[WorldDL]\u00a76 " + msg));
+        mc.ingameGUI.getChatGui().printChatMessage(new ChatComponentText("\u00a7c[WorldDL]\u00a76 " + msg));
     }
 
     public static void chatDebug(String msg)
     {
         if (DEBUG)
         {
-            mc.ingameGUI.getChatGUI().func_146227_a(new ChatComponentText("\u00a72[WorldDL]\u00a76 " + msg));
+            mc.ingameGUI.getChatGui().printChatMessage(new ChatComponentText("\u00a72[WorldDL]\u00a76 " + msg));
         }
     }
 

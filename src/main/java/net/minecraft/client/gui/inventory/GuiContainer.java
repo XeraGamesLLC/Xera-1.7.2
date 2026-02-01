@@ -3,9 +3,6 @@ package net.minecraft.client.gui.inventory;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import lol.nebula.Nebula;
-import lol.nebula.listener.events.render.gui.EventContainerSlotClick;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -22,13 +19,15 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
+import dev.xera.client.core.XeraClient;
+import dev.xera.client.impl.event.impl.inventory.EventWindowClick;
 
 public abstract class GuiContainer extends GuiScreen
 {
     protected static final ResourceLocation field_147001_a = new ResourceLocation("textures/gui/container/inventory.png");
     protected int field_146999_f = 176;
     protected int field_147000_g = 166;
-    public Container field_147002_h;
+    public Container container;
     protected int field_147003_i;
     protected int field_147009_r;
     private Slot field_147006_u;
@@ -57,24 +56,18 @@ public abstract class GuiContainer extends GuiScreen
 
     public GuiContainer(Container par1Container)
     {
-        this.field_147002_h = par1Container;
+        this.container = par1Container;
         this.field_146995_H = true;
     }
 
-    /**
-     * Adds the buttons (and other controls) to the screen in question.
-     */
     public void initGui()
     {
         super.initGui();
-        this.mc.thePlayer.openContainer = this.field_147002_h;
+        this.mc.thePlayer.openContainer = this.container;
         this.field_147003_i = (this.width - this.field_146999_f) / 2;
         this.field_147009_r = (this.height - this.field_147000_g) / 2;
     }
 
-    /**
-     * Draws the screen and all the components in it.
-     */
     public void drawScreen(int par1, int par2, float par3)
     {
         this.drawDefaultBackground();
@@ -98,9 +91,9 @@ public abstract class GuiContainer extends GuiScreen
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         int var11;
 
-        for (int var8 = 0; var8 < this.field_147002_h.inventorySlots.size(); ++var8)
+        for (int var8 = 0; var8 < this.container.inventorySlots.size(); ++var8)
         {
-            Slot var9 = (Slot)this.field_147002_h.inventorySlots.get(var8);
+            Slot var9 = (Slot)this.container.inventorySlots.get(var8);
             this.func_146977_a(var9);
 
             if (this.func_146981_a(var9, par1, par2) && var9.func_111238_b())
@@ -168,8 +161,9 @@ public abstract class GuiContainer extends GuiScreen
 
         if (var15.getItemStack() == null && this.field_147006_u != null && this.field_147006_u.getHasStack())
         {
+            //renderHoverInfo();
             ItemStack var19 = this.field_147006_u.getStack();
-            this.func_146285_a(var19, par1, par2);
+            this.renderHoverInfo(var19, par1, par2);
         }
 
         GL11.glEnable(GL11.GL_LIGHTING);
@@ -181,11 +175,11 @@ public abstract class GuiContainer extends GuiScreen
     {
         GL11.glTranslatef(0.0F, 0.0F, 32.0F);
         this.zLevel = 200.0F;
-        itemRender.zLevel = 200.0F;
-        itemRender.renderItemAndEffectIntoGUI(this.fontRendererObj, this.mc.getTextureManager(), p_146982_1_, p_146982_2_, p_146982_3_);
-        itemRender.renderItemOverlayIntoGUI(this.fontRendererObj, this.mc.getTextureManager(), p_146982_1_, p_146982_2_, p_146982_3_ - (this.field_147012_x == null ? 0 : 8), p_146982_4_);
+        renderItemGs.zLevel = 200.0F;
+        renderItemGs.renderItemAndEffectIntoGUI(this.fontRenderer, this.mc.getTextureManager(), p_146982_1_, p_146982_2_, p_146982_3_);
+        renderItemGs.renderItemOverlayIntoGUI(this.fontRenderer, this.mc.getTextureManager(), p_146982_1_, p_146982_2_, p_146982_3_ - (this.field_147012_x == null ? 0 : 8), p_146982_4_);
         this.zLevel = 0.0F;
-        itemRender.zLevel = 0.0F;
+        renderItemGs.zLevel = 0.0F;
     }
 
     protected void func_146979_b(int p_146979_1_, int p_146979_2_) {}
@@ -214,7 +208,7 @@ public abstract class GuiContainer extends GuiScreen
                 return;
             }
 
-            if (Container.func_94527_a(p_146977_1_, var7, true) && this.field_147002_h.canDragIntoSlot(p_146977_1_))
+            if (Container.func_94527_a(p_146977_1_, var7, true) && this.container.canDragIntoSlot(p_146977_1_))
             {
                 var4 = var7.copy();
                 var5 = true;
@@ -240,7 +234,7 @@ public abstract class GuiContainer extends GuiScreen
         }
 
         this.zLevel = 100.0F;
-        itemRender.zLevel = 100.0F;
+        renderItemGs.zLevel = 100.0F;
 
         if (var4 == null)
         {
@@ -264,11 +258,11 @@ public abstract class GuiContainer extends GuiScreen
             }
 
             GL11.glEnable(GL11.GL_DEPTH_TEST);
-            itemRender.renderItemAndEffectIntoGUI(this.fontRendererObj, this.mc.getTextureManager(), var4, var2, var3);
-            itemRender.renderItemOverlayIntoGUI(this.fontRendererObj, this.mc.getTextureManager(), var4, var2, var3, var8);
+            renderItemGs.renderItemAndEffectIntoGUI(this.fontRenderer, this.mc.getTextureManager(), var4, var2, var3);
+            renderItemGs.renderItemOverlayIntoGUI(this.fontRenderer, this.mc.getTextureManager(), var4, var2, var3, var8);
         }
 
-        itemRender.zLevel = 0.0F;
+        renderItemGs.zLevel = 0.0F;
         this.zLevel = 0.0F;
     }
 
@@ -304,9 +298,9 @@ public abstract class GuiContainer extends GuiScreen
 
     private Slot func_146975_c(int p_146975_1_, int p_146975_2_)
     {
-        for (int var3 = 0; var3 < this.field_147002_h.inventorySlots.size(); ++var3)
+        for (int var3 = 0; var3 < this.container.inventorySlots.size(); ++var3)
         {
-            Slot var4 = (Slot)this.field_147002_h.inventorySlots.get(var3);
+            Slot var4 = (Slot)this.container.inventorySlots.get(var3);
 
             if (this.func_146981_a(var4, p_146975_1_, p_146975_2_))
             {
@@ -317,9 +311,6 @@ public abstract class GuiContainer extends GuiScreen
         return null;
     }
 
-    /**
-     * Called when the mouse is clicked.
-     */
     protected void mouseClicked(int par1, int par2, int par3)
     {
         super.mouseClicked(par1, par2, par3);
@@ -458,7 +449,7 @@ public abstract class GuiContainer extends GuiScreen
                 }
             }
         }
-        else if (this.field_147007_t && var6 != null && var7 != null && var7.stackSize > this.field_147008_s.size() && Container.func_94527_a(var6, var7, true) && var6.isItemValid(var7) && this.field_147002_h.canDragIntoSlot(var6))
+        else if (this.field_147007_t && var6 != null && var7 != null && var7.stackSize > this.field_147008_s.size() && Container.func_94527_a(var6, var7, true) && var6.isItemValid(var7) && this.container.canDragIntoSlot(var6))
         {
             this.field_147008_s.add(var6);
             this.func_146980_g();
@@ -486,13 +477,13 @@ public abstract class GuiContainer extends GuiScreen
         Slot var10;
         Iterator var11;
 
-        if (this.field_146993_M && var4 != null && p_146286_3_ == 0 && this.field_147002_h.func_94530_a((ItemStack)null, var4))
+        if (this.field_146993_M && var4 != null && p_146286_3_ == 0 && this.container.func_94530_a((ItemStack)null, var4))
         {
             if (isShiftKeyDown())
             {
                 if (var4 != null && var4.inventory != null && this.field_146994_N != null)
                 {
-                    var11 = this.field_147002_h.inventorySlots.iterator();
+                    var11 = this.container.inventorySlots.iterator();
 
                     while (var11.hasNext())
                     {
@@ -636,15 +627,13 @@ public abstract class GuiContainer extends GuiScreen
             p_146984_2_ = p_146984_1_.slotNumber;
         }
 
-        if (Nebula.getBus().dispatch(new EventContainerSlotClick(
-                field_147002_h.windowId, p_146984_2_, p_146984_3_, p_146984_4_))) return;
+        if (XeraClient.BUS.post(new EventWindowClick(container.windowId, p_146984_2_, p_146984_3_, p_146984_4_))) {
+            return;
+        }
 
-        this.mc.playerController.windowClick(this.field_147002_h.windowId, p_146984_2_, p_146984_3_, p_146984_4_, this.mc.thePlayer);
+        this.mc.playerController.windowClick(this.container.windowId, p_146984_2_, p_146984_3_, p_146984_4_, this.mc.thePlayer);
     }
 
-    /**
-     * Fired when a key is typed. This is the equivalent of KeyListener.keyTyped(KeyEvent e).
-     */
     protected void keyTyped(char par1, int par2)
     {
         if (par2 == 1 || par2 == this.mc.gameSettings.keyBindInventory.getKeyCode())
@@ -684,28 +673,19 @@ public abstract class GuiContainer extends GuiScreen
         return false;
     }
 
-    /**
-     * "Called when the screen is unloaded. Used to disable keyboard repeat events."
-     */
     public void onGuiClosed()
     {
         if (this.mc.thePlayer != null)
         {
-            this.field_147002_h.onContainerClosed(this.mc.thePlayer);
+            this.container.onContainerClosed(this.mc.thePlayer);
         }
     }
 
-    /**
-     * Returns true if this GUI should pause the game when it is displayed in single-player
-     */
     public boolean doesGuiPauseGame()
     {
         return false;
     }
 
-    /**
-     * Called from the main game loop to update the screen.
-     */
     public void updateScreen()
     {
         super.updateScreen();

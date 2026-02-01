@@ -16,9 +16,7 @@ public class KeyBinding implements Comparable
     private final String keyDescription;
     private final int keyCodeDefault;
     private final String keyCategory;
-    private int keyCode;
-
-    /** because _303 wanted me to call it that(Caironater) */
+    public int keyCode;
     public boolean pressed;
     private int presses;
     private static final String __OBFID = "CL_00000628";

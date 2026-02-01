@@ -3,8 +3,6 @@ package net.minecraft.client.gui;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import java.util.List;
-
-import lol.nebula.ui.account.GuiAccountLoginScreen;
 import net.minecraft.client.multiplayer.GuiConnecting;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
@@ -41,9 +39,6 @@ public class GuiMultiplayer extends GuiScreen
         this.field_146798_g = par1GuiScreen;
     }
 
-    /**
-     * Adds the buttons (and other controls) to the screen in question.
-     */
     public void initGui()
     {
         Keyboard.enableRepeatEvents(true);
@@ -88,12 +83,8 @@ public class GuiMultiplayer extends GuiScreen
         this.buttonList.add(new GuiButton(0, this.width / 2 + 4 + 76, this.height - 28, 75, 20, I18n.format("gui.cancel", new Object[0])));
         this.func_146790_a(this.field_146803_h.func_148193_k());
 
-        buttonList.add(new GuiButton(69420, 4, 4, 100, 20, "Account Manager"));
     }
 
-    /**
-     * Called from the main game loop to update the screen.
-     */
     public void updateScreen()
     {
         super.updateScreen();
@@ -108,9 +99,6 @@ public class GuiMultiplayer extends GuiScreen
         this.field_146797_f.func_147223_a();
     }
 
-    /**
-     * "Called when the screen is unloaded. Used to disable keyboard repeat events."
-     */
     public void onGuiClosed()
     {
         Keyboard.enableRepeatEvents(false);
@@ -174,9 +162,6 @@ public class GuiMultiplayer extends GuiScreen
             else if (p_146284_1_.id == 8)
             {
                 this.func_146792_q();
-            }
-            else if (p_146284_1_.id == 69420) {
-                mc.displayGuiScreen(new GuiAccountLoginScreen());
             }
         }
     }
@@ -249,9 +234,6 @@ public class GuiMultiplayer extends GuiScreen
         }
     }
 
-    /**
-     * Fired when a key is typed. This is the equivalent of KeyListener.keyTyped(KeyEvent e).
-     */
     protected void keyTyped(char par1, int par2)
     {
         int var3 = this.field_146803_h.func_148193_k();
@@ -351,15 +333,12 @@ public class GuiMultiplayer extends GuiScreen
         }
     }
 
-    /**
-     * Draws the screen and all the components in it.
-     */
     public void drawScreen(int par1, int par2, float par3)
     {
         this.field_146812_y = null;
         this.drawDefaultBackground();
-        this.field_146803_h.func_148128_a(par1, par2, par3);
-        this.drawCenteredString(this.fontRendererObj, I18n.format("multiplayer.title", new Object[0]), this.width / 2, 20, 16777215);
+        this.field_146803_h.drawScreen(par1, par2, par3);
+        this.drawCenteredString(this.fontRenderer, I18n.format("multiplayer.title", new Object[0]), this.width / 2, 20, 16777215);
         super.drawScreen(par1, par2, par3);
 
         if (this.field_146812_y != null)
@@ -418,9 +397,6 @@ public class GuiMultiplayer extends GuiScreen
         this.field_146812_y = p_146793_1_;
     }
 
-    /**
-     * Called when the mouse is clicked.
-     */
     protected void mouseClicked(int par1, int par2, int par3)
     {
         super.mouseClicked(par1, par2, par3);

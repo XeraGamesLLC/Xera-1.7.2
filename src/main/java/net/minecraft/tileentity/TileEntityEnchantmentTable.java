@@ -34,7 +34,7 @@ public class TileEntityEnchantmentTable extends TileEntity
     {
         super.readFromNBT(p_145839_1_);
 
-        if (p_145839_1_.func_150297_b("CustomName", 8))
+        if (p_145839_1_.hasKey("CustomName", 8))
         {
             this.field_145922_s = p_145839_1_.getString("CustomName");
         }

@@ -42,9 +42,9 @@ public class GuiWDLPlayer extends GuiScreen
         this.buttonList.add(this.playerPosBtn);
         var3 += 22;
         this.posTextY = var3 + 4;
-        this.posX = new GuiTextField(this.fontRendererObj, var1 - 87, var3, 50, 16);
-        this.posY = new GuiTextField(this.fontRendererObj, var1 - 19, var3, 50, 16);
-        this.posZ = new GuiTextField(this.fontRendererObj, var1 + 48, var3, 50, 16);
+        this.posX = new GuiTextField(this.fontRenderer, var1 - 87, var3, 50, 16);
+        this.posY = new GuiTextField(this.fontRenderer, var1 - 19, var3, 50, 16);
+        this.posZ = new GuiTextField(this.fontRenderer, var1 + 48, var3, 50, 16);
         this.posX.func_146203_f(7);
         this.posY.func_146203_f(7);
         this.posZ.func_146203_f(7);
@@ -120,13 +120,13 @@ public class GuiWDLPlayer extends GuiScreen
     public void drawScreen(int var1, int var2, float var3)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, this.title, this.width / 2, this.height / 4 - 40, 16777215);
+        this.drawCenteredString(this.fontRenderer, this.title, this.width / 2, this.height / 4 - 40, 16777215);
 
         if (this.showPosFields)
         {
-            this.drawString(this.fontRendererObj, "X:", this.width / 2 - 99, this.posTextY, 16777215);
-            this.drawString(this.fontRendererObj, "Y:", this.width / 2 - 31, this.posTextY, 16777215);
-            this.drawString(this.fontRendererObj, "Z:", this.width / 2 + 37, this.posTextY, 16777215);
+            this.drawString(this.fontRenderer, "X:", this.width / 2 - 99, this.posTextY, 16777215);
+            this.drawString(this.fontRenderer, "Y:", this.width / 2 - 31, this.posTextY, 16777215);
+            this.drawString(this.fontRenderer, "Z:", this.width / 2 + 37, this.posTextY, 16777215);
             this.posX.drawTextBox();
             this.posY.drawTextBox();
             this.posZ.drawTextBox();
@@ -199,7 +199,7 @@ public class GuiWDLPlayer extends GuiScreen
     {
         String var2 = WDL.worldProps.getProperty("PlayerPos");
         this.showPosFields = false;
-        this.pickPosBtn.field_146125_m = false;
+        this.pickPosBtn.drawButton = false;
 
         if (var2.equals("keep"))
         {
@@ -224,7 +224,7 @@ public class GuiWDLPlayer extends GuiScreen
             {
                 this.playerPosBtn.displayString = "Player Position:";
                 this.showPosFields = true;
-                this.pickPosBtn.field_146125_m = true;
+                this.pickPosBtn.drawButton = true;
             }
         }
     }

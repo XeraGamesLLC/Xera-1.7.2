@@ -1,14 +1,13 @@
 package net.minecraft.wdl;
 
+import java.io.File;
+import java.util.Properties;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.util.Session;
-
-import java.io.File;
-import java.util.Properties;
 
 public class GuiWDLMultiworldSelect extends GuiScreen
 {
@@ -108,7 +107,7 @@ public class GuiWDLMultiworldSelect extends GuiScreen
             this.buttonList.add(this.buttons[var11]);
         }
 
-        this.newNameField = new GuiTextField(this.fontRendererObj, var11 % var3 * var4 + var9, this.height - 60 - var11 / var3 * 21 + 1, var4, 18);
+        this.newNameField = new GuiTextField(this.fontRenderer, var11 % var3 * var4 + var9, this.height - 60 - var11 / var3 * 21 + 1, var4, 18);
     }
 
     protected void actionPerformed(GuiButton var1)
@@ -176,14 +175,14 @@ public class GuiWDLMultiworldSelect extends GuiScreen
 
         if (this.parent == null)
         {
-            this.drawCenteredString(this.fontRendererObj, "World Downloader - Trying To Start Download", this.width / 2, this.height / 16, 16777215);
+            this.drawCenteredString(this.fontRenderer, "World Downloader - Trying To Start Download", this.width / 2, this.height / 16, 16777215);
         }
         else
         {
-            this.drawCenteredString(this.fontRendererObj, "World Downloader - Trying To Change Options", this.width / 2, this.height / 16, 16777215);
+            this.drawCenteredString(this.fontRenderer, "World Downloader - Trying To Change Options", this.width / 2, this.height / 16, 16777215);
         }
 
-        this.drawCenteredString(this.fontRendererObj, "Where are you?", this.width / 2, this.height / 16 + 10, 16711680);
+        this.drawCenteredString(this.fontRenderer, "Where are you?", this.width / 2, this.height / 16 + 10, 16711680);
         this.cam.prevRotationPitch = this.cam.rotationPitch = 0.0F;
         this.cam.prevRotationYaw = this.cam.rotationYaw = this.yaw;
         float var4 = 0.475F;

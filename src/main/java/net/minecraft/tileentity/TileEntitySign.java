@@ -38,9 +38,6 @@ public class TileEntitySign extends TileEntity
         }
     }
 
-    /**
-     * Overriden in a sign to provide the text.
-     */
     public Packet getDescriptionPacket()
     {
         String[] var1 = new String[4];

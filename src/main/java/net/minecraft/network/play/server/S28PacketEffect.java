@@ -28,9 +28,6 @@ public class S28PacketEffect extends Packet
         this.field_149246_f = p_i45198_6_;
     }
 
-    /**
-     * Reads the raw packet data from the data stream.
-     */
     public void readPacketData(PacketBuffer p_148837_1_) throws IOException
     {
         this.field_149251_a = p_148837_1_.readInt();
@@ -41,9 +38,6 @@ public class S28PacketEffect extends Packet
         this.field_149246_f = p_148837_1_.readBoolean();
     }
 
-    /**
-     * Writes the raw packet data to the data stream.
-     */
     public void writePacketData(PacketBuffer p_148840_1_) throws IOException
     {
         p_148840_1_.writeInt(this.field_149251_a);
@@ -64,7 +58,7 @@ public class S28PacketEffect extends Packet
         return this.field_149246_f;
     }
 
-    public int func_149242_d()
+    public int getEffectId()
     {
         return this.field_149251_a;
     }
@@ -74,17 +68,17 @@ public class S28PacketEffect extends Packet
         return this.field_149249_b;
     }
 
-    public int func_149240_f()
+    public int getX()
     {
         return this.field_149250_c;
     }
 
-    public int func_149243_g()
+    public int getY()
     {
         return this.field_149247_d;
     }
 
-    public int func_149239_h()
+    public int getZ()
     {
         return this.field_149248_e;
     }

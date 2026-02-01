@@ -13,7 +13,7 @@ public class TileEntityMobSpawner extends TileEntity
         private static final String __OBFID = "CL_00000361";
         public void func_98267_a(int par1)
         {
-            TileEntityMobSpawner.this.worldObj.func_147452_c(TileEntityMobSpawner.this.xCoord, TileEntityMobSpawner.this.yCoord, TileEntityMobSpawner.this.zCoord, Blocks.mob_spawner, par1, 0);
+            TileEntityMobSpawner.this.worldObj.addBlockEvent(TileEntityMobSpawner.this.xCoord, TileEntityMobSpawner.this.yCoord, TileEntityMobSpawner.this.zCoord, Blocks.mob_spawner, par1, 0);
         }
         public World getSpawnerWorld()
         {
@@ -61,9 +61,6 @@ public class TileEntityMobSpawner extends TileEntity
         super.updateEntity();
     }
 
-    /**
-     * Overriden in a sign to provide the text.
-     */
     public Packet getDescriptionPacket()
     {
         NBTTagCompound var1 = new NBTTagCompound();

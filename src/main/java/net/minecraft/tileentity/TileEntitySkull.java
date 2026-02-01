@@ -25,15 +25,12 @@ public class TileEntitySkull extends TileEntity
         this.field_145908_a = p_145839_1_.getByte("SkullType");
         this.field_145910_i = p_145839_1_.getByte("Rot");
 
-        if (p_145839_1_.func_150297_b("ExtraType", 8))
+        if (p_145839_1_.hasKey("ExtraType", 8))
         {
             this.field_145909_j = p_145839_1_.getString("ExtraType");
         }
     }
 
-    /**
-     * Overriden in a sign to provide the text.
-     */
     public Packet getDescriptionPacket()
     {
         NBTTagCompound var1 = new NBTTagCompound();
