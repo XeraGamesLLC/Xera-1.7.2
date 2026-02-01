@@ -10,6 +10,7 @@ sourceCompatibility = targetCompatibility = '8'
 compileJava {
     sourceCompatibility = targetCompatibility = '8'
     options.encoding 'UTF-8'
+    options.release = 8  // Ensures Java 8 API compatibility when compiling with newer JDKs
 }
 
 repositories {

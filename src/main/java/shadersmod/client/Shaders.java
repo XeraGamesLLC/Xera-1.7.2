@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -368,7 +369,7 @@ public class Shaders
     static final int[] colorTextureTextureImageUnit = new int[] {0, 1, 2, 3, 7, 8, 9, 10};
     static final boolean[][] programsToggleColorTextures = new boolean[44][8];
     private static final int bigBufferSize = 2548;
-    private static final ByteBuffer bigBuffer = (ByteBuffer)BufferUtils.createByteBuffer(2548).limit(0);
+    private static final ByteBuffer bigBuffer = (ByteBuffer)((Buffer)BufferUtils.createByteBuffer(2548)).limit(0);
     static final float[] faProjection = new float[16];
     static final float[] faProjectionInverse = new float[16];
     static final float[] faModelView = new float[16];
@@ -3309,8 +3310,10 @@ public class Shaders
         }
 
         dfb = EXTFramebufferObject.glGenFramebuffersEXT();
-        GL11.glGenTextures((IntBuffer)dfbDepthTextures.clear().limit(usedDepthBuffers));
-        GL11.glGenTextures((IntBuffer)dfbColorTextures.clear().limit(16));
+        dfbDepthTextures.clear(); ((Buffer)dfbDepthTextures).limit(usedDepthBuffers);
+        GL11.glGenTextures(dfbDepthTextures);
+        dfbColorTextures.clear(); ((Buffer)dfbColorTextures).limit(16);
+        GL11.glGenTextures(dfbColorTextures);
         dfbDepthTextures.position(0);
         dfbColorTextures.position(0);
         dfbColorTextures.get(dfbColorTexturesA).position(0);
@@ -3407,8 +3410,10 @@ public class Shaders
             EXTFramebufferObject.glBindFramebufferEXT(36160, sfb);
             GL11.glDrawBuffer(0);
             GL11.glReadBuffer(0);
-            GL11.glGenTextures((IntBuffer)sfbDepthTextures.clear().limit(usedShadowDepthBuffers));
-            GL11.glGenTextures((IntBuffer)sfbColorTextures.clear().limit(usedShadowColorBuffers));
+            sfbDepthTextures.clear(); ((Buffer)sfbDepthTextures).limit(usedShadowDepthBuffers);
+            GL11.glGenTextures(sfbDepthTextures);
+            sfbColorTextures.clear(); ((Buffer)sfbColorTextures).limit(usedShadowColorBuffers);
+            GL11.glGenTextures(sfbColorTextures);
             sfbDepthTextures.position(0);
             sfbColorTextures.position(0);
             int status;
@@ -5179,8 +5184,10 @@ public class Shaders
 
     static
     {
-        drawBuffersNone.limit(0);
-        drawBuffersColorAtt0.put(36064).position(0).limit(1);
+        ((Buffer)drawBuffersNone).limit(0);
+        drawBuffersColorAtt0.put(36064);
+        ((Buffer)drawBuffersColorAtt0).position(0);
+        ((Buffer)drawBuffersColorAtt0).limit(1);
         formatNames = new String[] {"R8", "RG8", "RGB8", "RGBA8", "R8_SNORM", "RG8_SNORM", "RGB8_SNORM", "RGBA8_SNORM", "R16", "RG16", "RGB16", "RGBA16", "R16_SNORM", "RG16_SNORM", "RGB16_SNORM", "RGBA16_SNORM", "R16F", "RG16F", "RGB16F", "RGBA16F", "R32F", "RG32F", "RGB32F", "RGBA32F", "R32I", "RG32I", "RGB32I", "RGBA32I", "R32UI", "RG32UI", "RGB32UI", "RGBA32UI", "R3_G3_B2", "RGB5_A1", "RGB10_A2", "R11F_G11F_B10F", "RGB9_E5"};
         formatIds = new int[] {33321, 33323, 32849, 32856, 36756, 36757, 36758, 36759, 33322, 33324, 32852, 32859, 36760, 36761, 36762, 36763, 33325, 33327, 34843, 34842, 33326, 33328, 34837, 34836, 33333, 33339, 36227, 36226, 33334, 33340, 36209, 36208, 10768, 32855, 32857, 35898, 35901};
         patternLoadEntityDataMap = Pattern.compile("\\s*([\\w:]+)\\s*=\\s*([-]?\\d+)\\s*");
