@@ -16,11 +16,19 @@ export async function searchMessages(channelId: string, q: string) {
   return res.data.messages as Message[];
 }
 
+export interface UploadedAttachment {
+  id: string;
+  url: string;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
 export async function uploadAttachment(channelId: string, file: File) {
   const form = new FormData();
   form.append("file", file);
   const res = await api.post(`/channels/${channelId}/attachments`, form);
-  return res.data.attachment as { id: string; url: string; filename: string };
+  return res.data.attachment as UploadedAttachment;
 }
 
 export async function markRead(channelId: string, lastReadMessageId: string) {

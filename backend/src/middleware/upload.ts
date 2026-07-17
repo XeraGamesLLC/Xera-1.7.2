@@ -6,17 +6,21 @@ import { env } from "../config/env";
 import { AppError } from "./errorHandler";
 
 const AVATAR_MIME_ALLOWLIST = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
-const ATTACHMENT_MIME_ALLOWLIST = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-  "video/mp4",
-  "video/webm",
-  "audio/mpeg",
-  "audio/ogg",
-  "application/pdf",
-  "text/plain",
+
+// Discord-style attachments accept nearly any file type, so this is a
+// blocklist of extensions that a browser or OS could execute/render as
+// active content rather than a narrow allowlist. Checked against the
+// original filename regardless of the claimed multipart mimetype, since
+// that field is client-supplied and not trustworthy on its own — combined
+// with the forced-download headers in app.ts for non-media types and
+// helmet's nosniff, this keeps uploaded files from ever running as script
+// in the browser (stored XSS) or as a program on the host OS.
+const DANGEROUS_EXTENSIONS = new Set([
+  ".html", ".htm", ".xhtml", ".mhtml", ".shtml",
+  ".svg", ".js", ".mjs", ".cjs", ".jsx",
+  ".exe", ".msi", ".dll", ".com", ".scr", ".cpl", ".gadget", ".lnk", ".hta",
+  ".bat", ".cmd", ".ps1", ".psm1", ".vbs", ".vbe", ".wsf", ".wsh", ".msc",
+  ".jar", ".apk", ".app",
 ]);
 
 function ensureDir(dir: string) {
@@ -52,8 +56,9 @@ export const attachmentUpload = multer({
   storage: makeStorage("attachments"),
   limits: { fileSize: env.MAX_ATTACHMENT_SIZE_MB * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (!ATTACHMENT_MIME_ALLOWLIST.has(file.mimetype)) {
-      return cb(new AppError(400, "Unsupported attachment file type"));
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (DANGEROUS_EXTENSIONS.has(ext)) {
+      return cb(new AppError(400, "This file type is not allowed"));
     }
     cb(null, true);
   },

@@ -40,7 +40,27 @@ app.use(cors({ origin: corsOrigins }));
 app.use(express.json({ limit: "256kb" }));
 app.use(generalLimiter);
 
-app.use("/uploads", express.static(path.resolve(env.UPLOAD_DIR)));
+// Media types the frontend renders inline (<img>/<video>/<audio>/embedded
+// pdf viewer) are served as-is; everything else is forced to download
+// rather than rendered in-browser, so an uploaded file can never execute
+// as active content even if a dangerous extension somehow slipped past the
+// upload filter.
+const INLINE_RENDER_EXTENSIONS = new Set([
+  ".png", ".jpg", ".jpeg", ".gif", ".webp",
+  ".mp4", ".webm", ".mov",
+  ".mp3", ".ogg", ".wav",
+  ".pdf",
+]);
+app.use(
+  "/uploads",
+  express.static(path.resolve(env.UPLOAD_DIR), {
+    setHeaders: (res, filePath) => {
+      if (!INLINE_RENDER_EXTENSIONS.has(path.extname(filePath).toLowerCase())) {
+        res.setHeader("Content-Disposition", "attachment");
+      }
+    },
+  })
+);
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 

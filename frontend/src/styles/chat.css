@@ -68,6 +68,12 @@
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
+.message-content.jumbo img.emoji {
+  height: 2.75em;
+  width: 2.75em;
+  vertical-align: middle;
+  margin: 2px 0;
+}
 .message-content .md-inline-code {
   background: var(--bg-darkest);
   padding: 2px 4px;
@@ -126,6 +132,39 @@
   color: var(--text-normal);
 }
 
+.attachment-chip-row {
+  margin: 0 16px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text-normal);
+  max-width: 260px;
+}
+.attachment-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+.attachment-chip-size {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+.attachment-chip-uploading {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .message-attachments {
   margin-top: 4px;
   display: flex;
@@ -139,6 +178,9 @@
   display: block;
 }
 .attachment-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--bg-elevated);
   border-radius: 6px;
   padding: 8px 12px;

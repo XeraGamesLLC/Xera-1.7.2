@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Message } from "../../store/app";
 import { emitWithAck } from "../../api/socket";
-import { uploadAttachment } from "../../api/channels";
+import { uploadAttachment, type UploadedAttachment } from "../../api/channels";
 import EmojiPicker from "./EmojiPicker";
-import { CloseIcon, PlusIcon, SmileIcon, SendIcon } from "../common/Icon";
+import { CloseIcon, PlusIcon, SmileIcon, SendIcon, FileIcon, ImageIcon } from "../common/Icon";
 import { useUiStore } from "../../store/ui";
 
 interface Props {
@@ -16,15 +16,24 @@ interface Props {
   onCancelEdit: () => void;
 }
 
+const MAX_FILES_PER_MESSAGE = 10;
+const MAX_FILE_SIZE_MB = 100;
+
 let typingThrottleAt = 0;
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export default function MessageInput({ channelId, guildId, channelName, replyingTo, editingMessage, onCancelReply, onCancelEdit }: Props) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [sending, setSending] = useState(false);
-  const [pendingAttachmentIds, setPendingAttachmentIds] = useState<string[]>([]);
-  const [pendingFileNames, setPendingFileNames] = useState<string[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<UploadedAttachment[]>([]);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeModal = useUiStore((s) => s.activeModal);
@@ -58,7 +67,7 @@ export default function MessageInput({ channelId, guildId, channelName, replying
 
   async function send() {
     const content = value.trim();
-    if (!content && pendingAttachmentIds.length === 0) return;
+    if (!content && pendingAttachments.length === 0) return;
     setError(null);
     setSending(true);
     try {
@@ -70,13 +79,12 @@ export default function MessageInput({ channelId, guildId, channelName, replying
           channelId,
           content: content || "​",
           replyToId: replyingTo?.id ?? null,
-          attachmentIds: pendingAttachmentIds,
+          attachmentIds: pendingAttachments.map((a) => a.id),
         });
         onCancelReply();
       }
       setValue("");
-      setPendingAttachmentIds([]);
-      setPendingFileNames([]);
+      setPendingAttachments([]);
     } catch (err: any) {
       setError(err.message ?? "Failed to send message");
     } finally {
@@ -97,17 +105,46 @@ export default function MessageInput({ channelId, guildId, channelName, replying
   }
 
   async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const attachment = await uploadAttachment(channelId, file);
-      setPendingAttachmentIds((ids) => [...ids, attachment.id]);
-      setPendingFileNames((names) => [...names, attachment.filename]);
-    } catch (err: any) {
-      setError(err?.response?.data?.error ?? "Upload failed");
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+    const files = Array.from(e.target.files ?? []);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (files.length === 0) return;
+
+    setError(null);
+
+    const remainingSlots = MAX_FILES_PER_MESSAGE - pendingAttachments.length;
+    if (remainingSlots <= 0) {
+      setError(`You can only attach up to ${MAX_FILES_PER_MESSAGE} files to a message.`);
+      return;
     }
+
+    const toUpload = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      setError(`Only attaching the first ${remainingSlots} file(s) — ${MAX_FILES_PER_MESSAGE} per message max.`);
+    }
+
+    const tooLarge = toUpload.filter((f) => f.size > MAX_FILE_SIZE_MB * 1024 * 1024);
+    const validFiles = toUpload.filter((f) => f.size <= MAX_FILE_SIZE_MB * 1024 * 1024);
+    if (tooLarge.length > 0) {
+      setError(`${tooLarge.map((f) => f.name).join(", ")} — over the ${MAX_FILE_SIZE_MB}MB per-file limit, not uploaded.`);
+    }
+
+    setUploadingCount((n) => n + validFiles.length);
+    const results = await Promise.allSettled(validFiles.map((f) => uploadAttachment(channelId, f)));
+    setUploadingCount((n) => n - validFiles.length);
+
+    const uploaded: UploadedAttachment[] = [];
+    const failed: string[] = [];
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") uploaded.push(r.value);
+      else failed.push(validFiles[i].name);
+    });
+
+    if (uploaded.length > 0) setPendingAttachments((prev) => [...prev, ...uploaded]);
+    if (failed.length > 0) setError(`Failed to upload: ${failed.join(", ")}`);
+  }
+
+  function removeAttachment(id: string) {
+    setPendingAttachments((prev) => prev.filter((a) => a.id !== id));
   }
 
   return (
@@ -125,16 +162,35 @@ export default function MessageInput({ channelId, guildId, channelName, replying
           <button className="icon-btn" onClick={() => { onCancelEdit(); setValue(""); }}><CloseIcon size={14} /></button>
         </div>
       )}
-      {pendingFileNames.length > 0 && (
-        <div className="reply-preview" style={{ margin: "0 16px 4px" }}>
-          Attached: {pendingFileNames.join(", ")}
+      {(pendingAttachments.length > 0 || uploadingCount > 0) && (
+        <div className="attachment-chip-row">
+          {pendingAttachments.map((a) => (
+            <div key={a.id} className="attachment-chip">
+              {a.contentType.startsWith("image/") ? <ImageIcon size={16} /> : <FileIcon size={16} />}
+              <span className="attachment-chip-name">{a.filename}</span>
+              <span className="attachment-chip-size">{formatFileSize(a.size)}</span>
+              <button className="icon-btn" onClick={() => removeAttachment(a.id)} title="Remove">
+                <CloseIcon size={12} />
+              </button>
+            </div>
+          ))}
+          {uploadingCount > 0 && (
+            <div className="attachment-chip attachment-chip-uploading">
+              Uploading {uploadingCount} file{uploadingCount > 1 ? "s" : ""}…
+            </div>
+          )}
         </div>
       )}
       <div className="composer">
-        <button className="icon-btn" title="Upload a file" onClick={() => fileInputRef.current?.click()}>
+        <button
+          className="icon-btn"
+          title="Upload files"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={pendingAttachments.length >= MAX_FILES_PER_MESSAGE}
+        >
           <PlusIcon />
         </button>
-        <input ref={fileInputRef} type="file" hidden onChange={onFileChange} />
+        <input ref={fileInputRef} type="file" hidden multiple onChange={onFileChange} />
         <textarea
           ref={textareaRef}
           rows={1}

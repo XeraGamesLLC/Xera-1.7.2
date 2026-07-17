@@ -15,7 +15,7 @@ const envSchema = z.object({
 
   UPLOAD_DIR: z.string().default("./uploads"),
   MAX_AVATAR_SIZE_MB: z.coerce.number().default(8),
-  MAX_ATTACHMENT_SIZE_MB: z.coerce.number().default(25),
+  MAX_ATTACHMENT_SIZE_MB: z.coerce.number().default(100),
 
   ANTI_VPN_ENABLED: z.coerce.boolean().default(false),
   ANTI_VPN_API_KEY: z.string().optional().default(""),

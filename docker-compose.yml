@@ -43,7 +43,7 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set a long random secret in .env}
       UPLOAD_DIR: /app/uploads
       MAX_AVATAR_SIZE_MB: 8
-      MAX_ATTACHMENT_SIZE_MB: 25
+      MAX_ATTACHMENT_SIZE_MB: 100
       ANTI_VPN_ENABLED: ${ANTI_VPN_ENABLED:-false}
       ANTI_VPN_API_KEY: ${ANTI_VPN_API_KEY:-}
       RATE_LIMIT_WINDOW_MS: 60000

@@ -4,7 +4,7 @@ import MessageContent from "./MessageContent";
 import { formatMessageTimestamp, formatShortTime } from "../../utils/time";
 import type { MentionContext } from "../../utils/markdown";
 import { emitWithAck } from "../../api/socket";
-import { ReplyIcon, EditIcon, TrashIcon } from "../common/Icon";
+import { ReplyIcon, EditIcon, TrashIcon, FileIcon } from "../common/Icon";
 import { twemojiUrl } from "../../utils/twemoji";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
@@ -77,7 +77,7 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
                 <img key={a.id} src={a.url} alt={a.filename} loading="lazy" />
               ) : (
                 <a key={a.id} className="attachment-file" href={a.url} target="_blank" rel="noopener noreferrer">
-                  📎 {a.filename}
+                  <FileIcon size={16} /> {a.filename}
                 </a>
               )
             )}

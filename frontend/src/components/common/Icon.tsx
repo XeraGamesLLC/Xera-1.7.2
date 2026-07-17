@@ -139,3 +139,22 @@ export function SpeakerIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function FileIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M7 3.5h7l4 4V19a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" strokeLinejoin="round" />
+      <path d="M14 3.5V8h4" strokeLinejoin="round" />
+    </Base>
+  );
+}
+
+export function ImageIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="M4 17l5.5-5.5a1.5 1.5 0 0 1 2.1 0L15 15l1.5-1.5a1.5 1.5 0 0 1 2.1 0L20.5 15.5" />
+    </Base>
+  );
+}
