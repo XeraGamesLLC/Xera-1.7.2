@@ -85,6 +85,15 @@ export interface Reaction {
   emoji: string;
 }
 
+export interface MessageEmbed {
+  id: string;
+  url: string;
+  title: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  siteName: string | null;
+}
+
 export interface Message {
   id: string;
   channelId: string;
@@ -98,6 +107,7 @@ export interface Message {
   author: PublicUser;
   attachments: Attachment[];
   reactions: Reaction[];
+  embeds: MessageEmbed[];
   replyTo?: Message | null;
 }
 

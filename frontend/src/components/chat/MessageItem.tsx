@@ -1,6 +1,7 @@
 import type { Message, PublicUser } from "../../store/app";
 import Avatar from "../common/Avatar";
 import MessageContent from "./MessageContent";
+import EmbedCard from "./EmbedCard";
 import { formatMessageTimestamp, formatShortTime } from "../../utils/time";
 import type { MentionContext } from "../../utils/markdown";
 import { emitWithAck } from "../../api/socket";
@@ -69,6 +70,14 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
         )}
         <MessageContent content={message.content} mentionContext={mentionContext} />
         {message.editedAt && <span className="message-edited"> (edited)</span>}
+
+        {message.embeds.length > 0 && (
+          <div className="embed-list">
+            {message.embeds.map((embed) => (
+              <EmbedCard key={embed.id} embed={embed} />
+            ))}
+          </div>
+        )}
 
         {message.attachments.length > 0 && (
           <div className="message-attachments">

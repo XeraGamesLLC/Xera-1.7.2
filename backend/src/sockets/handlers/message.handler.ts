@@ -5,6 +5,7 @@ import { consumeRateLimit } from "../../middleware/rateLimit";
 import { emitToChannel, emitToUser } from "../index";
 import * as messageService from "../../services/message.service";
 import { assertChannelPermission } from "../../services/permission.service";
+import { resolveEmbedForUrl, firstUrlIn } from "../../services/embed.service";
 import {
   sendMessageSchema,
   editMessageSchema,
@@ -81,6 +82,11 @@ export function registerMessageHandlers(socket: Socket) {
       await deliverMentions(channel, input.channelId, userId, mentions, message.id);
 
       ack?.({ ok: true, data: message });
+
+      // Best-effort, fire-and-forget: resolve a link embed and push it out as
+      // a message:update once ready, matching Discord's "embed pops in a
+      // moment later" behavior. Never let this affect the send itself.
+      void generateEmbedForMessage(message.id, input.channelId, userId, input.content);
     } catch (err: any) {
       ack?.({ ok: false, error: err.message ?? "Failed to send message" });
     }
@@ -173,6 +179,26 @@ export function registerMessageHandlers(socket: Socket) {
       // typing indicators are best-effort, swallow errors
     }
   });
+}
+
+async function generateEmbedForMessage(messageId: string, channelId: string, userId: string, content: string) {
+  try {
+    const url = firstUrlIn(content);
+    if (!url) return;
+
+    const withinBudget = await consumeRateLimit(`embed:${userId}`, 10, 60);
+    if (!withinBudget) return;
+
+    const embed = await resolveEmbedForUrl(url);
+    if (!embed) return;
+
+    const updated = await messageService.addEmbed(messageId, embed);
+    if (!updated) return;
+
+    emitToChannel(channelId, "message:update", updated);
+  } catch {
+    // Link previews are a nicety, not core functionality — swallow errors.
+  }
 }
 
 async function deliverMentions(

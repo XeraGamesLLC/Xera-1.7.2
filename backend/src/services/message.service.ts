@@ -8,6 +8,7 @@ const MESSAGE_INCLUDE = {
   author: { select: { id: true, username: true, discriminator: true, avatarUrl: true } },
   attachments: true,
   reactions: true,
+  embeds: true,
   replyTo: {
     include: { author: { select: { id: true, username: true, discriminator: true, avatarUrl: true } } },
   },
@@ -49,6 +50,17 @@ export async function listMessages(channelId: string, opts: { before?: string; l
     ...(opts.before ? { cursor: { id: opts.before }, skip: 1 } : {}),
     include: MESSAGE_INCLUDE,
   });
+}
+
+export async function addEmbed(messageId: string, embed: { url: string; title: string | null; description: string | null; imageUrl: string | null; siteName: string | null }) {
+  const message = await prisma.message.findUnique({ where: { id: messageId } });
+  if (!message || message.deletedAt) return null; // message was deleted before the embed finished resolving
+
+  await prisma.messageEmbed.create({
+    data: { id: generateSnowflake(), messageId, ...embed },
+  });
+
+  return prisma.message.findUnique({ where: { id: messageId }, include: MESSAGE_INCLUDE });
 }
 
 export async function editMessage(messageId: string, authorId: string, content: string) {

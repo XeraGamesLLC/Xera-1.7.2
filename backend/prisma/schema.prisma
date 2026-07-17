@@ -279,9 +279,28 @@ model Message {
   replies     Message[]    @relation("MessageReply")
   attachments Attachment[]
   reactions   Reaction[]
+  embeds      MessageEmbed[]
 
   @@index([channelId, createdAt])
   @@index([authorId])
+}
+
+model MessageEmbed {
+  id          String   @id
+  messageId   String
+  url         String
+  title       String?
+  description String?
+  // Locally-cached copy of the remote og:image, never a hotlink to the
+  // source site — see embed.service.ts for why (keeps CSP tight and never
+  // leaks a viewer's IP to arbitrary third-party origins on message view).
+  imageUrl    String?
+  siteName    String?
+  createdAt   DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
 }
 
 model Attachment {
