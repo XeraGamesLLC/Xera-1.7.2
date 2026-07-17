@@ -7,7 +7,7 @@ import { requireAuth } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { uploadLimiter } from "../middleware/rateLimit";
 import { avatarUpload } from "../middleware/upload";
-import { updateProfileSchema, updateStatusSchema, lookupUserSchema } from "../validators/user.schema";
+import { updateProfileSchema, updateStatusSchema, lookupUserSchema, updatePrimaryGuildSchema } from "../validators/user.schema";
 import { prisma } from "../lib/prisma";
 import { sanitizeUser } from "../services/auth.service";
 import { AppError } from "../middleware/errorHandler";
@@ -35,6 +35,38 @@ router.patch("/me/status", requireAuth, validate({ body: updateStatusSchema }), 
     next(err);
   }
 });
+
+router.patch(
+  "/me/primary-guild",
+  requireAuth,
+  validate({ body: updatePrimaryGuildSchema }),
+  async (req, res, next) => {
+    try {
+      const { guildId } = req.body as { guildId: string | null };
+
+      if (guildId !== null) {
+        // Only servers the user belongs to, and only ones that actually
+        // have a tag configured, can be selected - matches Discord only
+        // ever offering eligible servers in the picker.
+        const membership = await prisma.guildMember.findUnique({
+          where: { guildId_userId: { guildId, userId: req.userId! } },
+          include: { guild: { select: { tag: true } } },
+        });
+        if (!membership) throw new AppError(403, "You are not a member of this server");
+        if (!membership.guild.tag) throw new AppError(400, "This server has no tag configured");
+      }
+
+      const user = await prisma.user.update({
+        where: { id: req.userId },
+        data: { primaryGuildId: guildId },
+        include: { primaryGuild: { select: { id: true, name: true, tag: true, tagColor: true } } },
+      });
+      res.json({ user: sanitizeUser(user) });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 router.post("/me/avatar", requireAuth, uploadLimiter, avatarUpload.single("avatar"), async (req, res, next) => {
   try {
@@ -75,10 +107,15 @@ router.post("/me/avatar", requireAuth, uploadLimiter, avatarUpload.single("avata
   }
 });
 
+const PRIMARY_GUILD_SELECT = { id: true, name: true, tag: true, tagColor: true } as const;
+
 router.get("/lookup", requireAuth, validate({ query: lookupUserSchema }), async (req, res, next) => {
   try {
     const { username, discriminator } = req.query as unknown as { username: string; discriminator: string };
-    const user = await prisma.user.findUnique({ where: { username_discriminator: { username, discriminator } } });
+    const user = await prisma.user.findUnique({
+      where: { username_discriminator: { username, discriminator } },
+      include: { primaryGuild: { select: PRIMARY_GUILD_SELECT } },
+    });
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ user: publicProfile(user) });
   } catch (err) {
@@ -88,7 +125,10 @@ router.get("/lookup", requireAuth, validate({ query: lookupUserSchema }), async 
 
 router.get("/:id", requireAuth, async (req, res, next) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      include: { primaryGuild: { select: PRIMARY_GUILD_SELECT } },
+    });
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ user: publicProfile(user) });
   } catch (err) {
@@ -106,9 +146,10 @@ function publicProfile(user: {
   status: string;
   customStatus: string | null;
   createdAt: Date;
+  primaryGuild: { id: string; name: string; tag: string | null; tagColor: string | null } | null;
 }) {
-  const { id, username, discriminator, avatarUrl, bannerUrl, aboutMe, status, customStatus, createdAt } = user;
-  return { id, username, discriminator, avatarUrl, bannerUrl, aboutMe, status, customStatus, createdAt };
+  const { id, username, discriminator, avatarUrl, bannerUrl, aboutMe, status, customStatus, createdAt, primaryGuild } = user;
+  return { id, username, discriminator, avatarUrl, bannerUrl, aboutMe, status, customStatus, createdAt, primaryGuild };
 }
 
 export default router;

@@ -7,6 +7,7 @@ import type { MentionContext } from "../../utils/markdown";
 import { emitWithAck } from "../../api/socket";
 import { ReplyIcon, EditIcon, TrashIcon, FileIcon } from "../common/Icon";
 import { twemojiUrl } from "../../utils/twemoji";
+import ServerTagBadge from "../common/ServerTagBadge";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
 
@@ -52,6 +53,7 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
         <div className="reply-preview">
           <ReplyIcon size={14} />
           <span className="reply-author">{message.replyTo.author.username}</span>
+          <ServerTagBadge guild={message.replyTo.author.primaryGuild} />
           <span>{message.replyTo.content.slice(0, 80)}</span>
         </div>
       )}
@@ -66,6 +68,7 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
             <span className="message-author" onClick={() => onOpenProfile(message.authorId)}>
               {message.author.username}
             </span>
+            <ServerTagBadge guild={message.author.primaryGuild} />
             <span className="message-timestamp">{formatMessageTimestamp(message.createdAt)}</span>
           </div>
         )}

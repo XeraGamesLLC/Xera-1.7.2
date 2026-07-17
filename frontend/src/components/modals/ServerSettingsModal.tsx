@@ -85,7 +85,16 @@ export default function ServerSettingsModal({ guildId }: { guildId: string }) {
         )}
       </div>
       <div className="modal-content">
-        {tab === "overview" && <OverviewTab guildId={guildId} name={guild.name} iconUrl={guild.iconUrl} discoverable={guild.discoverable ?? false} />}
+        {tab === "overview" && (
+          <OverviewTab
+            guildId={guildId}
+            name={guild.name}
+            iconUrl={guild.iconUrl}
+            discoverable={guild.discoverable ?? false}
+            tag={guild.tag ?? null}
+            tagColor={guild.tagColor ?? null}
+          />
+        )}
         {tab === "roles" && <RolesTab guildId={guildId} />}
         {tab === "members" && <MembersTab guildId={guildId} members={members} currentUserId={currentUser.id} />}
         {tab === "invites" && <InvitesTab guildId={guildId} />}
@@ -101,14 +110,20 @@ function OverviewTab({
   name,
   iconUrl,
   discoverable,
+  tag,
+  tagColor,
 }: {
   guildId: string;
   name: string;
   iconUrl: string | null;
   discoverable: boolean;
+  tag: string | null;
+  tagColor: string | null;
 }) {
   const [value, setValue] = useState(name);
   const [isDiscoverable, setIsDiscoverable] = useState(discoverable);
+  const [tagValue, setTagValue] = useState(tag ?? "");
+  const [tagColorValue, setTagColorValue] = useState(tagColor ?? "#5865F2");
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const upsertGuild = useAppStore((s) => s.upsertGuild);
@@ -169,10 +184,47 @@ function OverviewTab({
         />
         <label htmlFor="overview-discoverable">Show this server on Discovery</label>
       </div>
+      <div className="form-field">
+        <label>Server Tag</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input
+            value={tagValue}
+            maxLength={4}
+            placeholder="e.g. NH"
+            style={{ width: 100, textTransform: "uppercase" }}
+            onChange={(e) => setTagValue(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))}
+          />
+          <input
+            type="color"
+            value={tagColorValue}
+            onChange={(e) => setTagColorValue(e.target.value)}
+            disabled={!tagValue}
+            style={{ width: 36, height: 32, padding: 0, border: "none", background: "none" }}
+          />
+          {tagValue && <span className="server-tag-badge" style={{ borderColor: tagColorValue, color: tagColorValue }}>{tagValue}</span>}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+          Up to 4 characters (letters, numbers, - or _). Members can choose to display it next to their name. Clear it to remove the tag.
+        </div>
+      </div>
       <button
         className="btn btn-primary"
         style={{ width: "auto" }}
-        onClick={async () => syncGuild(await updateGuild(guildId, { name: value, discoverable: isDiscoverable }))}
+        onClick={async () => {
+          setError(null);
+          try {
+            syncGuild(
+              await updateGuild(guildId, {
+                name: value,
+                discoverable: isDiscoverable,
+                tag: tagValue || null,
+                tagColor: tagValue ? tagColorValue : null,
+              })
+            );
+          } catch (err) {
+            setError(apiErrorMessage(err, "Could not save server settings"));
+          }
+        }}
       >
         Save
       </button>

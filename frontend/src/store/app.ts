@@ -47,9 +47,19 @@ export interface Guild {
   iconUrl: string | null;
   ownerId: string;
   discoverable?: boolean;
+  tag?: string | null;
+  tagColor?: string | null;
   categories?: Category[];
   channels?: Channel[]; // channels without a category
   roles?: Role[];
+}
+
+// The server whose tag a user has chosen to display next to their name.
+export interface PrimaryGuild {
+  id: string;
+  name: string;
+  tag: string | null;
+  tagColor: string | null;
 }
 
 export interface PublicUser {
@@ -59,6 +69,7 @@ export interface PublicUser {
   avatarUrl: string | null;
   status: string;
   customStatus?: string | null;
+  primaryGuild?: PrimaryGuild | null;
 }
 
 export interface Member {

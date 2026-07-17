@@ -5,9 +5,25 @@ export const createGuildSchema = z.object({
   discoverable: z.boolean().optional(),
 });
 
+// Matches Discord's real server tag format: up to 4 characters, letters,
+// numbers, hyphens and underscores only (no spaces or emoji). Tags don't
+// need to be unique across servers. Real Discord gates this behind 3
+// Server Boosts; XRA has no boost system, so it's just a MANAGE_GUILD field.
 export const updateGuildSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
   discoverable: z.boolean().optional(),
+  tag: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9_-]{1,4}$/, "Server tags are 1-4 characters (letters, numbers, - or _)")
+    .nullable()
+    .optional(),
+  tagColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a hex value like #5865F2")
+    .nullable()
+    .optional(),
 });
 
 export const createCategorySchema = z.object({

@@ -85,7 +85,10 @@ router.post("/verify-email", authLimiter, validate({ body: verifyEmailSchema }),
 
 router.get("/me", requireAuth, async (req, res, next) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { primaryGuild: { select: { id: true, name: true, tag: true, tagColor: true } } },
+    });
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ user: authService.sanitizeUser(user) });
   } catch (err) {

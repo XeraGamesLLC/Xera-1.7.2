@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth";
 import { useUiStore } from "../../store/ui";
-import { updateProfile, updateStatus, uploadAvatar } from "../../api/users";
+import { useAppStore } from "../../store/app";
+import { updateProfile, updateStatus, uploadAvatar, setPrimaryGuild } from "../../api/users";
 import { logout as apiLogout } from "../../api/auth";
 import { disconnectSocket } from "../../api/socket";
 import Avatar from "../common/Avatar";
+import ServerTagBadge from "../common/ServerTagBadge";
 import { CloseIcon } from "../common/Icon";
 
 const STATUSES: { value: "ONLINE" | "IDLE" | "DND" | "INVISIBLE"; label: string }[] = [
@@ -23,6 +25,13 @@ export default function UserSettingsModal() {
   const [aboutMe, setAboutMe] = useState(user.aboutMe ?? "");
   const [customStatus, setCustomStatus] = useState(user.customStatus ?? "");
   const [saving, setSaving] = useState(false);
+  const guilds = useAppStore((s) => s.guilds);
+  const taggedGuilds = guilds.filter((g) => g.tag);
+
+  async function onPrimaryGuildChange(guildId: string) {
+    const updated = await setPrimaryGuild(guildId || null);
+    setUser(updated);
+  }
 
   async function save() {
     setSaving(true);
@@ -87,6 +96,25 @@ export default function UserSettingsModal() {
         <label>About Me</label>
         <textarea value={aboutMe} onChange={(e) => setAboutMe(e.target.value)} maxLength={190} rows={3} />
       </div>
+
+      {taggedGuilds.length > 0 && (
+        <div className="form-field">
+          <label>Server Tag</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              value={user.primaryGuild?.id ?? ""}
+              onChange={(e) => onPrimaryGuildChange(e.target.value)}
+              style={{ flex: 1, background: "var(--bg-input)", border: "none", borderRadius: 4, padding: 10, color: "var(--text-normal)" }}
+            >
+              <option value="">None</option>
+              {taggedGuilds.map((g) => (
+                <option key={g.id} value={g.id}>{g.name} — {g.tag}</option>
+              ))}
+            </select>
+            {user.primaryGuild && <ServerTagBadge guild={user.primaryGuild} />}
+          </div>
+        </div>
+      )}
 
       <button className="btn btn-primary" onClick={save} disabled={saving}>
         {saving ? "Saving…" : "Save Changes"}

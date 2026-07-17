@@ -144,6 +144,13 @@ export async function deleteGuild(guildId: string, userId: string) {
   await prisma.guild.delete({ where: { id: guildId } });
 }
 
-export async function updateGuild(guildId: string, data: { name?: string; discoverable?: boolean; iconUrl?: string }) {
+export async function updateGuild(
+  guildId: string,
+  data: { name?: string; discoverable?: boolean; iconUrl?: string; tag?: string | null; tagColor?: string | null }
+) {
+  // Clearing the tag should also clear its color, and a server with no tag
+  // can't have a color - otherwise a stale tagColor could linger and get
+  // picked up if a tag is set again later without also setting a color.
+  if (data.tag === null) data.tagColor = null;
   return prisma.guild.update({ where: { id: guildId }, data });
 }

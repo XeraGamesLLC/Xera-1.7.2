@@ -18,6 +18,11 @@ export async function uploadAvatar(file: File) {
   return res.data.user as XraUser;
 }
 
+export async function setPrimaryGuild(guildId: string | null) {
+  const res = await api.patch("/users/me/primary-guild", { guildId });
+  return res.data.user as XraUser;
+}
+
 export async function lookupUser(username: string, discriminator: string) {
   const res = await api.get("/users/lookup", { params: { username, discriminator } });
   return res.data.user;

@@ -16,7 +16,10 @@ export async function getGuild(guildId: string) {
   return res.data.guild as Guild;
 }
 
-export async function updateGuild(guildId: string, data: { name?: string; discoverable?: boolean }) {
+export async function updateGuild(
+  guildId: string,
+  data: { name?: string; discoverable?: boolean; tag?: string | null; tagColor?: string | null }
+) {
   const res = await api.patch(`/guilds/${guildId}`, data);
   return res.data.guild as Guild;
 }

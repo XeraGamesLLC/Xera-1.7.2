@@ -4,13 +4,21 @@ import { AppError } from "../middleware/errorHandler";
 import { parseMentions } from "../utils/mentions";
 import { logAudit } from "./auditLog.service";
 
+const AUTHOR_SELECT = {
+  id: true,
+  username: true,
+  discriminator: true,
+  avatarUrl: true,
+  primaryGuild: { select: { id: true, tag: true, tagColor: true } },
+} as const;
+
 const MESSAGE_INCLUDE = {
-  author: { select: { id: true, username: true, discriminator: true, avatarUrl: true } },
+  author: { select: AUTHOR_SELECT },
   attachments: true,
   reactions: true,
   embeds: true,
   replyTo: {
-    include: { author: { select: { id: true, username: true, discriminator: true, avatarUrl: true } } },
+    include: { author: { select: AUTHOR_SELECT } },
   },
 } as const;
 

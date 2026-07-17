@@ -83,6 +83,14 @@ model User {
   // forward via the agreedToTos field.
   tosAcceptedAt DateTime?
 
+  // Server Tags: a user opts in to displaying one server's short tag (a
+  // clan-tag-style badge) next to their name everywhere, chosen from
+  // servers they belong to that have a tag configured. SetNull so leaving
+  // or the server deleting its tag just clears the selection rather than
+  // erroring.
+  primaryGuildId String?
+  primaryGuild   Guild?  @relation("PrimaryGuild", fields: [primaryGuildId], references: [id], onDelete: SetNull)
+
   // tokenVersion is embedded in every issued token's HMAC. Bumping it
   // (logout, password reset) makes every previously-issued token fail
   // verification instantly, without needing a token blocklist/DB lookup
@@ -147,19 +155,29 @@ model Guild {
   iconUrl       String?
   bannerUrl     String?
   discoverable  Boolean  @default(false)
+  // Short clan-tag-style badge (e.g. "NH"), shown next to a member's name
+  // wherever they've chosen to display it. Null/empty means this server
+  // has no tag configured, so it can't be selected by anyone. Real Discord
+  // gates this behind 3 Server Boosts; XRA has no boost system, so any
+  // server owner/admin can set one.
+  tag           String?  @db.VarChar(4)
+  // Hex color (e.g. "#5865F2") applied to the tag badge for everyone
+  // displaying it, set by the server admin alongside the tag itself.
+  tagColor      String?  @db.VarChar(7)
   ownerId       String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  owner      User            @relation("GuildOwner", fields: [ownerId], references: [id])
-  members    GuildMember[]
-  roles      Role[]
-  categories Category[]
-  channels   Channel[]
-  invites    Invite[]
-  bans       Ban[]
-  emojis     CustomEmoji[]
-  auditLog   AuditLogEntry[]
+  owner              User            @relation("GuildOwner", fields: [ownerId], references: [id])
+  members            GuildMember[]
+  roles              Role[]
+  categories         Category[]
+  channels           Channel[]
+  invites            Invite[]
+  bans               Ban[]
+  emojis             CustomEmoji[]
+  auditLog           AuditLogEntry[]
+  usersDisplayingTag User[]          @relation("PrimaryGuild")
 
   @@index([ownerId])
   @@index([discoverable])

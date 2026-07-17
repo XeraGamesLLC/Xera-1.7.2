@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { PrimaryGuild } from "./app";
 
 export interface XraUser {
   id: string;
@@ -10,6 +11,7 @@ export interface XraUser {
   aboutMe?: string | null;
   status: "ONLINE" | "IDLE" | "DND" | "INVISIBLE" | "OFFLINE";
   customStatus: string | null;
+  primaryGuild?: PrimaryGuild | null;
 }
 
 const TOKEN_STORAGE_KEY = "xra_token";
