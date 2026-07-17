@@ -7,6 +7,7 @@ import FriendsView from "./pages/FriendsView";
 import DmView from "./pages/DmView";
 import GuildView from "./pages/GuildView";
 import InvitePage from "./pages/InvitePage";
+import DiscoveryPage from "./pages/DiscoveryPage";
 import { useAuthStore } from "./store/auth";
 import { fetchMe } from "./api/auth";
 
@@ -68,6 +69,7 @@ export default function App() {
         }
       >
         <Route path="friends" element={<FriendsView />} />
+        <Route path="discovery" element={<DiscoveryPage />} />
         <Route path="dms/:channelId" element={<DmView />} />
         <Route path="guilds/:guildId" element={<GuildView />} />
         <Route path="guilds/:guildId/channels/:channelId" element={<GuildView />} />

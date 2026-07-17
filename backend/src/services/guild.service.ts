@@ -2,12 +2,13 @@ import { prisma } from "../lib/prisma";
 import { generateSnowflake } from "../utils/snowflake";
 import { AppError } from "../middleware/errorHandler";
 import { DEFAULT_EVERYONE_PERMISSIONS } from "../utils/permissions";
+import { onlineUserIdsInGuild } from "./presence.service";
 
-export async function createGuild(ownerId: string, name: string) {
+export async function createGuild(ownerId: string, name: string, discoverable = false) {
   const guildId = generateSnowflake();
 
   return prisma.$transaction(async (tx) => {
-    const guild = await tx.guild.create({ data: { id: guildId, name, ownerId } });
+    const guild = await tx.guild.create({ data: { id: guildId, name, ownerId, discoverable } });
 
     const everyoneRole = await tx.role.create({
       data: {
@@ -41,6 +42,42 @@ export async function createGuild(ownerId: string, name: string) {
 
     return { guild, everyoneRole, generalChannel };
   });
+}
+
+export async function listDiscoverableGuilds() {
+  const guilds = await prisma.guild.findMany({
+    where: { discoverable: true },
+    include: { _count: { select: { members: true } } },
+  });
+
+  const withOnline = await Promise.all(
+    guilds.map(async (guild) => ({
+      id: guild.id,
+      name: guild.name,
+      iconUrl: guild.iconUrl,
+      memberCount: guild._count.members,
+      onlineCount: (await onlineUserIdsInGuild(guild.id)).length,
+    }))
+  );
+
+  // Sort by member count first, online count as the tiebreaker - matches
+  // Discord's own discovery ordering (biggest, most-active servers surface
+  // first).
+  return withOnline.sort((a, b) => b.memberCount - a.memberCount || b.onlineCount - a.onlineCount);
+}
+
+export async function joinDiscoverableGuild(guildId: string, userId: string) {
+  const guild = await prisma.guild.findUnique({ where: { id: guildId } });
+  if (!guild || !guild.discoverable) throw new AppError(404, "Server not found");
+
+  const banned = await prisma.ban.findUnique({ where: { guildId_userId: { guildId, userId } } });
+  if (banned) throw new AppError(403, "You are banned from this server");
+
+  const existing = await prisma.guildMember.findUnique({ where: { guildId_userId: { guildId, userId } } });
+  if (existing) return guild;
+
+  await prisma.guildMember.create({ data: { id: generateSnowflake(), guildId, userId } });
+  return guild;
 }
 
 export async function listUserGuilds(userId: string) {
@@ -107,6 +144,6 @@ export async function deleteGuild(guildId: string, userId: string) {
   await prisma.guild.delete({ where: { id: guildId } });
 }
 
-export async function updateGuild(guildId: string, data: { name?: string }) {
+export async function updateGuild(guildId: string, data: { name?: string; discoverable?: boolean; iconUrl?: string }) {
   return prisma.guild.update({ where: { id: guildId }, data });
 }

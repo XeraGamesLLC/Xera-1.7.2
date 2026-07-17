@@ -2,10 +2,12 @@ import { z } from "zod";
 
 export const createGuildSchema = z.object({
   name: z.string().trim().min(2).max(100),
+  discoverable: z.boolean().optional(),
 });
 
 export const updateGuildSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
+  discoverable: z.boolean().optional(),
 });
 
 export const createCategorySchema = z.object({

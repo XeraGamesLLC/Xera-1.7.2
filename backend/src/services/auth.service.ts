@@ -5,12 +5,42 @@ import { issueToken, decodeToken } from "../utils/token";
 import { sha256Hex, randomToken } from "../utils/crypto";
 import { AppError } from "../middleware/errorHandler";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./email.service";
+import { resolveAndUseInvite } from "./invite.service";
+import { env } from "../config/env";
 import ms from "../utils/ms";
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 const RESET_TOKEN_TTL_MS = ms("1h");
 const VERIFY_TOKEN_TTL_MS = ms("24h");
+
+/**
+ * Joins a user into the server configured by AUTO_JOIN_GUILD_INVITE_CODE, if
+ * set — but only once per account (tracked via User.hasAutoJoined). Without
+ * that guard, re-running this on every login would silently re-add anyone
+ * who deliberately left, which defeats the point of being able to leave at
+ * all. The one-time check is also what catches up accounts that existed
+ * before this was configured: their hasAutoJoined is still false, so the
+ * next login joins them same as a brand-new signup would have. Never
+ * throws: a misconfigured/deleted invite code must not break login or
+ * registration.
+ */
+async function autoJoinConfiguredGuild(userId: string, hasAutoJoined: boolean) {
+  if (!env.AUTO_JOIN_GUILD_INVITE_CODE || hasAutoJoined) return;
+  try {
+    const guild = await resolveAndUseInvite(env.AUTO_JOIN_GUILD_INVITE_CODE, userId);
+    // Setting the env var is the only manual step this feature needs - make
+    // sure the target guild also shows up on the Discovery tab, rather than
+    // requiring a second, separate "mark it discoverable" action.
+    if (guild && !guild.discoverable) {
+      await prisma.guild.update({ where: { id: guild.id }, data: { discoverable: true } });
+    }
+  } catch {
+    // a misconfigured or deleted invite code must not break login/register
+  } finally {
+    await prisma.user.update({ where: { id: userId }, data: { hasAutoJoined: true } }).catch(() => undefined);
+  }
+}
 
 async function generateUniqueDiscriminator(username: string): Promise<string> {
   for (let attempt = 0; attempt < 25; attempt++) {
@@ -54,6 +84,7 @@ export async function register(input: { username: string; email: string; passwor
     },
   });
   await sendVerificationEmail(user.email, verifyToken);
+  await autoJoinConfiguredGuild(user.id, user.hasAutoJoined);
 
   return sanitizeUser(user);
 }
@@ -85,6 +116,7 @@ export async function login(input: { email: string; password: string }, ip: stri
     where: { id: user.id },
     data: { failedLoginAttempts: 0, lockedUntil: null, lastLoginIp: ip, lastLoginAt: new Date() },
   });
+  await autoJoinConfiguredGuild(user.id, user.hasAutoJoined);
 
   // Same token every time you log in (until it's invalidated) — logging in
   // on a second device does not invalidate the first, matching Discord.

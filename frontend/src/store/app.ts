@@ -46,6 +46,7 @@ export interface Guild {
   name: string;
   iconUrl: string | null;
   ownerId: string;
+  discoverable?: boolean;
   categories?: Category[];
   channels?: Channel[]; // channels without a category
   roles?: Role[];

@@ -9,6 +9,7 @@ import { CloseIcon } from "../common/Icon";
 export default function CreateServerModal() {
   const [mode, setMode] = useState<"create" | "join">("create");
   const [name, setName] = useState("");
+  const [discoverable, setDiscoverable] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,7 @@ export default function CreateServerModal() {
     setLoading(true);
     try {
       if (mode === "create") {
-        const guild = await createGuild(name);
+        const guild = await createGuild(name, discoverable);
         upsertGuild(guild);
         navigate(`/app/guilds/${guild.id}`);
       } else {
@@ -48,10 +49,21 @@ export default function CreateServerModal() {
       {error && <div className="form-error">{error}</div>}
       <form onSubmit={onSubmit}>
         {mode === "create" ? (
-          <div className="form-field">
-            <label>Server name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={100} autoFocus />
-          </div>
+          <>
+            <div className="form-field">
+              <label>Server name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={100} autoFocus />
+            </div>
+            <div className="checkbox-row">
+              <input
+                id="discoverable"
+                type="checkbox"
+                checked={discoverable}
+                onChange={(e) => setDiscoverable(e.target.checked)}
+              />
+              <label htmlFor="discoverable">Add server to Discovery</label>
+            </div>
+          </>
         ) : (
           <div className="form-field">
             <label>Invite link or code</label>

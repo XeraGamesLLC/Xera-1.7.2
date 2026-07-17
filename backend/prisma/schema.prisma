@@ -68,6 +68,11 @@ model User {
   bannerUrl     String?
   aboutMe       String?
   status        UserStatus @default(OFFLINE)
+  // Whether the AUTO_JOIN_GUILD_INVITE_CODE join has already been attempted
+  // for this account. Without this, a login-time "make sure they're a
+  // member" check would silently re-add anyone who deliberately left -
+  // this flag makes auto-join a true one-time action, not an unleavable one.
+  hasAutoJoined Boolean    @default(false)
   customStatus  String?
   isVerified    Boolean    @default(false)
   isSystem      Boolean    @default(false) // reserved for future system/bot accounts
@@ -131,13 +136,14 @@ model PasswordResetToken {
 }
 
 model Guild {
-  id          String   @id
-  name        String
-  iconUrl     String?
-  bannerUrl   String?
-  ownerId     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id
+  name          String
+  iconUrl       String?
+  bannerUrl     String?
+  discoverable  Boolean  @default(false)
+  ownerId       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   owner      User            @relation("GuildOwner", fields: [ownerId], references: [id])
   members    GuildMember[]
@@ -150,6 +156,7 @@ model Guild {
   auditLog   AuditLogEntry[]
 
   @@index([ownerId])
+  @@index([discoverable])
 }
 
 model GuildMember {

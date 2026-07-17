@@ -1,10 +1,12 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAppStore } from "../../store/app";
 import { useUiStore } from "../../store/ui";
+import { CompassIcon } from "../common/Icon";
 
 export default function ServerRail() {
   const guilds = useAppStore((s) => s.guilds);
   const { guildId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const setMobilePanel = useUiStore((s) => s.setMobilePanel);
   const openModal = useUiStore((s) => s.openModal);
@@ -16,6 +18,11 @@ export default function ServerRail() {
 
   function goToGuild(id: string) {
     navigate(`/app/guilds/${id}`);
+    setMobilePanel("channels");
+  }
+
+  function goToDiscovery() {
+    navigate("/app/discovery");
     setMobilePanel("channels");
   }
 
@@ -37,6 +44,14 @@ export default function ServerRail() {
           {g.iconUrl ? <img src={g.iconUrl} alt="" /> : initials(g.name)}
         </div>
       ))}
+      <div
+        className={`server-pill ${location.pathname === "/app/discovery" ? "active" : ""}`}
+        onClick={goToDiscovery}
+        title="Discover Servers"
+      >
+        <span className="pill-indicator" />
+        <CompassIcon size={22} />
+      </div>
       <div
         className="server-pill action"
         onClick={() => openModal("create-server")}

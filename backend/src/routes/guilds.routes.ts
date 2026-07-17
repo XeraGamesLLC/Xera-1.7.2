@@ -21,18 +21,22 @@ import * as inviteService from "../services/invite.service";
 import * as moderationService from "../services/moderation.service";
 import { listAuditLog, logAudit } from "../services/auditLog.service";
 import { assertGuildPermission, assertChannelPermission } from "../services/permission.service";
-import { emitToGuild, emitToUser } from "../sockets";
+import { emitToGuild, emitToUser, getIo } from "../sockets";
 import { z } from "zod";
-import { emojiUpload } from "../middleware/upload";
+import { emojiUpload, guildIconUpload } from "../middleware/upload";
 import { uploadLimiter } from "../middleware/rateLimit";
 import { generateSnowflake } from "../utils/snowflake";
+import sharp from "sharp";
+import path from "node:path";
+import fs from "node:fs/promises";
+import { nanoid } from "nanoid";
 
 const router = Router();
 router.use(requireAuth);
 
 router.post("/", validate({ body: createGuildSchema }), async (req, res, next) => {
   try {
-    const { guild } = await guildService.createGuild(req.userId!, req.body.name);
+    const { guild } = await guildService.createGuild(req.userId!, req.body.name, req.body.discoverable);
     res.status(201).json({ guild });
   } catch (err) {
     next(err);
@@ -43,6 +47,63 @@ router.get("/", async (req, res, next) => {
   try {
     const guilds = await guildService.listUserGuilds(req.userId!);
     res.json({ guilds });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Must be registered before GET /:guildId, or "discovery" would be parsed
+// as a guildId and 403/404 instead of matching this route.
+router.get("/discovery", async (_req, res, next) => {
+  try {
+    const guilds = await guildService.listDiscoverableGuilds();
+    res.json({ guilds });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/:guildId/discovery/join", async (req, res, next) => {
+  try {
+    const guild = await guildService.joinDiscoverableGuild(req.params.guildId, req.userId!);
+    try {
+      getIo().in(`user:${req.userId}`).socketsJoin(`guild:${guild.id}`);
+    } catch {
+      // socket server not initialized (tests) — fine, next connection will join normally
+    }
+    res.json({ guild });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/:guildId/icon", uploadLimiter, guildIconUpload.single("icon"), async (req, res, next) => {
+  try {
+    if (!req.file) throw new AppError(400, "No file uploaded");
+
+    try {
+      await assertGuildPermission(req.params.guildId, req.userId!, "MANAGE_GUILD");
+    } catch (permErr) {
+      // multer's diskStorage already wrote the upload before this handler
+      // ran - clean it up on the rejected path too, or every unauthorized
+      // attempt leaves an orphaned file behind.
+      await fs.unlink(req.file.path).catch(() => undefined);
+      throw permErr;
+    }
+
+    const processedPath = path.join(path.dirname(req.file.path), `${nanoid(24)}.png`);
+    try {
+      await sharp(req.file.path).resize(256, 256, { fit: "cover" }).png().toFile(processedPath);
+    } catch {
+      throw new AppError(400, "Could not process that image - is it a valid image file?");
+    } finally {
+      await fs.unlink(req.file.path).catch(() => undefined);
+    }
+
+    const iconUrl = `/uploads/guild-icons/${path.basename(processedPath)}`;
+    const guild = await guildService.updateGuild(req.params.guildId, { iconUrl });
+    emitToGuild(req.params.guildId, "guild:update", { guild });
+    res.json({ guild });
   } catch (err) {
     next(err);
   }

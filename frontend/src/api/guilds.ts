@@ -1,8 +1,8 @@
 import { api } from "./client";
 import type { Guild, Member, Role, Channel } from "../store/app";
 
-export async function createGuild(name: string) {
-  const res = await api.post("/guilds", { name });
+export async function createGuild(name: string, discoverable?: boolean) {
+  const res = await api.post("/guilds", { name, discoverable });
   return res.data.guild as Guild;
 }
 
@@ -16,8 +16,33 @@ export async function getGuild(guildId: string) {
   return res.data.guild as Guild;
 }
 
-export async function updateGuild(guildId: string, data: { name?: string }) {
+export async function updateGuild(guildId: string, data: { name?: string; discoverable?: boolean }) {
   const res = await api.patch(`/guilds/${guildId}`, data);
+  return res.data.guild as Guild;
+}
+
+export interface DiscoverableGuild {
+  id: string;
+  name: string;
+  iconUrl: string | null;
+  memberCount: number;
+  onlineCount: number;
+}
+
+export async function listDiscoverableGuilds() {
+  const res = await api.get("/guilds/discovery");
+  return res.data.guilds as DiscoverableGuild[];
+}
+
+export async function joinDiscoverableGuild(guildId: string) {
+  const res = await api.post(`/guilds/${guildId}/discovery/join`);
+  return res.data.guild as Guild;
+}
+
+export async function uploadGuildIcon(guildId: string, file: File) {
+  const form = new FormData();
+  form.append("icon", file);
+  const res = await api.post(`/guilds/${guildId}/icon`, form);
   return res.data.guild as Guild;
 }
 

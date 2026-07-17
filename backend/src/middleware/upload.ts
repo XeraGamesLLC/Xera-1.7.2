@@ -72,6 +72,18 @@ export const attachmentUpload = multer({
   },
 });
 
+export const guildIconUpload = multer({
+  storage: makeStorage("guild-icons"),
+  limits: { fileSize: env.MAX_AVATAR_SIZE_MB * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!IMAGE_EXTENSIONS.has(ext) || !AVATAR_MIME_ALLOWLIST.has(file.mimetype)) {
+      return cb(new AppError(400, "Unsupported icon file type"));
+    }
+    cb(null, true);
+  },
+});
+
 export const emojiUpload = multer({
   storage: makeStorage("emoji"),
   limits: { fileSize: 256 * 1024 }, // 256KB, matches old Discord's custom emoji cap

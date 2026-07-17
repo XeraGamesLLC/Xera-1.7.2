@@ -23,9 +23,11 @@ import {
   timeoutMember,
   getGuild,
   listMembers,
+  uploadGuildIcon,
 } from "../../api/guilds";
 import { Permissions, type PermissionFlag } from "../../utils/permissions";
-import { CloseIcon } from "../common/Icon";
+import { CloseIcon, ImageIcon } from "../common/Icon";
+import { apiErrorMessage } from "../../api/client";
 
 type Tab = "overview" | "roles" | "members" | "invites" | "bans" | "audit-log";
 
@@ -83,7 +85,7 @@ export default function ServerSettingsModal({ guildId }: { guildId: string }) {
         )}
       </div>
       <div className="modal-content">
-        {tab === "overview" && <OverviewTab guildId={guildId} name={guild.name} />}
+        {tab === "overview" && <OverviewTab guildId={guildId} name={guild.name} iconUrl={guild.iconUrl} discoverable={guild.discoverable ?? false} />}
         {tab === "roles" && <RolesTab guildId={guildId} />}
         {tab === "members" && <MembersTab guildId={guildId} members={members} currentUserId={currentUser.id} />}
         {tab === "invites" && <InvitesTab guildId={guildId} />}
@@ -94,17 +96,72 @@ export default function ServerSettingsModal({ guildId }: { guildId: string }) {
   );
 }
 
-function OverviewTab({ guildId, name }: { guildId: string; name: string }) {
+function OverviewTab({
+  guildId,
+  name,
+  iconUrl,
+  discoverable,
+}: {
+  guildId: string;
+  name: string;
+  iconUrl: string | null;
+  discoverable: boolean;
+}) {
   const [value, setValue] = useState(name);
+  const [isDiscoverable, setIsDiscoverable] = useState(discoverable);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const upsertGuild = useAppStore((s) => s.upsertGuild);
+
+  async function onIconChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (e.target) e.target.value = "";
+    if (!file) return;
+    setUploadingIcon(true);
+    setError(null);
+    try {
+      upsertGuild(await uploadGuildIcon(guildId, file));
+    } catch (err) {
+      setError(apiErrorMessage(err, "Could not upload icon"));
+    } finally {
+      setUploadingIcon(false);
+    }
+  }
+
   return (
     <div>
       <h2 style={{ marginTop: 0 }}>Overview</h2>
+      {error && <div className="form-error">{error}</div>}
+      <div className="form-field">
+        <label>Server Icon</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="discovery-card-icon" style={{ width: 64, height: 64 }}>
+            {iconUrl ? <img src={iconUrl} alt="" /> : <ImageIcon size={24} />}
+          </div>
+          <label className="btn btn-secondary" style={{ width: "auto", cursor: "pointer" }}>
+            {uploadingIcon ? "Uploading…" : "Change Icon"}
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={onIconChange} disabled={uploadingIcon} />
+          </label>
+        </div>
+      </div>
       <div className="form-field">
         <label>Server Name</label>
         <input value={value} onChange={(e) => setValue(e.target.value)} />
       </div>
-      <button className="btn btn-primary" style={{ width: "auto" }} onClick={async () => upsertGuild(await updateGuild(guildId, { name: value }))}>
+      <div className="checkbox-row">
+        <input
+          id="overview-discoverable"
+          type="checkbox"
+          checked={isDiscoverable}
+          onChange={(e) => setIsDiscoverable(e.target.checked)}
+        />
+        <label htmlFor="overview-discoverable">Show this server on Discovery</label>
+      </div>
+      <button
+        className="btn btn-primary"
+        style={{ width: "auto" }}
+        onClick={async () => upsertGuild(await updateGuild(guildId, { name: value, discoverable: isDiscoverable }))}
+      >
         Save
       </button>
     </div>
