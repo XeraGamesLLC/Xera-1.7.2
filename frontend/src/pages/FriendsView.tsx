@@ -45,6 +45,7 @@ export default function FriendsView() {
     const channel = await openDm(userId);
     useAppStore.getState().upsertDmChannel(channel);
     navigate(`/app/dms/${channel.id}`);
+    setMobilePanel("chat");
   }
 
   const onlineFriends = friends.filter((f) => (presence[f.id] ?? f.status) !== "OFFLINE");

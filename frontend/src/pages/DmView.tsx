@@ -25,6 +25,19 @@ export default function DmView() {
     if (!channel) listDmChannels().then(setDmChannels);
   }, [channelId]);
 
+  // Every other way of arriving at a DM (the sidebar's own DM/friend rows)
+  // sets mobilePanel to "chat" right before navigating here, but landing on
+  // this route directly - a page refresh while already in a DM, a deep
+  // link, restoring a previous tab - skips all of those click handlers.
+  // mobilePanel then stays at its default ("servers"), leaving the
+  // off-canvas sidebar visible and, on mobile, sitting on top of this view
+  // intercepting every touch - unable to scroll the message list or tap
+  // the hamburger to get back out. This view has to be able to correct
+  // that on its own rather than depending on the caller to get it right.
+  useEffect(() => {
+    setMobilePanel("chat");
+  }, []);
+
   useEffect(() => {
     setReplyingTo(null);
     setEditingMessage(null);

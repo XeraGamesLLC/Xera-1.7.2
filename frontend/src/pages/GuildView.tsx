@@ -28,6 +28,14 @@ export default function GuildView() {
     setEditingMessage(null);
   }, [channelId]);
 
+  // Same fix as DmView: landing here directly (refresh, deep link) skips
+  // the sidebar click handlers that normally set mobilePanel to "chat"
+  // before navigating, leaving the off-canvas sidebar open and, on
+  // mobile, intercepting touches meant for this view.
+  useEffect(() => {
+    setMobilePanel("chat");
+  }, []);
+
   if (!guild) return <main className="chat-column" />;
   const channel = channelId ? getGuildChannels(guild).find((c) => c.id === channelId) : undefined;
   if (!channel) return <main className="chat-column empty-state">Pick a channel to get started.</main>;
