@@ -72,6 +72,12 @@ model User {
   isVerified    Boolean    @default(false)
   isSystem      Boolean    @default(false) // reserved for future system/bot accounts
 
+  // tokenVersion is embedded in every issued token's HMAC. Bumping it
+  // (logout, password reset) makes every previously-issued token fail
+  // verification instantly, without needing a token blocklist/DB lookup
+  // per request — this is the actual mechanism, not just a comment.
+  tokenVersion Int @default(0)
+
   // Security / anti-abuse
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
@@ -82,7 +88,6 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  refreshTokens     RefreshToken[]
   ownedGuilds       Guild[]                @relation("GuildOwner")
   memberships       GuildMember[]
   messages          Message[]
@@ -100,21 +105,6 @@ model User {
 
   @@unique([username, discriminator])
   @@index([email])
-}
-
-model RefreshToken {
-  id        String   @id
-  userId    String
-  tokenHash String   @unique
-  userAgent String?
-  ip        String?
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
 
 model EmailVerificationToken {

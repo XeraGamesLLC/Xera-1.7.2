@@ -7,8 +7,7 @@ export function connectSocket(): Socket {
   if (socket?.connected) return socket;
 
   socket = io("/", {
-    auth: { token: useAuthStore.getState().accessToken },
-    withCredentials: true,
+    auth: { token: useAuthStore.getState().token },
     transports: ["websocket", "polling"],
   });
 

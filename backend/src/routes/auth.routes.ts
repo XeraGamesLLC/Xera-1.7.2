@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { env } from "../config/env";
 import { validate } from "../middleware/validate";
 import { authLimiter, loginLimiter } from "../middleware/rateLimit";
 import { antiVpnGate } from "../middleware/antiVpn";
@@ -16,15 +15,6 @@ import { prisma } from "../lib/prisma";
 
 const router = Router();
 
-const REFRESH_COOKIE_NAME = "xra_refresh";
-const REFRESH_COOKIE_OPTS = {
-  httpOnly: true,
-  secure: env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/api/auth",
-  maxAge: 30 * 24 * 60 * 60 * 1000,
-};
-
 router.post("/register", authLimiter, antiVpnGate, validate({ body: registerSchema }), async (req, res, next) => {
   try {
     const user = await authService.register(req.body, req.ip ?? "unknown");
@@ -36,39 +26,20 @@ router.post("/register", authLimiter, antiVpnGate, validate({ body: registerSche
 
 router.post("/login", loginLimiter, validate({ body: loginSchema }), async (req, res, next) => {
   try {
-    const { user, accessToken, refreshToken } = await authService.login(
-      req.body,
-      req.ip ?? "unknown",
-      req.headers["user-agent"]
-    );
-    res.cookie(REFRESH_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTS);
-    res.json({ user, accessToken });
+    const { user, token } = await authService.login(req.body, req.ip ?? "unknown");
+    res.json({ user, token });
   } catch (err) {
     next(err);
   }
 });
 
-router.post("/refresh", authLimiter, async (req, res, next) => {
+// Invalidates the token that's actually presented (bumps tokenVersion) —
+// there's no separate refresh token to also revoke, and no other device's
+// session is affected unless they were using this exact same token value,
+// same as real Discord.
+router.post("/logout", requireAuth, async (req, res, next) => {
   try {
-    const rawToken = req.cookies?.[REFRESH_COOKIE_NAME];
-    if (!rawToken) return res.status(401).json({ error: "No refresh token" });
-
-    const { accessToken, refreshToken } = await authService.refreshTokens(
-      rawToken,
-      req.ip ?? "unknown",
-      req.headers["user-agent"]
-    );
-    res.cookie(REFRESH_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTS);
-    res.json({ accessToken });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post("/logout", async (req, res, next) => {
-  try {
-    await authService.logout(req.cookies?.[REFRESH_COOKIE_NAME]);
-    res.clearCookie(REFRESH_COOKIE_NAME, { path: "/api/auth" });
+    await authService.logout(req.userId!);
     res.status(204).send();
   } catch (err) {
     next(err);

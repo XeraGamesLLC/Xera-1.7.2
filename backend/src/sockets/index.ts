@@ -1,7 +1,7 @@
 import type { Server as HttpServer } from "node:http";
 import { Server, type Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { verifyAccessToken } from "../utils/jwt";
+import { verifyToken } from "../services/auth.service";
 import { redis } from "../lib/redis";
 import { prisma } from "../lib/prisma";
 import { corsOrigins } from "../config/env";
@@ -39,17 +39,13 @@ export async function initSockets(httpServer: HttpServer) {
   const subClient = redis.duplicate();
   io.adapter(createAdapter(pubClient, subClient));
 
-  io.use((socket, next) => {
-    try {
-      const token = socket.handshake.auth?.token as string | undefined;
-      if (!token) return next(new Error("Missing auth token"));
-      const payload = verifyAccessToken(token);
-      socket.data.userId = payload.sub;
-      socket.data.username = payload.username;
-      next();
-    } catch {
-      next(new Error("Invalid or expired token"));
-    }
+  io.use(async (socket, next) => {
+    const token = socket.handshake.auth?.token as string | undefined;
+    if (!token) return next(new Error("Missing auth token"));
+    const user = await verifyToken(token);
+    if (!user) return next(new Error("Invalid or revoked token"));
+    socket.data.userId = user.id;
+    next();
   });
 
   io.on("connection", (socket) => handleConnection(socket));

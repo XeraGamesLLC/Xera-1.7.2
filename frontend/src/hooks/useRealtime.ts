@@ -6,11 +6,11 @@ import { getGuild, listMembers } from "../api/guilds";
 
 /** Wires Socket.IO events into the global app store. Mounted once, at the app shell level. */
 export function useRealtime() {
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const token = useAuthStore((s) => s.token);
   const userId = useAuthStore((s) => s.user?.id);
 
   useEffect(() => {
-    if (!accessToken || !userId) return;
+    if (!token || !userId) return;
 
     const socket = connectSocket();
 
@@ -139,5 +139,5 @@ export function useRealtime() {
       for (const t of typingTimeouts.values()) clearTimeout(t);
       disconnectSocket();
     };
-  }, [accessToken, userId]);
+  }, [token, userId]);
 }

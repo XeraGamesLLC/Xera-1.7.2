@@ -9,10 +9,9 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
 
+  // HMAC signing key for auth tokens (see utils/token.ts) — kept the JWT_*
+  // name for backwards-compatible .env files even though tokens aren't JWTs.
   JWT_ACCESS_SECRET: z.string().min(16, "JWT_ACCESS_SECRET must be set to a long random value"),
-  JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET must be set to a long random value"),
-  JWT_ACCESS_TTL: z.string().default("15m"),
-  JWT_REFRESH_TTL: z.string().default("30d"),
 
   UPLOAD_DIR: z.string().default("./uploads"),
   MAX_AVATAR_SIZE_MB: z.coerce.number().default(8),

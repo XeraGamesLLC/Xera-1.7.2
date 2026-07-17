@@ -1,8 +1,7 @@
 import { prisma } from "../lib/prisma";
-import { redis } from "../lib/redis";
 import { generateSnowflake } from "../utils/snowflake";
 import { hashPassword, verifyPassword, validatePasswordStrength } from "../utils/password";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
+import { issueToken, decodeToken } from "../utils/token";
 import { sha256Hex, randomToken } from "../utils/crypto";
 import { AppError } from "../middleware/errorHandler";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./email.service";
@@ -10,7 +9,6 @@ import ms from "../utils/ms";
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
-const REFRESH_TOKEN_TTL_MS = ms("30d");
 const RESET_TOKEN_TTL_MS = ms("1h");
 const VERIFY_TOKEN_TTL_MS = ms("24h");
 
@@ -60,7 +58,7 @@ export async function register(input: { username: string; email: string; passwor
   return sanitizeUser(user);
 }
 
-export async function login(input: { email: string; password: string }, ip: string, userAgent?: string) {
+export async function login(input: { email: string; password: string }, ip: string) {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user) throw new AppError(401, "Invalid email or password");
 
@@ -88,66 +86,31 @@ export async function login(input: { email: string; password: string }, ip: stri
     data: { failedLoginAttempts: 0, lockedUntil: null, lastLoginIp: ip, lastLoginAt: new Date() },
   });
 
-  const tokens = await issueTokenPair(user.id, user.username, ip, userAgent);
-  return { user: sanitizeUser(user), ...tokens };
+  // Same token every time you log in (until it's invalidated) — logging in
+  // on a second device does not invalidate the first, matching Discord.
+  const token = issueToken(user.id, user.tokenVersion);
+  return { user: sanitizeUser(user), token };
 }
 
-export async function issueTokenPair(userId: string, username: string, ip?: string, userAgent?: string) {
-  const accessToken = signAccessToken({ sub: userId, username });
+/**
+ * Full verification: decodes the token, checks its internal signature, AND
+ * confirms the embedded tokenVersion still matches the user's current one
+ * in the DB. That last check is what makes logout/password-reset actually
+ * invalidate a token — decodeToken() alone only proves the token wasn't
+ * tampered with, not that it's still live.
+ */
+export async function verifyToken(rawToken: string) {
+  const decoded = decodeToken(rawToken);
+  if (!decoded) return null;
 
-  const refreshTokenId = generateSnowflake();
-  const refreshToken = signRefreshToken({ sub: userId, jti: refreshTokenId });
+  const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+  if (!user || user.tokenVersion !== decoded.tokenVersion) return null;
 
-  await prisma.refreshToken.create({
-    data: {
-      id: refreshTokenId,
-      userId,
-      tokenHash: sha256Hex(refreshToken),
-      ip,
-      userAgent,
-      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
-    },
-  });
-
-  return { accessToken, refreshToken };
+  return user;
 }
 
-export async function refreshTokens(rawRefreshToken: string, ip?: string, userAgent?: string) {
-  let payload;
-  try {
-    payload = verifyRefreshToken(rawRefreshToken);
-  } catch {
-    throw new AppError(401, "Invalid or expired refresh token");
-  }
-
-  const stored = await prisma.refreshToken.findUnique({ where: { id: payload.jti } });
-  if (!stored || stored.expiresAt < new Date()) {
-    throw new AppError(401, "Refresh token expired");
-  }
-
-  if (stored.revoked || stored.tokenHash !== sha256Hex(rawRefreshToken)) {
-    // Reuse of an already-rotated/revoked token is a strong signal of theft —
-    // nuke every session for this user rather than trusting it.
-    await prisma.refreshToken.updateMany({ where: { userId: stored.userId }, data: { revoked: true } });
-    throw new AppError(401, "Refresh token reuse detected - all sessions revoked, please log in again");
-  }
-
-  await prisma.refreshToken.update({ where: { id: stored.id }, data: { revoked: true } });
-
-  const user = await prisma.user.findUnique({ where: { id: stored.userId } });
-  if (!user) throw new AppError(401, "User no longer exists");
-
-  return issueTokenPair(user.id, user.username, ip, userAgent);
-}
-
-export async function logout(rawRefreshToken: string | undefined) {
-  if (!rawRefreshToken) return;
-  try {
-    const payload = verifyRefreshToken(rawRefreshToken);
-    await prisma.refreshToken.update({ where: { id: payload.jti }, data: { revoked: true } }).catch(() => undefined);
-  } catch {
-    // token already invalid — nothing to revoke
-  }
+export async function logout(userId: string) {
+  await prisma.user.update({ where: { id: userId }, data: { tokenVersion: { increment: 1 } } });
 }
 
 export async function requestPasswordReset(email: string) {
@@ -180,9 +143,10 @@ export async function resetPassword(rawToken: string, newPassword: string) {
 
   const passwordHash = await hashPassword(newPassword);
   await prisma.$transaction([
-    prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+    // tokenVersion bump invalidates every previously-issued token for this
+    // user in one write — no separate session table to clean up.
+    prisma.user.update({ where: { id: record.userId }, data: { passwordHash, tokenVersion: { increment: 1 } } }),
     prisma.passwordResetToken.update({ where: { id: record.id }, data: { used: true } }),
-    prisma.refreshToken.updateMany({ where: { userId: record.userId }, data: { revoked: true } }),
   ]);
 }
 
@@ -199,14 +163,7 @@ export async function verifyEmail(rawToken: string) {
   ]);
 }
 
-export function sanitizeUser<T extends { passwordHash: string }>(user: T) {
-  const { passwordHash, ...rest } = user;
+export function sanitizeUser<T extends { passwordHash: string; tokenVersion?: number }>(user: T) {
+  const { passwordHash, tokenVersion, ...rest } = user;
   return rest;
-}
-
-// Cache a lightweight "is this refresh token revoked" flag in Redis so a
-// stolen-but-revoked token is rejected even faster than a DB round trip
-// would allow, under sustained abuse. Best-effort — DB remains source of truth.
-export async function markTokenRevokedCache(tokenId: string) {
-  await redis.set(`revoked:${tokenId}`, "1", "EX", 60 * 60 * 24 * 30);
 }

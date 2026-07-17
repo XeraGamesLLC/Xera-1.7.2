@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: string } };
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setToken = useAuthStore((s) => s.setToken);
   const setUser = useAuthStore((s) => s.setUser);
 
   async function onSubmit(e: FormEvent) {
@@ -20,8 +20,8 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const { user, accessToken } = await login({ email, password });
-      setAccessToken(accessToken);
+      const { user, token } = await login({ email, password });
+      setToken(token);
       setUser(user);
       navigate(location.state?.from ?? "/app/friends", { replace: true });
     } catch (err) {

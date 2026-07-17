@@ -41,9 +41,6 @@ services:
       DATABASE_URL: postgresql://xra:${POSTGRES_PASSWORD:-xra_dev_password}@postgres:5432/xra?schema=public
       REDIS_URL: redis://redis:6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set a long random secret in .env}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set a different long random secret in .env}
-      JWT_ACCESS_TTL: 15m
-      JWT_REFRESH_TTL: 30d
       UPLOAD_DIR: /app/uploads
       MAX_AVATAR_SIZE_MB: 8
       MAX_ATTACHMENT_SIZE_MB: 25

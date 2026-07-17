@@ -1,7 +1,6 @@
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 import path from "node:path";
 import { env, corsOrigins } from "./config/env";
 import { generalLimiter } from "./middleware/rateLimit";
@@ -34,8 +33,7 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
-app.use(cors({ origin: corsOrigins, credentials: true }));
-app.use(cookieParser());
+app.use(cors({ origin: corsOrigins }));
 app.use(express.json({ limit: "256kb" }));
 app.use(generalLimiter);
 

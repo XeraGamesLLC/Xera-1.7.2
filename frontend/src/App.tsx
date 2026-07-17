@@ -9,7 +9,6 @@ import GuildView from "./pages/GuildView";
 import InvitePage from "./pages/InvitePage";
 import { useAuthStore } from "./store/auth";
 import { fetchMe } from "./api/auth";
-import { requestTokenRefresh } from "./api/client";
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const user = useAuthStore((s) => s.user);
@@ -29,23 +28,26 @@ function FullScreenLoader() {
 }
 
 export default function App() {
+  const token = useAuthStore((s) => s.token);
   const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
   const setHydrating = useAuthStore((s) => s.setHydrating);
 
   useEffect(() => {
     (async () => {
+      // The token (if any) was already read from localStorage synchronously
+      // when the auth store was created — just confirm it's still valid and
+      // fetch the user it belongs to. No refresh call: this token doesn't
+      // expire on its own, so there's nothing to renew.
+      if (!token) {
+        setHydrating(false);
+        return;
+      }
       try {
-        // Goes through the same deduped refresh path as the 401-retry
-        // interceptor — see the comment on requestTokenRefresh for why that
-        // matters (concurrent raw refresh calls trip reuse detection and
-        // log the user out of every session).
-        const token = await requestTokenRefresh();
-        if (token) {
-          const me = await fetchMe();
-          setUser(me.user);
-        }
+        const me = await fetchMe();
+        setUser(me.user);
       } catch {
-        // no valid session — user needs to log in
+        logout(); // token was invalidated server-side (logout elsewhere / password reset)
       } finally {
         setHydrating(false);
       }

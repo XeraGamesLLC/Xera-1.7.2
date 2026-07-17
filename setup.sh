@@ -29,7 +29,7 @@ if ! command -v docker &> /dev/null; then
     usermod -aG docker "$SUDO_USER" || true
   elif [ "$(id -u)" -ne 0 ]; then
     sudo usermod -aG docker "$USER" || true
-    echo "    Added $USER to the docker group — log out and back in (or run"
+    echo "    Added $USER to the docker group - log out and back in (or run"
     echo "    'newgrp docker') if the next docker command below fails with a"
     echo "    permission error."
   fi
@@ -51,14 +51,12 @@ else
   cp .env.example .env
   POSTGRES_PASSWORD="$(openssl rand -hex 24)"
   JWT_ACCESS_SECRET="$(openssl rand -hex 48)"
-  JWT_REFRESH_SECRET="$(openssl rand -hex 48)"
 
   sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${POSTGRES_PASSWORD}|" .env
   sed -i "s|^JWT_ACCESS_SECRET=.*|JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}|" .env
-  sed -i "s|^JWT_REFRESH_SECRET=.*|JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}|" .env
   sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=http://${HOST}:8080|" .env
 
-  echo "    Wrote .env — these are throwaway secrets, good enough for testing."
+  echo "    Wrote .env - these are throwaway secrets, good enough for testing."
   echo "    Generate real ones before letting real users sign up (see DEPLOY.md)."
 fi
 
@@ -75,7 +73,7 @@ if ! docker compose up -d --build --wait --wait-timeout 180; then
   echo "-----------------------------------------------------------" >&2
   echo "Common causes: .env wasn't found next to docker-compose.yml (run this" >&2
   echo "script from the repo root), or a secret got mangled by a previous" >&2
-  echo "partial run — try 'rm .env' and re-running this script." >&2
+  echo "partial run - try 'rm .env' and re-running this script." >&2
   exit 1
 fi
 
@@ -87,5 +85,5 @@ echo ""
 echo "==> Done. Open: http://${HOST}:8080"
 echo "    Logs:    docker compose logs -f"
 echo "    Stop:    docker compose down"
-echo "    This is plain HTTP with temp secrets — fine for testing, not for real users."
+echo "    This is plain HTTP with temp secrets - fine for testing, not for real users."
 echo "    See DEPLOY.md for TLS + real secrets before going live."

@@ -8,7 +8,7 @@ export async function registerAccount(input: { username: string; email: string; 
 
 export async function login(input: { email: string; password: string }) {
   const res = await api.post("/auth/login", input);
-  return res.data as { user: XraUser; accessToken: string };
+  return res.data as { user: XraUser; token: string };
 }
 
 export async function logout() {

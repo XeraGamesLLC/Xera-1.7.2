@@ -4,7 +4,7 @@ This covers taking `docker-compose.yml` from "runs on my machine" to "runs in pr
 
 ## 1. Server sizing
 
-For 100 CCU actively chatting (not voice — voice isn't built yet, see CHECKLIST.md):
+For 100 CCU actively chatting (not voice - voice isn't built yet, see CHECKLIST.md):
 
 - **2 vCPU / 4GB RAM** is comfortably enough for Postgres + Redis + the Node backend + nginx together.
 - Disk: mostly driven by uploads (avatars/attachments/emoji). Start with 20-40GB and monitor `/app/uploads` growth.
@@ -16,7 +16,7 @@ For 100 CCU actively chatting (not voice — voice isn't built yet, see CHECKLIS
 cp .env.example .env
 ```
 
-Generate strong values for `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, and `POSTGRES_PASSWORD`:
+Generate strong values for `JWT_ACCESS_SECRET` and `POSTGRES_PASSWORD`:
 
 ```bash
 openssl rand -hex 64
@@ -39,7 +39,7 @@ chat.yourdomain.com {
 
 Then set `CORS_ORIGINS=https://chat.yourdomain.com` in `.env` before bringing the stack up, and point your VR game / website at `https://chat.yourdomain.com`.
 
-If you'd rather terminate TLS with nginx directly or use Cloudflare in front (orange-cloud proxy), that works too — the app doesn't care, as long as whatever's in front forwards `Upgrade`/`Connection` headers for the `/socket.io/` path (already handled if you reuse `frontend/nginx.conf` as a reference).
+If you'd rather terminate TLS with nginx directly or use Cloudflare in front (orange-cloud proxy), that works too - the app doesn't care, as long as whatever's in front forwards `Upgrade`/`Connection` headers for the `/socket.io/` path (already handled if you reuse `frontend/nginx.conf` as a reference).
 
 ## 4. Bring it up
 
@@ -48,7 +48,7 @@ docker compose up -d --build
 docker compose logs -f backend   # confirm it started cleanly
 ```
 
-Prisma migrations run automatically as part of the backend image's... actually they don't — run them explicitly once, and on every future schema change:
+Prisma migrations run automatically as part of the backend image's... actually they don't - run them explicitly once, and on every future schema change:
 
 ```bash
 docker compose exec backend npx prisma migrate deploy
@@ -56,10 +56,10 @@ docker compose exec backend npx prisma migrate deploy
 
 ## 5. Anti-VPN (currently a no-op)
 
-`ANTI_VPN_ENABLED=false` by default — signups are never blocked. When you're ready to turn this on:
+`ANTI_VPN_ENABLED=false` by default - signups are never blocked. When you're ready to turn this on:
 
 1. Pick a provider (IPQualityScore, ipdata, IPinfo all have pay-as-you-go tiers).
-2. Implement the actual HTTP call in `backend/src/middleware/antiVpn.ts` — the function `checkIp()` is the one and only place this needs to change.
+2. Implement the actual HTTP call in `backend/src/middleware/antiVpn.ts` - the function `checkIp()` is the one and only place this needs to change.
 3. Set `ANTI_VPN_API_KEY` and `ANTI_VPN_ENABLED=true` in `.env`, redeploy.
 
 ## 6. Backups
@@ -70,13 +70,13 @@ Postgres data lives in the `pgdata` Docker volume. At minimum, cron a nightly du
 docker compose exec -T postgres pg_dump -U xra xra | gzip > "backup-$(date +%F).sql.gz"
 ```
 
-Copy backups off the box (S3, Backblaze, etc.) — a backup that lives on the same disk as the database doesn't protect you from disk failure.
+Copy backups off the box (S3, Backblaze, etc.) - a backup that lives on the same disk as the database doesn't protect you from disk failure.
 
-The `uploads` volume (avatars/attachments/emoji) should be backed up the same way, or moved to object storage down the line (see CHECKLIST.md — currently local-disk only).
+The `uploads` volume (avatars/attachments/emoji) should be backed up the same way, or moved to object storage down the line (see CHECKLIST.md - currently local-disk only).
 
 ## 7. Monitoring / logs
 
-`docker compose logs -f backend` for now. Winston logs JSON in production (`NODE_ENV=production`), so it's ready to ship to any log aggregator (Loki, CloudWatch, etc.) whenever you want one — none is wired up by default.
+`docker compose logs -f backend` for now. Winston logs JSON in production (`NODE_ENV=production`), so it's ready to ship to any log aggregator (Loki, CloudWatch, etc.) whenever you want one - none is wired up by default.
 
 ## 8. Updating
 
@@ -88,4 +88,4 @@ docker compose exec backend npx prisma migrate deploy
 
 ## 9. Scaling past one server
 
-The Socket.IO layer already uses the Redis adapter (`backend/src/sockets/index.ts`), so running multiple backend containers behind a load balancer with sticky-session-free WebSocket routing is a config change, not a rewrite — add a `backend` replica in `docker-compose.yml` (or move to a proper orchestrator) and put a load balancer in front. You'd want managed/clustered Postgres and Redis before pushing this hard, though — that's out of scope for the single-box setup here.
+The Socket.IO layer already uses the Redis adapter (`backend/src/sockets/index.ts`), so running multiple backend containers behind a load balancer with sticky-session-free WebSocket routing is a config change, not a rewrite - add a `backend` replica in `docker-compose.yml` (or move to a proper orchestrator) and put a load balancer in front. You'd want managed/clustered Postgres and Redis before pushing this hard, though - that's out of scope for the single-box setup here.
