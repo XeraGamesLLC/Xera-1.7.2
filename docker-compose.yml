@@ -53,10 +53,8 @@ services:
       RATE_LIMIT_MAX: 100
     volumes:
       - uploads:/app/uploads
-    # No published port — the backend is only reachable through the frontend
-    # container's nginx (which proxies /api and /socket.io to it) and that,
-    # in turn, only through Caddy's TLS. Nothing unencrypted is exposed to
-    # the internet.
+    ports:
+      - "4000:4000"
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', r => process.exit(r.statusCode===200?0:1)).on('error', () => process.exit(1))"]
       interval: 5s
@@ -70,32 +68,10 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    # No published port either — see caddy below, which is the only
-    # container with anything exposed to the internet.
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      - frontend
-    environment:
-      # A real, publicly-resolvable hostname is required for Caddy to get a
-      # trusted Let's Encrypt cert — an IP literal won't work. Defaults to a
-      # free sslip.io hostname that resolves straight back to this VPS, so
-      # this works out of the box with zero domain setup; set to a real
-      # domain in .env once you have one.
-      XRA_DOMAIN: ${XRA_DOMAIN:-localhost}
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - "8080:80"
 
 volumes:
   pgdata:
   redisdata:
   uploads:
-  caddy_data:
-  caddy_config:
