@@ -8,6 +8,7 @@
 
 .message-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 2px 16px;
   position: relative;
@@ -126,10 +127,24 @@
   font-size: 13px;
   margin-bottom: 2px;
   margin-left: 56px;
+  /* .message-row is a flex row (gutter, body, timestamp), and without a
+     width of its own this was just another item squeezed into that same
+     row — on a narrow mobile viewport it could get crushed down to almost
+     nothing, and the browser wrapped its text one character per line to
+     fit. Forcing full width (with message-row's flex-wrap below) makes it
+     its own line above the row instead of sharing horizontal space. */
+  flex: 0 0 100%;
+  min-width: 0;
+}
+.reply-preview span:last-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .reply-preview .reply-author {
   font-weight: 600;
   color: var(--text-normal);
+  flex-shrink: 0;
 }
 
 .attachment-chip-row {

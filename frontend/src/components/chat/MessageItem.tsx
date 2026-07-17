@@ -50,7 +50,8 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
     <div className={`message-row ${grouped ? "grouped" : ""}`}>
       {message.replyTo && (
         <div className="reply-preview">
-          ↪ <span className="reply-author">{message.replyTo.author.username}</span>
+          <ReplyIcon size={14} />
+          <span className="reply-author">{message.replyTo.author.username}</span>
           <span>{message.replyTo.content.slice(0, 80)}</span>
         </div>
       )}
