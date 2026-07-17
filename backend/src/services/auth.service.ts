@@ -22,7 +22,7 @@ async function generateUniqueDiscriminator(username: string): Promise<string> {
     });
     if (!existing) return candidate;
   }
-  throw new AppError(409, "This username is extremely popular right now — try another one.");
+  throw new AppError(409, "This username is extremely popular right now - try another one.");
 }
 
 export async function register(input: { username: string; email: string; password: string }, ip: string) {
@@ -129,7 +129,7 @@ export async function refreshTokens(rawRefreshToken: string, ip?: string, userAg
     // Reuse of an already-rotated/revoked token is a strong signal of theft —
     // nuke every session for this user rather than trusting it.
     await prisma.refreshToken.updateMany({ where: { userId: stored.userId }, data: { revoked: true } });
-    throw new AppError(401, "Refresh token reuse detected — all sessions revoked, please log in again");
+    throw new AppError(401, "Refresh token reuse detected - all sessions revoked, please log in again");
   }
 
   await prisma.refreshToken.update({ where: { id: stored.id }, data: { revoked: true } });

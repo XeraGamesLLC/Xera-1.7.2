@@ -6,6 +6,7 @@ import { updateProfile, updateStatus, uploadAvatar } from "../../api/users";
 import { logout as apiLogout } from "../../api/auth";
 import { disconnectSocket } from "../../api/socket";
 import Avatar from "../common/Avatar";
+import { CloseIcon } from "../common/Icon";
 
 const STATUSES: { value: "ONLINE" | "IDLE" | "DND" | "INVISIBLE"; label: string }[] = [
   { value: "ONLINE", label: "Online" },
@@ -50,7 +51,7 @@ export default function UserSettingsModal() {
 
   return (
     <div className="modal-card">
-      <button className="modal-close" onClick={closeModal}>✕</button>
+      <button className="modal-close" onClick={closeModal}><CloseIcon size={14} /></button>
       <h1 style={{ color: "var(--header-primary)", marginTop: 0 }}>User Settings</h1>
 
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>

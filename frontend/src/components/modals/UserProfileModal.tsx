@@ -7,6 +7,7 @@ import { getUser } from "../../api/users";
 import { sendFriendRequest } from "../../api/friends";
 import { openDm } from "../../api/dms";
 import Avatar from "../common/Avatar";
+import { CloseIcon } from "../common/Icon";
 
 export default function UserProfileModal({ userId, guildId }: { userId: string; guildId?: string }) {
   const closeModal = useUiStore((s) => s.closeModal);
@@ -41,7 +42,7 @@ export default function UserProfileModal({ userId, guildId }: { userId: string; 
 
   return (
     <div className="modal-card">
-      <button className="modal-close" onClick={closeModal}>✕</button>
+      <button className="modal-close" onClick={closeModal}><CloseIcon size={14} /></button>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <Avatar url={profile.avatarUrl} name={profile.username} size={64} status={profile.status} />
         <div>

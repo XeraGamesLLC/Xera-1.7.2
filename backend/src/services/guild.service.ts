@@ -93,7 +93,7 @@ export async function leaveGuild(guildId: string, userId: string) {
   const guild = await prisma.guild.findUnique({ where: { id: guildId } });
   if (!guild) throw new AppError(404, "Server not found");
   if (guild.ownerId === userId) {
-    throw new AppError(400, "The owner cannot leave — transfer ownership or delete the server instead");
+    throw new AppError(400, "The owner cannot leave - transfer ownership or delete the server instead");
   }
   await prisma.guildMember.delete({ where: { guildId_userId: { guildId, userId } } }).catch(() => {
     throw new AppError(404, "You are not a member of this server");

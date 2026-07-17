@@ -5,6 +5,7 @@ import { useUiStore } from "../store/ui";
 import MessageList from "../components/chat/MessageList";
 import MessageInput from "../components/chat/MessageInput";
 import { createInvite } from "../api/guilds";
+import { MenuIcon, SpeakerIcon, LinkIcon, UsersIcon } from "../components/common/Icon";
 
 export default function GuildView() {
   const { guildId, channelId } = useParams();
@@ -44,12 +45,14 @@ export default function GuildView() {
   return (
     <main className="chat-column">
       <div className="chat-header">
-        <button className="icon-btn hamburger" onClick={() => setMobilePanel("channels")}>☰</button>
-        <span>{channel.type === "VOICE" ? "🔊" : "#"} {channel.name}</span>
+        <button className="icon-btn hamburger" onClick={() => setMobilePanel("channels")}><MenuIcon /></button>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          {channel.type === "VOICE" ? <SpeakerIcon size={16} /> : "#"} {channel.name}
+        </span>
         {channel.topic && <span className="topic">{channel.topic}</span>}
         <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
-          <button className="icon-btn" onClick={copyInvite} title="Create invite">🔗</button>
-          <button className="icon-btn" onClick={toggleMemberList} title="Members">👥</button>
+          <button className="icon-btn" onClick={copyInvite} title="Create invite"><LinkIcon /></button>
+          <button className="icon-btn" onClick={toggleMemberList} title="Members"><UsersIcon /></button>
         </div>
       </div>
       <MessageList

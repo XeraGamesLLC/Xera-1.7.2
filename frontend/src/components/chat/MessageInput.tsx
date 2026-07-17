@@ -3,6 +3,7 @@ import type { Message } from "../../store/app";
 import { emitWithAck } from "../../api/socket";
 import { uploadAttachment } from "../../api/channels";
 import EmojiPicker from "./EmojiPicker";
+import { CloseIcon, PlusIcon, SmileIcon, SendIcon } from "../common/Icon";
 
 interface Props {
   channelId: string;
@@ -104,13 +105,13 @@ export default function MessageInput({ channelId, guildId, channelName, replying
       {replyingTo && !editingMessage && (
         <div className="reply-preview" style={{ margin: "0 16px 4px" }}>
           Replying to <span className="reply-author">{replyingTo.author.username}</span>
-          <button className="icon-btn" onClick={onCancelReply}>✕</button>
+          <button className="icon-btn" onClick={onCancelReply}><CloseIcon size={14} /></button>
         </div>
       )}
       {editingMessage && (
         <div className="reply-preview" style={{ margin: "0 16px 4px" }}>
           Editing message
-          <button className="icon-btn" onClick={() => { onCancelEdit(); setValue(""); }}>✕</button>
+          <button className="icon-btn" onClick={() => { onCancelEdit(); setValue(""); }}><CloseIcon size={14} /></button>
         </div>
       )}
       {pendingFileNames.length > 0 && (
@@ -120,7 +121,7 @@ export default function MessageInput({ channelId, guildId, channelName, replying
       )}
       <div className="composer">
         <button className="icon-btn" title="Upload a file" onClick={() => fileInputRef.current?.click()}>
-          ＋
+          <PlusIcon />
         </button>
         <input ref={fileInputRef} type="file" hidden onChange={onFileChange} />
         <textarea
@@ -132,7 +133,7 @@ export default function MessageInput({ channelId, guildId, channelName, replying
           onKeyDown={onKeyDown}
         />
         <button className="icon-btn" title="Emoji" onClick={() => setShowEmoji((v) => !v)}>
-          🙂
+          <SmileIcon />
         </button>
         {showEmoji && (
           <EmojiPicker
@@ -145,7 +146,7 @@ export default function MessageInput({ channelId, guildId, channelName, replying
           />
         )}
         <button className="icon-btn" title="Send" onClick={send} disabled={sending}>
-          ➤
+          <SendIcon />
         </button>
       </div>
     </div>

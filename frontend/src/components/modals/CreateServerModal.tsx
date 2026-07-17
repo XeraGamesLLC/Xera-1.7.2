@@ -4,6 +4,7 @@ import { createGuild, joinByInvite } from "../../api/guilds";
 import { useAppStore } from "../../store/app";
 import { useUiStore } from "../../store/ui";
 import { apiErrorMessage } from "../../api/client";
+import { CloseIcon } from "../common/Icon";
 
 export default function CreateServerModal() {
   const [mode, setMode] = useState<"create" | "join">("create");
@@ -40,7 +41,7 @@ export default function CreateServerModal() {
 
   return (
     <div className="modal-card">
-      <button className="modal-close" onClick={closeModal}>✕</button>
+      <button className="modal-close" onClick={closeModal}><CloseIcon size={14} /></button>
       <h1 style={{ color: "var(--header-primary)", marginTop: 0 }}>
         {mode === "create" ? "Create a Server" : "Join a Server"}
       </h1>

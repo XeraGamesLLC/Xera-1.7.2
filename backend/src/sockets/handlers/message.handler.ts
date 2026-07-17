@@ -37,7 +37,7 @@ async function assertCanSend(channelId: string, userId: string) {
     if (channel.slowmodeSeconds > 0) {
       const key = `slowmode:${channelId}:${userId}`;
       const remaining = await redis.ttl(key);
-      if (remaining > 0) throw new Error(`Slow mode is active — wait ${remaining}s`);
+      if (remaining > 0) throw new Error(`Slow mode is active - wait ${remaining}s`);
       await redis.set(key, "1", "EX", channel.slowmodeSeconds);
     }
   } else {

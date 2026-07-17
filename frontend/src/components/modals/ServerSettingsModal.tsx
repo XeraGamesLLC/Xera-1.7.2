@@ -25,6 +25,7 @@ import {
   listMembers,
 } from "../../api/guilds";
 import { Permissions, type PermissionFlag } from "../../utils/permissions";
+import { CloseIcon } from "../common/Icon";
 
 type Tab = "overview" | "roles" | "members" | "invites" | "bans" | "audit-log";
 
@@ -41,7 +42,7 @@ export default function ServerSettingsModal({ guildId }: { guildId: string }) {
 
   return (
     <div className="modal-card wide">
-      <button className="modal-close" onClick={closeModal}>✕</button>
+      <button className="modal-close" onClick={closeModal}><CloseIcon size={14} /></button>
       <div className="modal-sidebar">
         {(["overview", "roles", "members", "invites", "bans", "audit-log"] as Tab[]).map((t) => (
           <div key={t} className={`modal-sidebar-item ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
@@ -251,7 +252,7 @@ function MembersTab({ guildId, members, currentUserId }: { guildId: string; memb
 
   return (
     <div>
-      <h2 style={{ marginTop: 0 }}>Members — {members.length}</h2>
+      <h2 style={{ marginTop: 0 }}>Members - {members.length}</h2>
       {members.map((m) => (
         <div key={m.id} className="settings-row">
           <div>
@@ -326,7 +327,7 @@ function InvitesTab({ guildId }: { guildId: string }) {
       </button>
       {invites.map((i) => (
         <div key={i.code} className="settings-row">
-          <span>/invite/{i.code} — {i.uses} uses</span>
+          <span>/invite/{i.code} - {i.uses} uses</span>
           <button
             className="btn btn-danger"
             onClick={async () => {
@@ -354,7 +355,7 @@ function BansTab({ guildId }: { guildId: string }) {
       {bans.length === 0 && <div className="empty-state">No bans yet.</div>}
       {bans.map((b) => (
         <div key={b.id} className="settings-row">
-          <span>{b.user.username}#{b.user.discriminator} — {b.reason || "No reason given"}</span>
+          <span>{b.user.username}#{b.user.discriminator} - {b.reason || "No reason given"}</span>
           <button className="btn btn-secondary" onClick={async () => { await unbanMember(guildId, b.userId); setBans(await listBans(guildId)); }}>
             Revoke Ban
           </button>
@@ -377,7 +378,7 @@ function AuditLogTab({ guildId }: { guildId: string }) {
       {entries.map((e) => (
         <div key={e.id} className="settings-row">
           <span>
-            <strong>{e.actor.username}</strong> — {e.action.replace(/_/g, " ")}
+            <strong>{e.actor.username}</strong> - {e.action.replace(/_/g, " ")}
             {e.reason ? ` (${e.reason})` : ""}
           </span>
           <span style={{ color: "var(--text-muted)", fontSize: 12 }}>{new Date(e.createdAt).toLocaleString()}</span>

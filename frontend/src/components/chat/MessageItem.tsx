@@ -4,6 +4,7 @@ import MessageContent from "./MessageContent";
 import { formatMessageTimestamp, formatShortTime } from "../../utils/time";
 import type { MentionContext } from "../../utils/markdown";
 import { emitWithAck } from "../../api/socket";
+import { ReplyIcon, EditIcon, TrashIcon } from "../common/Icon";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
 
@@ -106,16 +107,16 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
           </button>
         ))}
         <button onClick={() => onReply(message)} title="Reply">
-          ↩
+          <ReplyIcon size={16} />
         </button>
         {canEdit && (
           <button onClick={() => onEdit(message)} title="Edit">
-            ✎
+            <EditIcon size={16} />
           </button>
         )}
         {canDelete && (
           <button onClick={deleteMessage} title="Delete">
-            🗑
+            <TrashIcon size={16} />
           </button>
         )}
       </div>

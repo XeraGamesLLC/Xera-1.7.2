@@ -41,7 +41,7 @@ export default function InvitePage() {
         {invite && (
           <>
             <p className="subtitle">
-              Join <strong>{invite.guild.name}</strong> — #{invite.channel.name}
+              Join <strong>{invite.guild.name}</strong> - #{invite.channel.name}
             </p>
             <button className="btn btn-primary" onClick={join} disabled={joining}>
               {joining ? "Joining…" : "Accept Invite"}

@@ -45,7 +45,7 @@ export default function RegisterPage() {
     <div className="auth-screen">
       <div className="auth-card">
         <h1>Create an account</h1>
-        <p className="subtitle">Join XRA — chat with your friends and your VR crew.</p>
+        <p className="subtitle">Join XRA - chat with your friends and your VR crew.</p>
         {error && <div className="form-error">{error}</div>}
         <form onSubmit={onSubmit}>
           <div className="form-field">

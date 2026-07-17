@@ -6,6 +6,7 @@ import { getGuild, listMembers } from "../../api/guilds";
 import { openDm } from "../../api/dms";
 import Avatar from "../common/Avatar";
 import UserPanel from "./UserPanel";
+import { GearIcon, UsersIcon, SpeakerIcon } from "../common/Icon";
 
 export default function ChannelSidebar() {
   const { guildId, channelId } = useParams();
@@ -55,7 +56,7 @@ export default function ChannelSidebar() {
       <aside className="channel-sidebar">
         <div className="channel-sidebar-header" onClick={() => openModal("server-settings", { guildId })}>
           <span>{guildDetail.name}</span>
-          <span className="icon-btn" title="Server settings">⚙</span>
+          <span className="icon-btn" title="Server settings"><GearIcon /></span>
         </div>
         <div className="channel-list">
           {uncategorized.map((ch) => (
@@ -105,7 +106,7 @@ export default function ChannelSidebar() {
             setMobilePanel("chat");
           }}
         >
-          <span>👥</span>
+          <span><UsersIcon size={16} /></span>
           <span className="channel-name">Friends</span>
         </div>
         <div className="channel-category">Direct Messages</div>
@@ -162,7 +163,7 @@ function ChannelRow({
 }) {
   return (
     <div className={`channel-row ${active ? "active" : ""} ${unread ? "unread" : ""}`} onClick={onClick}>
-      <span>{type === "VOICE" ? "🔊" : "#"}</span>
+      <span>{type === "VOICE" ? <SpeakerIcon size={16} /> : "#"}</span>
       <span className="channel-name">{name}</span>
       {!!mentions && <span className="mention-badge">{mentions}</span>}
     </div>

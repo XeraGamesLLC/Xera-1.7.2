@@ -31,10 +31,10 @@ export default function MemberList() {
   return (
     <aside className="member-list">
       {[...hoistedGroups.entries()].map(([roleName, group]) => (
-        <MemberGroup key={roleName} label={`${roleName} — ${group.length}`} members={group} onSelect={(id) => openModal("user-profile", { userId: id, guildId })} />
+        <MemberGroup key={roleName} label={`${roleName} - ${group.length}`} members={group} onSelect={(id) => openModal("user-profile", { userId: id, guildId })} />
       ))}
-      <MemberGroup label={`Online — ${plainOnline.length}`} members={plainOnline} onSelect={(id) => openModal("user-profile", { userId: id, guildId })} />
-      <MemberGroup label={`Offline — ${offline.length}`} members={offline} onSelect={(id) => openModal("user-profile", { userId: id, guildId })} />
+      <MemberGroup label={`Online - ${plainOnline.length}`} members={plainOnline} onSelect={(id) => openModal("user-profile", { userId: id, guildId })} />
+      <MemberGroup label={`Offline - ${offline.length}`} members={offline} onSelect={(id) => openModal("user-profile", { userId: id, guildId })} />
     </aside>
   );
 }

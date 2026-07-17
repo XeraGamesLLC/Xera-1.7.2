@@ -7,6 +7,7 @@ import MessageList from "../components/chat/MessageList";
 import MessageInput from "../components/chat/MessageInput";
 import Avatar from "../components/common/Avatar";
 import { listDmChannels } from "../api/dms";
+import { MenuIcon } from "../components/common/Icon";
 
 export default function DmView() {
   const { channelId } = useParams();
@@ -38,7 +39,7 @@ export default function DmView() {
   return (
     <main className="chat-column">
       <div className="chat-header">
-        <button className="icon-btn hamburger" onClick={() => setMobilePanel("channels")}>☰</button>
+        <button className="icon-btn hamburger" onClick={() => setMobilePanel("channels")}><MenuIcon /></button>
         {others[0] && <Avatar url={others[0].avatarUrl} name={title} size={24} status={presence[others[0].id] ?? others[0].status} />}
         <span>{title}</span>
       </div>

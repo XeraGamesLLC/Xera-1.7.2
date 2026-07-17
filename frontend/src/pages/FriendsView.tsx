@@ -14,6 +14,7 @@ import {
 } from "../api/friends";
 import { openDm } from "../api/dms";
 import { apiErrorMessage } from "../api/client";
+import { MenuIcon, UsersIcon } from "../components/common/Icon";
 
 type Tab = "online" | "all" | "pending" | "add";
 
@@ -52,8 +53,8 @@ export default function FriendsView() {
   return (
     <main className="chat-column">
       <div className="chat-header">
-        <button className="icon-btn hamburger" onClick={() => setMobilePanel("channels")}>☰</button>
-        <span>👥 Friends</span>
+        <button className="icon-btn hamburger" onClick={() => setMobilePanel("channels")}><MenuIcon /></button>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><UsersIcon size={16} /> Friends</span>
         <nav style={{ display: "flex", gap: 16, marginLeft: 24, fontSize: 14 }}>
           {(["online", "all", "pending", "add"] as Tab[]).map((t) => (
             <button
@@ -75,7 +76,7 @@ export default function FriendsView() {
         {tab === "pending" && (
           <div>
             <h3 style={{ color: "var(--text-muted)", fontSize: 13, textTransform: "uppercase" }}>
-              Incoming — {incoming.length}
+              Incoming - {incoming.length}
             </h3>
             {incoming.map((r: any) => (
               <div key={r.id} className="member-row" style={{ justifyContent: "space-between" }}>
@@ -90,12 +91,12 @@ export default function FriendsView() {
               </div>
             ))}
             <h3 style={{ color: "var(--text-muted)", fontSize: 13, textTransform: "uppercase", marginTop: 16 }}>
-              Outgoing — {outgoing.length}
+              Outgoing - {outgoing.length}
             </h3>
             {outgoing.map((r: any) => (
               <div key={r.id} className="member-row">
                 <Avatar url={r.addressee.avatarUrl} name={r.addressee.username} size={32} />
-                {r.addressee.username}#{r.addressee.discriminator} — Pending
+                {r.addressee.username}#{r.addressee.discriminator} - Pending
               </div>
             ))}
           </div>

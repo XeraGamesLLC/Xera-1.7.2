@@ -67,6 +67,16 @@ html {
 button {
   font-family: inherit;
   cursor: pointer;
+  /* Reset the native button chrome (border/background/rounded corners
+     Safari and other browsers draw by default) so every button's actual
+     look comes entirely from its class — without this, iOS Safari in
+     particular shows a boxed outline around anything styled as a plain
+     text/link button (e.g. the Friends page tab row). */
+  border: none;
+  background: none;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 input,

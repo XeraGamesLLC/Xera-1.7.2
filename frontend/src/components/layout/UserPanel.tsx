@@ -1,6 +1,7 @@
 import { useAuthStore } from "../../store/auth";
 import { useUiStore } from "../../store/ui";
 import Avatar from "../common/Avatar";
+import { GearIcon } from "../common/Icon";
 
 export default function UserPanel() {
   const user = useAuthStore((s) => s.user);
@@ -19,7 +20,7 @@ export default function UserPanel() {
         </div>
       </div>
       <button className="icon-btn" title="User Settings" onClick={() => openModal("user-settings")}>
-        ⚙
+        <GearIcon />
       </button>
     </div>
   );
