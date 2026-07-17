@@ -58,6 +58,16 @@ app.use(
       if (!INLINE_RENDER_EXTENSIONS.has(path.extname(filePath).toLowerCase())) {
         res.setHeader("Content-Disposition", "attachment");
       }
+      // Avatars and server icons get a brand-new filename on every upload,
+      // so there's never a legitimate reason to reuse a cached response for
+      // one of these paths — force a full revalidation every time so a
+      // browser (or an intermediate proxy) can never keep serving a
+      // previously-cached failure for what looks to the user like "my
+      // profile picture" rather than a specific, disposable file.
+      const normalized = filePath.replace(/\\/g, "/");
+      if (normalized.includes("/avatars/") || normalized.includes("/guild-icons/")) {
+        res.setHeader("Cache-Control", "no-store");
+      }
     },
   })
 );
