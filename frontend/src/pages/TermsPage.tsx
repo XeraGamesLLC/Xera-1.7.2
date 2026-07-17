@@ -8,88 +8,107 @@ export default function TermsPage() {
         <h1>Terms of Service</h1>
         <p className="subtitle">Last updated: 2026</p>
 
-        <TosSection title="1. Acceptance">
+        <TosSection title="1. Acceptance of Terms">
           <p>
-            By creating an account or using XRA, you agree to these Terms. If you don't agree, don't use the
-            service. XRA is a small, independently-run chat service - these terms aren't a substitute for legal
-            advice, and if this service grows into something bigger, a real lawyer should review and replace them.
+            By creating an account or otherwise accessing XRA, you agree to be bound by these Terms of Service. If
+            you do not agree to these Terms, you may not use the service.
           </p>
         </TosSection>
 
-        <TosSection title="2. Who can use XRA">
+        <TosSection title="2. Eligibility">
           <p>
-            You must be at least 13 years old to create an account. By registering, you confirm the information
-            you provide is accurate and that you're not violating any law that applies to you by using this
-            service.
+            You must be at least 13 years of age to create an account. By registering, you confirm that the
+            information you provide is accurate and that your use of the service complies with all laws
+            applicable to you.
           </p>
         </TosSection>
 
-        <TosSection title="3. Your account">
+        <TosSection title="3. Account Responsibility">
           <p>
-            You're responsible for your account and everything that happens on it, including keeping your
-            password secure. Don't share your login with anyone else, and tell us if you think your account has
-            been compromised. One account per person - don't create accounts to evade a ban or impersonate someone
-            else.
+            You are responsible for your account and for all activity that occurs on it, including maintaining the
+            security of your password. You may not share your login credentials with any other person. You must
+            notify us promptly if you believe your account has been compromised. Each individual may maintain only
+            one account. Creating additional accounts to evade a ban or to impersonate another user is prohibited.
           </p>
         </TosSection>
 
-        <TosSection title="4. What data we collect">
-          <p>To run the service, XRA collects and stores:</p>
+        <TosSection title="4. Data We Collect">
+          <p>To operate the service, XRA collects and stores the following:</p>
           <ul>
-            <li>Account info: your username, email address, and a securely hashed password (we never store your actual password)</li>
-            <li>Content you send: messages, images and files you upload, server/profile icons, custom statuses and "about me" text</li>
-            <li>Technical data: your IP address at signup and login (used for security, abuse prevention, and enforcing bans), and standard connection metadata (timestamps, browser/client info)</li>
-            <li>Usage data needed for the app to work: who you're friends with, which servers you're in, your online/idle/DND status, message read state</li>
+            <li>Account information: your username, email address, and a securely hashed password. Your actual password is never stored.</li>
+            <li>Content: messages, images, and files you upload, server and profile icons, custom statuses, and profile information such as your "about me" text.</li>
+            <li>Technical information: your IP address at signup and login, used for security, abuse prevention, and enforcement of bans, along with standard connection metadata such as timestamps and client information.</li>
+            <li>Usage information required for the service to function: your friends and server memberships, your online status, and message read state.</li>
           </ul>
           <p>
-            This data is used only to operate, secure, and moderate XRA. It is not sold, and it is not shared with
-            third parties except where required by law. Uploaded files and messages are stored on the server
-            infrastructure XRA runs on. Deleting a message or your account removes it from normal use, though
-            backups may retain data for a limited period.
+            This data is used solely to operate, secure, and moderate XRA. It is not sold and is not shared with
+            third parties except where required by law. Uploaded files and messages are stored on the
+            infrastructure that runs the service. Deleting a message or your account removes it from normal use,
+            though backups may retain data for a limited period.
           </p>
         </TosSection>
 
-        <TosSection title="5. Acceptable use">
+        <TosSection title="5. Acceptable Use">
           <p>You agree not to use XRA to:</p>
           <ul>
-            <li>Post or share anything illegal, including content that exploits or endangers minors - this is reported to relevant authorities without exception</li>
-            <li>Harass, threaten, bully, stalk, or intimidate anyone</li>
-            <li>Post hate speech, or content that attacks people based on race, ethnicity, religion, gender, sexual orientation, disability, or similar characteristics</li>
-            <li>Share someone's private information without their consent (doxxing)</li>
-            <li>Send spam, malware, phishing links, or attempt to compromise other accounts or the service itself</li>
-            <li>Impersonate another person, XRA staff, or a server/organization you don't represent</li>
-            <li>Upload content that infringes someone else's copyright or other rights</li>
-            <li>Use the service to organize or promote violence or illegal activity</li>
+            <li>Post or share illegal content of any kind. Content that exploits or endangers minors will be removed immediately and reported to the relevant authorities without exception.</li>
+            <li>Harass, threaten, bully, stalk, or intimidate any person.</li>
+            <li>Post hate speech or content that attacks people on the basis of race, ethnicity, religion, gender, sexual orientation, disability, or similar characteristics.</li>
+            <li>Share another person's private information without their consent.</li>
+            <li>Post excessively graphic, violent, or gratuitous content, including gore.</li>
+            <li>Send spam, malware, or phishing links, or attempt to compromise other accounts or the service itself.</li>
+            <li>Impersonate another person, XRA staff, or an organization you do not represent.</li>
+            <li>Upload content that infringes another party's copyright or other rights.</li>
+            <li>Use the service to organize or promote violence or other illegal activity.</li>
           </ul>
-        </TosSection>
-
-        <TosSection title="6. Moderation">
           <p>
-            Server owners and the roles they assign can moderate their own servers (remove messages, kick, ban,
-            time out members). Separately, content or accounts that violate these Terms may be removed, and
-            accounts may be suspended or terminated, at any time and without advance notice for serious
-            violations.
+            Illegal content and graphic violent content, including gore, will be removed as soon as it is
+            discovered or reported, and the responsible account will be subject to enforcement action, including
+            suspension or termination.
           </p>
         </TosSection>
 
-        <TosSection title="7. Service availability">
+        <TosSection title="6. Moderation and Enforcement">
           <p>
-            XRA is provided "as is," without warranty of any kind. It may go down, change, or be discontinued at
-            any time. To the fullest extent permitted by law, XRA and whoever operates it are not liable for any
-            damages arising from your use of, or inability to use, the service.
+            Server owners and the roles they assign are responsible for moderating their own servers, including
+            removing messages and removing or restricting members. Independently of server-level moderation,
+            content or accounts that violate these Terms may be removed, and accounts may be suspended or
+            terminated at any time, without prior notice, at our sole discretion.
           </p>
         </TosSection>
 
-        <TosSection title="8. Changes to these Terms">
+        <TosSection title="7. User Content and Liability">
           <p>
-            These Terms may be updated as the service changes. Continuing to use XRA after an update means you
-            accept the revised Terms.
+            Messages, files, and other content posted on XRA are created and shared by users, not by XRA or its
+            operator. You are solely responsible for the content you post and for your conduct on the service.
+            XRA and its operator are not liable for content posted by users, including content posted in servers,
+            channels, or direct messages that they do not directly control or review before it is posted.
+          </p>
+          <p>
+            This does not limit our right to remove content or take action against an account at any time. Illegal
+            content and graphic content, including gore, will be removed upon discovery or report.
           </p>
         </TosSection>
 
-        <TosSection title="9. Contact">
+        <TosSection title="8. Service Availability">
           <p>
-            Questions, complaints, or reports about content or conduct on XRA: <a href="mailto:juelzirons@proton.me">juelzirons@proton.me</a>
+            XRA is provided on an "as is" basis, without warranty of any kind. The service may be interrupted,
+            changed, or discontinued at any time. To the fullest extent permitted by law, XRA and its operator are
+            not liable for any damages arising from your use of, or inability to use, the service.
+          </p>
+        </TosSection>
+
+        <TosSection title="9. Changes to These Terms">
+          <p>
+            These Terms may be updated as the service changes. Continued use of XRA after an update constitutes
+            acceptance of the revised Terms.
+          </p>
+        </TosSection>
+
+        <TosSection title="10. Contact">
+          <p>
+            Questions, complaints, and reports regarding content or conduct on XRA should be directed to:{" "}
+            <a href="mailto:juelzirons@proton.me">juelzirons@proton.me</a>
           </p>
         </TosSection>
 
