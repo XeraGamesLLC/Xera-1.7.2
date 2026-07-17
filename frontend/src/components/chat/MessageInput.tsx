@@ -4,6 +4,7 @@ import { emitWithAck } from "../../api/socket";
 import { uploadAttachment } from "../../api/channels";
 import EmojiPicker from "./EmojiPicker";
 import { CloseIcon, PlusIcon, SmileIcon, SendIcon } from "../common/Icon";
+import { useUiStore } from "../../store/ui";
 
 interface Props {
   channelId: string;
@@ -26,6 +27,16 @@ export default function MessageInput({ channelId, guildId, channelName, replying
   const [pendingFileNames, setPendingFileNames] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeModal = useUiStore((s) => s.activeModal);
+
+  // The picker is only closed by onMouseLeave, which never fires from a
+  // click straight from the composer to a header button (or never fires at
+  // all in touch/keyboard-driven use) — leaving it open, absolutely
+  // positioned, rendering on top of whatever modal opens next. Close it
+  // explicitly the moment any modal opens instead of relying on that.
+  useEffect(() => {
+    if (activeModal) setShowEmoji(false);
+  }, [activeModal]);
 
   useEffect(() => {
     if (editingMessage) setValue(editingMessage.content);
