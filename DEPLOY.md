@@ -24,22 +24,15 @@ openssl rand -hex 64
 
 Never commit `.env`. It's already in `.gitignore`.
 
-## 3. TLS (required)
+## 3. TLS (required, and already built in)
 
-`docker-compose.yml` serves plain HTTP on port 8080 (frontend) and 4000 (backend). **Do not expose either directly to the internet.** Both your VR game client and browsers require HTTPS/WSS for Socket.IO to work reliably (and browsers will refuse mixed content).
+`docker-compose.yml` includes a `caddy` service that terminates TLS and automatically fetches a real Let's Encrypt certificate — it's the only container with ports published (80/443). `frontend` and `backend` have no published ports at all; they're only reachable through Caddy. There's nothing unencrypted exposed to the internet.
 
-The simplest path is putting [Caddy](https://caddyserver.com/) in front, which gets you automatic Let's Encrypt certs for free:
+All you need to provide is `XRA_DOMAIN` in `.env` — a real, publicly-resolvable hostname (an IP literal won't work, Let's Encrypt can't issue a cert for one). If you don't have a domain yet, use a free [sslip.io](https://sslip.io) hostname for your server's IP (e.g. `185-182-9-183.sslip.io` for `185.182.9.183`) — `setup.sh` does this automatically when you pass it a bare IP. Once you have a real domain, just point an A record at your server and set `XRA_DOMAIN`/`CORS_ORIGINS` to it in `.env`.
 
-```caddyfile
-# /etc/caddy/Caddyfile
-chat.yourdomain.com {
-    reverse_proxy localhost:8080
-}
-```
+Point your VR game / website at `https://<XRA_DOMAIN>`.
 
-Then set `CORS_ORIGINS=https://chat.yourdomain.com` in `.env` before bringing the stack up, and point your VR game / website at `https://chat.yourdomain.com`.
-
-If you'd rather terminate TLS with nginx directly or use Cloudflare in front (orange-cloud proxy), that works too — the app doesn't care, as long as whatever's in front forwards `Upgrade`/`Connection` headers for the `/socket.io/` path (already handled if you reuse `frontend/nginx.conf` as a reference).
+If you'd rather terminate TLS with nginx directly or put Cloudflare in front (orange-cloud proxy) instead of the bundled Caddy, that works too — remove the `caddy` service, publish `frontend`'s port 80 again, and forward `Upgrade`/`Connection` headers for the `/socket.io/` path (already handled if you reuse `frontend/nginx.conf` as a reference).
 
 ## 4. Bring it up
 
