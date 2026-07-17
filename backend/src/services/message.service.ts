@@ -23,6 +23,22 @@ export async function createMessage(input: {
 }) {
   const id = generateSnowflake();
 
+  // Prisma's `connect` just reassigns the attachment's messageId FK — with
+  // no ownership check, a client could pass any attachment id (attachment
+  // ids are sequential snowflakes, not random, so nearby ones are guessable)
+  // and silently steal someone else's upload into their own message, moving
+  // it out of wherever (possibly a private DM) it was originally attached.
+  // Only allow attaching files the sender uploaded themselves and that
+  // aren't already attached to another message.
+  let attachmentIds = input.attachmentIds ?? [];
+  if (attachmentIds.length) {
+    const owned = await prisma.attachment.findMany({
+      where: { id: { in: attachmentIds }, uploaderId: input.authorId, messageId: null },
+      select: { id: true },
+    });
+    attachmentIds = owned.map((a) => a.id);
+  }
+
   const message = await prisma.message.create({
     data: {
       id,
@@ -30,9 +46,7 @@ export async function createMessage(input: {
       authorId: input.authorId,
       content: input.content,
       replyToId: input.replyToId ?? null,
-      attachments: input.attachmentIds?.length
-        ? { connect: input.attachmentIds.map((attachmentId) => ({ id: attachmentId })) }
-        : undefined,
+      attachments: attachmentIds.length ? { connect: attachmentIds.map((attachmentId) => ({ id: attachmentId })) } : undefined,
     },
     include: MESSAGE_INCLUDE,
   });
