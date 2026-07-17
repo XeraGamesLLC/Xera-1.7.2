@@ -53,7 +53,10 @@ async function generateUniqueDiscriminator(username: string): Promise<string> {
   throw new AppError(409, "This username is extremely popular right now - try another one.");
 }
 
-export async function register(input: { username: string; email: string; password: string }, ip: string) {
+export async function register(
+  input: { username: string; email: string; password: string; agreedToTos: true },
+  ip: string
+) {
   const passwordIssue = validatePasswordStrength(input.password);
   if (passwordIssue) throw new AppError(400, passwordIssue);
 
@@ -71,6 +74,7 @@ export async function register(input: { username: string; email: string; passwor
       email: input.email,
       passwordHash,
       signupIp: ip,
+      tosAcceptedAt: new Date(),
     },
   });
 

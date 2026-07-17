@@ -76,6 +76,12 @@ model User {
   customStatus  String?
   isVerified    Boolean    @default(false)
   isSystem      Boolean    @default(false) // reserved for future system/bot accounts
+  // Timestamp of ToS acceptance, recorded at registration - a checkbox that
+  // only exists client-side isn't worth much as an actual record of
+  // consent. Required (non-nullable would break existing rows), so this
+  // stays optional; registerSchema enforces it must be present going
+  // forward via the agreedToTos field.
+  tosAcceptedAt DateTime?
 
   // tokenVersion is embedded in every issued token's HMAC. Bumping it
   // (logout, password reset) makes every previously-issued token fail

@@ -8,6 +8,7 @@ import DmView from "./pages/DmView";
 import GuildView from "./pages/GuildView";
 import InvitePage from "./pages/InvitePage";
 import DiscoveryPage from "./pages/DiscoveryPage";
+import TermsPage from "./pages/TermsPage";
 import { useAuthStore } from "./store/auth";
 import { fetchMe } from "./api/auth";
 
@@ -59,6 +60,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="/invite/:code" element={<ProtectedRoute><InvitePage /></ProtectedRoute>} />
       <Route
         path="/app"

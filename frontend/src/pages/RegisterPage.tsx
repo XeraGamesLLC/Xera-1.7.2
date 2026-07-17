@@ -8,6 +8,7 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agreedToTos, setAgreedToTos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -15,10 +16,14 @@ export default function RegisterPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!agreedToTos) {
+      setError("You must agree to the Terms of Service to create an account");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      await registerAccount({ username, email, password });
+      await registerAccount({ username, email, password, agreedToTos: true });
       setDone(true);
     } catch (err) {
       setError(apiErrorMessage(err, "Could not create account"));
@@ -68,7 +73,18 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <button className="btn btn-primary" type="submit" disabled={loading}>
+          <div className="checkbox-row">
+            <input
+              id="agreed-to-tos"
+              type="checkbox"
+              checked={agreedToTos}
+              onChange={(e) => setAgreedToTos(e.target.checked)}
+            />
+            <label htmlFor="agreed-to-tos">
+              I agree to the <Link to="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</Link>
+            </label>
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={loading || !agreedToTos}>
             {loading ? "Creating account…" : "Continue"}
           </button>
         </form>

@@ -132,6 +132,7 @@ interface AppState {
   upsertGuild: (guild: Guild) => void;
   removeGuild: (guildId: string) => void;
   setGuildDetail: (guildId: string, guild: Guild) => void;
+  patchGuildDetail: (guildId: string, patch: Partial<Guild>) => void;
   setMembers: (guildId: string, members: Member[]) => void;
   setMessages: (channelId: string, messages: Message[]) => void;
   prependMessages: (channelId: string, messages: Message[]) => void;
@@ -186,6 +187,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeGuildId: s.activeGuildId === guildId ? null : s.activeGuildId,
     })),
   setGuildDetail: (guildId, guild) => set((s) => ({ guildDetail: { ...s.guildDetail, [guildId]: guild } })),
+  // Merges rather than replaces — updateGuild()/uploadGuildIcon() only
+  // return the bare Guild row (no categories/channels/roles), so replacing
+  // guildDetail[guildId] wholesale with that response would wipe the
+  // channel list out of the settings modal and sidebar until the next
+  // guild:update socket round-trip happened to refetch it.
+  patchGuildDetail: (guildId, patch) =>
+    set((s) => (s.guildDetail[guildId] ? { guildDetail: { ...s.guildDetail, [guildId]: { ...s.guildDetail[guildId], ...patch } } } : {})),
   setMembers: (guildId, members) => set((s) => ({ members: { ...s.members, [guildId]: members } })),
 
   setMessages: (channelId, messages) => set((s) => ({ messages: { ...s.messages, [channelId]: messages } })),

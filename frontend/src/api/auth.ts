@@ -1,7 +1,7 @@
 import { api } from "./client";
 import type { XraUser } from "../store/auth";
 
-export async function registerAccount(input: { username: string; email: string; password: string }) {
+export async function registerAccount(input: { username: string; email: string; password: string; agreedToTos: true }) {
   const res = await api.post("/auth/register", input);
   return res.data as { user: XraUser; message: string };
 }

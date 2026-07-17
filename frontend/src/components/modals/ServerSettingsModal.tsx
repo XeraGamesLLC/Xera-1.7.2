@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUiStore } from "../../store/ui";
-import { useAppStore } from "../../store/app";
+import { useAppStore, type Guild } from "../../store/app";
 import { useAuthStore } from "../../store/auth";
 import {
   updateGuild,
@@ -112,6 +112,18 @@ function OverviewTab({
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const upsertGuild = useAppStore((s) => s.upsertGuild);
+  const patchGuildDetail = useAppStore((s) => s.patchGuildDetail);
+
+  // upsertGuild keeps the server rail's icon/name in sync (it reads from
+  // the separate `guilds` list); patchGuildDetail keeps this modal itself
+  // in sync (it reads from `guildDetail`, a different slice — updateGuild()
+  // and uploadGuildIcon() only return the bare guild row, so without this
+  // merge the modal kept showing stale values until an unrelated
+  // guild:update socket event happened to refetch the full detail).
+  function syncGuild(guild: Guild) {
+    upsertGuild(guild);
+    patchGuildDetail(guildId, guild);
+  }
 
   async function onIconChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -120,7 +132,7 @@ function OverviewTab({
     setUploadingIcon(true);
     setError(null);
     try {
-      upsertGuild(await uploadGuildIcon(guildId, file));
+      syncGuild(await uploadGuildIcon(guildId, file));
     } catch (err) {
       setError(apiErrorMessage(err, "Could not upload icon"));
     } finally {
@@ -160,7 +172,7 @@ function OverviewTab({
       <button
         className="btn btn-primary"
         style={{ width: "auto" }}
-        onClick={async () => upsertGuild(await updateGuild(guildId, { name: value, discoverable: isDiscoverable }))}
+        onClick={async () => syncGuild(await updateGuild(guildId, { name: value, discoverable: isDiscoverable }))}
       >
         Save
       </button>
