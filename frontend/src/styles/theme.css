@@ -55,6 +55,18 @@ body {
   line-height: 1.375rem;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
+  /* iOS Safari/WebKit (Safari, DuckDuckGo, etc.) can pan the *visual*
+     viewport independently of the layout viewport when its own address
+     bar collapses on a short screen like the 12 mini - height:100% and
+     overflow:hidden alone only stop the document from laying out as
+     scrollable, they don't stop that independent visual-viewport pan, so
+     the whole page (chat header included) silently scrolls out from
+     under the top of the screen with nothing to scroll it back down.
+     Pinning body to the viewport with position:fixed removes that scroll
+     surface entirely - there is nothing left for the browser to pan. */
+  position: fixed;
+  inset: 0;
+  width: 100%;
 }
 
 /* iOS Safari: keep the app from rubber-banding the whole page, and respect
