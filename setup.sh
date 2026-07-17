@@ -1,37 +1,25 @@
 #!/usr/bin/env bash
-# Quick-start setup for XRA on a fresh Linux VPS, with real TLS out of the box.
+# Quick-start setup for XRA on a fresh Linux VPS.
 #
 # Installs Docker if missing, generates throwaway secrets into .env (replace
 # them with real ones before you actually open this up to real users — see
-# DEPLOY.md), and brings the whole stack up with docker compose — including
-# Caddy, which gets a genuine Let's Encrypt certificate automatically.
+# DEPLOY.md), and brings the whole stack up with docker compose.
 #
 # Usage:
 #   ./setup.sh [host]
 #
-# [host] is either:
-#   - an IP (default: 185.182.9.183, this VPS) — a free sslip.io hostname
-#     that resolves back to that IP is used so Let's Encrypt has something
-#     to issue a real cert for (it can't issue one for a bare IP), or
-#   - a real domain/subdomain you already own and have pointed at this VPS,
-#     e.g. ./setup.sh chat.yourdomain.com
+# [host] is the IP or domain the frontend will be reached at (used to set
+# CORS_ORIGINS so the browser is allowed to talk to the API). Defaults to
+# 185.182.9.183, this VPS's IP. Pass a domain instead once you have one:
+#   ./setup.sh chat.yourdomain.com
 
 set -euo pipefail
 
 HOST="${1:-185.182.9.183}"
-
-# A bare IPv4 gets turned into a free sslip.io hostname; anything else
-# (assumed to already be a domain) is used as-is.
-if [[ "$HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  XRA_DOMAIN="${HOST//./-}.sslip.io"
-else
-  XRA_DOMAIN="$HOST"
-fi
-
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
-echo "==> XRA setup starting (domain: $XRA_DOMAIN)"
+echo "==> XRA setup starting (host: $HOST)"
 
 # --- 1. Docker ---
 if ! command -v docker &> /dev/null; then
@@ -57,9 +45,7 @@ fi
 
 # --- 2. .env with generated (temporary!) secrets ---
 if [ -f .env ]; then
-  echo "!! .env already exists. If it's from before this script started setting up"
-  echo "   TLS/Caddy, it won't have XRA_DOMAIN or an https:// CORS_ORIGINS in it,"
-  echo "   and Caddy will fail. Run 'rm .env' and re-run this script to regenerate it."
+  echo "==> .env already exists, leaving it as-is (delete it first if you want fresh secrets)"
 else
   echo "==> Generating .env with temporary secrets"
   cp .env.example .env
@@ -70,8 +56,7 @@ else
   sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${POSTGRES_PASSWORD}|" .env
   sed -i "s|^JWT_ACCESS_SECRET=.*|JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}|" .env
   sed -i "s|^JWT_REFRESH_SECRET=.*|JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}|" .env
-  sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=https://${XRA_DOMAIN}|" .env
-  echo "XRA_DOMAIN=${XRA_DOMAIN}" >> .env
+  sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=http://${HOST}:8080|" .env
 
   echo "    Wrote .env — these are throwaway secrets, good enough for testing."
   echo "    Generate real ones before letting real users sign up (see DEPLOY.md)."
@@ -99,14 +84,8 @@ echo "==> Applying database migrations"
 docker compose exec -T backend npx prisma migrate deploy
 
 echo ""
-echo "==> Done. Open: https://${XRA_DOMAIN}"
-echo "    (Caddy is fetching a Let's Encrypt cert on first request — if you see a"
-echo "    cert warning, wait ~15s and reload once.)"
+echo "==> Done. Open: http://${HOST}:8080"
 echo "    Logs:    docker compose logs -f"
 echo "    Stop:    docker compose down"
-echo ""
-echo "    Firewall: make sure ports 80 and 443 are open (not 8080/4000 — those"
-echo "    aren't exposed anymore, Caddy is the only entry point now):"
-echo "      ufw allow 80 && ufw allow 443"
-echo ""
-echo "    Secrets are still temporary/generated — see DEPLOY.md before real users sign up."
+echo "    This is plain HTTP with temp secrets — fine for testing, not for real users."
+echo "    See DEPLOY.md for TLS + real secrets before going live."
