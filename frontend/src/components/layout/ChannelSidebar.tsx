@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppStore } from "../../store/app";
+import { useAuthStore } from "../../store/auth";
 import { useUiStore } from "../../store/ui";
 import { getGuild, listMembers } from "../../api/guilds";
 import { openDm } from "../../api/dms";
@@ -24,6 +25,7 @@ export default function ChannelSidebar() {
   const unreadChannelIds = useAppStore((s) => s.unreadChannelIds);
   const clearUnread = useAppStore((s) => s.clearUnread);
   const clearMentionCount = useAppStore((s) => s.clearMentionCount);
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
   useEffect(() => {
     if (!guildId) return;
@@ -111,8 +113,11 @@ export default function ChannelSidebar() {
         </div>
         <div className="channel-category">Direct Messages</div>
         {dmChannels.map((c) => {
-          const other = c.members?.find((m) => m.user)?.user;
-          const label = c.type === "GROUP_DM" ? c.name || groupLabel(c) : other ? `${other.username}` : "Unknown";
+          // Must exclude the current user, not just grab the first member
+          // with a populated .user - otherwise a DM can end up displaying
+          // your own name/avatar instead of the other participant's.
+          const other = c.members?.find((m) => m.user && m.userId !== currentUserId)?.user;
+          const label = c.type === "GROUP_DM" ? c.name || groupLabel(c, currentUserId) : other ? `${other.username}` : "Unknown";
           return (
             <div
               key={c.id}
@@ -142,8 +147,13 @@ export default function ChannelSidebar() {
   );
 }
 
-function groupLabel(c: { members?: { user: { username: string } }[] }): string {
-  return (c.members ?? []).map((m) => m.user.username).join(", ") || "Group DM";
+function groupLabel(c: { members?: { userId: string; user: { username: string } }[] }, currentUserId?: string): string {
+  return (
+    (c.members ?? [])
+      .filter((m) => m.userId !== currentUserId)
+      .map((m) => m.user.username)
+      .join(", ") || "Group DM"
+  );
 }
 
 function ChannelRow({

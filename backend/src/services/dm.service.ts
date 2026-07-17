@@ -3,6 +3,12 @@ import { generateSnowflake } from "../utils/snowflake";
 import { AppError } from "../middleware/errorHandler";
 import { isBlocked } from "./friend.service";
 
+const DM_MEMBER_INCLUDE = {
+  members: {
+    include: { user: { select: { id: true, username: true, discriminator: true, avatarUrl: true, status: true, customStatus: true } } },
+  },
+} as const;
+
 export async function getOrCreateDmChannel(userId: string, otherUserId: string) {
   if (userId === otherUserId) throw new AppError(400, "Can't DM yourself");
   if (await isBlocked(userId, otherUserId)) throw new AppError(403, "You can't message this user");
@@ -13,7 +19,7 @@ export async function getOrCreateDmChannel(userId: string, otherUserId: string) 
       members: { some: { userId } },
       AND: { members: { some: { userId: otherUserId } } },
     },
-    include: { members: true },
+    include: DM_MEMBER_INCLUDE,
   });
   if (existing && existing.members.length === 2) return existing;
 
@@ -24,7 +30,7 @@ export async function getOrCreateDmChannel(userId: string, otherUserId: string) 
       name: "",
       members: { create: [{ userId }, { userId: otherUserId }] },
     },
-    include: { members: true },
+    include: DM_MEMBER_INCLUDE,
   });
 }
 
