@@ -33,12 +33,27 @@ export default function GuildView() {
   if (!channel) return <main className="chat-column empty-state">Pick a channel to get started.</main>;
 
   async function copyInvite() {
+    let invite;
     try {
-      const invite = await createInvite(guildId!, channelId!);
-      await navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.code}`);
-      alert("Invite link copied to clipboard!");
+      invite = await createInvite(guildId!, channelId!);
     } catch {
       alert("Could not create invite");
+      return;
+    }
+
+    const link = `${window.location.origin}/invite/${invite.code}`;
+    try {
+      // The Clipboard API only exists in a secure context (HTTPS or
+      // localhost) - on a plain-HTTP deployment (no domain/TLS yet),
+      // navigator.clipboard is undefined here. Fall back to showing the
+      // link so the invite - already created successfully at this point -
+      // can still be copied by hand instead of surfacing a false "invite
+      // creation failed" error.
+      if (!navigator.clipboard) throw new Error("Clipboard API unavailable");
+      await navigator.clipboard.writeText(link);
+      alert("Invite link copied to clipboard!");
+    } catch {
+      prompt("Invite link (copy this):", link);
     }
   }
 
