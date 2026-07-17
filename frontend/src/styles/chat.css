@@ -9,7 +9,14 @@
 .message-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  /* column-gap (avatar <-> body) needs to stay 16px, but plain "gap" also
+     applies between wrapped flex lines - since the reply-preview line
+     forces a wrap onto its own line above the avatar+body line, that was
+     adding a full 16px of vertical space on top of reply-preview's own
+     margin, pushing it far looser than Discord's actual tight hook-in
+     spacing. Splitting the two keeps the horizontal gap intact. */
+  column-gap: 16px;
+  row-gap: 0;
   padding: 2px 16px;
   position: relative;
 }
