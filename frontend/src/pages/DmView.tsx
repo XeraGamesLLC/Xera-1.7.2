@@ -43,7 +43,13 @@ export default function DmView() {
         {others[0] && <Avatar url={others[0].avatarUrl} name={title} size={24} status={presence[others[0].id] ?? others[0].status} />}
         <span>{title}</span>
       </div>
-      <MessageList channelId={channel.id} guildId={null} onEdit={(m) => setEditingMessage(m)} onReply={(m) => setReplyingTo(m)} />
+      <MessageList
+        channelId={channel.id}
+        guildId={null}
+        dmMembers={channel.members}
+        onEdit={(m) => setEditingMessage(m)}
+        onReply={(m) => setReplyingTo(m)}
+      />
       <MessageInput
         channelId={channel.id}
         channelName={title}
