@@ -63,16 +63,21 @@ else
 fi
 
 # --- 3. Bring the stack up ---
+# --wait blocks here until every service with a healthcheck (postgres, redis,
+# backend) actually reports healthy — not just "started" — and fails loudly
+# instead of racing ahead into a container that's still crash-looping.
 echo "==> Building and starting containers (this takes a few minutes the first time)"
-docker compose up -d --build
-
-echo "==> Waiting for the backend to be ready"
-for i in $(seq 1 30); do
-  if docker compose exec -T backend node -e "require('http').get('http://localhost:4000/health', r => process.exit(r.statusCode===200?0:1)).on('error', () => process.exit(1))" &> /dev/null; then
-    break
-  fi
-  sleep 2
-done
+if ! docker compose up -d --build --wait --wait-timeout 180; then
+  echo ""
+  echo "!! A service didn't become healthy. Recent backend logs:" >&2
+  echo "-----------------------------------------------------------" >&2
+  docker compose logs backend --tail 100 >&2
+  echo "-----------------------------------------------------------" >&2
+  echo "Common causes: .env wasn't found next to docker-compose.yml (run this" >&2
+  echo "script from the repo root), or a secret got mangled by a previous" >&2
+  echo "partial run — try 'rm .env' and re-running this script." >&2
+  exit 1
+fi
 
 # --- 4. Run database migrations ---
 echo "==> Applying database migrations"
