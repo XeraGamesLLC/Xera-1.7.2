@@ -30,6 +30,7 @@ import sharp from "sharp";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { nanoid } from "nanoid";
+import { env } from "../config/env";
 
 const router = Router();
 router.use(requireAuth);
@@ -91,6 +92,8 @@ router.post("/:guildId/icon", uploadLimiter, guildIconUpload.single("icon"), asy
       throw permErr;
     }
 
+    const previous = await prisma.guild.findUnique({ where: { id: req.params.guildId }, select: { iconUrl: true } });
+
     const processedPath = path.join(path.dirname(req.file.path), `${nanoid(24)}.png`);
     try {
       await sharp(req.file.path).resize(256, 256, { fit: "cover" }).png().toFile(processedPath);
@@ -102,6 +105,14 @@ router.post("/:guildId/icon", uploadLimiter, guildIconUpload.single("icon"), asy
 
     const iconUrl = `/uploads/guild-icons/${path.basename(processedPath)}`;
     const guild = await guildService.updateGuild(req.params.guildId, { iconUrl });
+
+    // Same cleanup as avatar re-uploads: the old icon file is never
+    // referenced again once the guild row points at the new one.
+    if (previous?.iconUrl?.startsWith("/uploads/guild-icons/")) {
+      const oldPath = path.join(env.UPLOAD_DIR, previous.iconUrl.slice("/uploads/".length));
+      await fs.unlink(oldPath).catch(() => undefined);
+    }
+
     emitToGuild(req.params.guildId, "guild:update", { guild });
     res.json({ guild });
   } catch (err) {

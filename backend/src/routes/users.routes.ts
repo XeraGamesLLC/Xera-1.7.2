@@ -11,6 +11,7 @@ import { updateProfileSchema, updateStatusSchema, lookupUserSchema } from "../va
 import { prisma } from "../lib/prisma";
 import { sanitizeUser } from "../services/auth.service";
 import { AppError } from "../middleware/errorHandler";
+import { env } from "../config/env";
 
 const router = Router();
 
@@ -39,6 +40,8 @@ router.post("/me/avatar", requireAuth, uploadLimiter, avatarUpload.single("avata
   try {
     if (!req.file) throw new AppError(400, "No file uploaded");
 
+    const previous = await prisma.user.findUnique({ where: { id: req.userId }, select: { avatarUrl: true } });
+
     // Re-encode through sharp: strips EXIF/metadata, normalizes format, and
     // guards against polyglot files (e.g. an image with embedded script
     // content) since the output is always a freshly rendered PNG. The output
@@ -57,6 +60,15 @@ router.post("/me/avatar", requireAuth, uploadLimiter, avatarUpload.single("avata
 
     const avatarUrl = `/uploads/avatars/${path.basename(processedPath)}`;
     const user = await prisma.user.update({ where: { id: req.userId }, data: { avatarUrl } });
+
+    // The old avatar file is never referenced again once the DB row points
+    // at the new one - without this it just accumulates on disk forever,
+    // one orphaned file per re-upload.
+    if (previous?.avatarUrl?.startsWith("/uploads/avatars/")) {
+      const oldPath = path.join(env.UPLOAD_DIR, previous.avatarUrl.slice("/uploads/".length));
+      await fs.unlink(oldPath).catch(() => undefined);
+    }
+
     res.json({ user: sanitizeUser(user) });
   } catch (err) {
     next(err);
