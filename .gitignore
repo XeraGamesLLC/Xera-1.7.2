@@ -1,0 +1,30 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+npm-debug.log*
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/uploads/
+backend/prisma/dev.db
+backend/generated/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local Redis persistence dump (created by redis-server if run from this dir during dev)
+dump.rdb
+
+# Docker volumes (local dev)
+docker/pgdata/
+docker/redisdata/
