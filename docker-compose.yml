@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: xra
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xra_dev_password}
+      POSTGRES_DB: xra
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xra"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      DATABASE_URL: postgresql://xra:${POSTGRES_PASSWORD:-xra_dev_password}@postgres:5432/xra?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set a long random secret in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set a different long random secret in .env}
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 30d
+      UPLOAD_DIR: /app/uploads
+      MAX_AVATAR_SIZE_MB: 8
+      MAX_ATTACHMENT_SIZE_MB: 25
+      ANTI_VPN_ENABLED: ${ANTI_VPN_ENABLED:-false}
+      ANTI_VPN_API_KEY: ${ANTI_VPN_API_KEY:-}
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX: 100
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:

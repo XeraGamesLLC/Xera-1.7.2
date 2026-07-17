@@ -1,0 +1,38 @@
+import "dotenv/config";
+import { z } from "zod";
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  PORT: z.coerce.number().default(4000),
+  CORS_ORIGINS: z.string().default("http://localhost:5173"),
+
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  REDIS_URL: z.string().min(1, "REDIS_URL is required"),
+
+  JWT_ACCESS_SECRET: z.string().min(16, "JWT_ACCESS_SECRET must be set to a long random value"),
+  JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET must be set to a long random value"),
+  JWT_ACCESS_TTL: z.string().default("15m"),
+  JWT_REFRESH_TTL: z.string().default("30d"),
+
+  UPLOAD_DIR: z.string().default("./uploads"),
+  MAX_AVATAR_SIZE_MB: z.coerce.number().default(8),
+  MAX_ATTACHMENT_SIZE_MB: z.coerce.number().default(25),
+
+  ANTI_VPN_ENABLED: z.coerce.boolean().default(false),
+  ANTI_VPN_API_KEY: z.string().optional().default(""),
+
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60_000),
+  RATE_LIMIT_MAX: z.coerce.number().default(100),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  // Fail fast and loud — a misconfigured secret in prod is worse than a crash on boot.
+  console.error("Invalid environment configuration:", parsed.error.flatten().fieldErrors);
+  process.exit(1);
+}
+
+export const env = parsed.data;
+
+export const corsOrigins = env.CORS_ORIGINS.split(",").map((origin) => origin.trim());

@@ -1,0 +1,418 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// All IDs are app-generated Discord-style "snowflakes" (see src/utils/snowflake.ts) —
+// 64-bit, time-sortable, stored as strings. This gives free chronological ordering
+// for messages without a separate createdAt index and matches old Discord's ID scheme.
+
+enum UserStatus {
+  ONLINE
+  IDLE
+  DND
+  INVISIBLE
+  OFFLINE
+}
+
+enum ChannelType {
+  TEXT
+  VOICE // structural stub for now — no media pipeline wired up yet (see CHECKLIST.md)
+  DM
+  GROUP_DM
+}
+
+enum OverwriteTarget {
+  ROLE
+  MEMBER
+}
+
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum AuditAction {
+  MEMBER_KICK
+  MEMBER_BAN
+  MEMBER_UNBAN
+  MEMBER_TIMEOUT
+  MEMBER_ROLE_UPDATE
+  MEMBER_NICK_UPDATE
+  CHANNEL_CREATE
+  CHANNEL_UPDATE
+  CHANNEL_DELETE
+  ROLE_CREATE
+  ROLE_UPDATE
+  ROLE_DELETE
+  MESSAGE_DELETE
+  GUILD_UPDATE
+  INVITE_CREATE
+  INVITE_DELETE
+  EMOJI_CREATE
+  EMOJI_DELETE
+}
+
+model User {
+  id            String     @id
+  username      String
+  discriminator String // 4-digit tag, e.g. "0001" — old-Discord style username#tag
+  email         String     @unique
+  passwordHash  String
+  avatarUrl     String?
+  bannerUrl     String?
+  aboutMe       String?
+  status        UserStatus @default(OFFLINE)
+  customStatus  String?
+  isVerified    Boolean    @default(false)
+  isSystem      Boolean    @default(false) // reserved for future system/bot accounts
+
+  // Security / anti-abuse
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  signupIp            String?
+  lastLoginIp         String?
+  lastLoginAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens     RefreshToken[]
+  ownedGuilds       Guild[]                @relation("GuildOwner")
+  memberships       GuildMember[]
+  messages          Message[]
+  reactions         Reaction[]
+  channelMemberships ChannelMember[]
+  sentFriendReqs    Friendship[]           @relation("FriendRequester")
+  receivedFriendReqs Friendship[]          @relation("FriendAddressee")
+  createdInvites    Invite[]
+  bansIssued        Ban[]                  @relation("BanIssuedBy")
+  bansReceived      Ban[]                  @relation("BanTarget")
+  auditLogEntries   AuditLogEntry[]
+  readStates        ReadState[]
+  emailVerification EmailVerificationToken?
+  passwordResets    PasswordResetToken[]
+
+  @@unique([username, discriminator])
+  @@index([email])
+}
+
+model RefreshToken {
+  id        String   @id
+  userId    String
+  tokenHash String   @unique
+  userAgent String?
+  ip        String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        String   @id
+  userId    String   @unique
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Guild {
+  id          String   @id
+  name        String
+  iconUrl     String?
+  bannerUrl   String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner      User            @relation("GuildOwner", fields: [ownerId], references: [id])
+  members    GuildMember[]
+  roles      Role[]
+  categories Category[]
+  channels   Channel[]
+  invites    Invite[]
+  bans       Ban[]
+  emojis     CustomEmoji[]
+  auditLog   AuditLogEntry[]
+
+  @@index([ownerId])
+}
+
+model GuildMember {
+  id       String    @id
+  guildId  String
+  userId   String
+  nickname String?
+  joinedAt DateTime  @default(now())
+
+  isTimedOut   Boolean   @default(false)
+  timeoutUntil DateTime?
+
+  guild Guild            @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roles GuildMemberRole[]
+
+  @@unique([guildId, userId])
+  @@index([userId])
+}
+
+model Role {
+  id          String  @id
+  guildId     String
+  name        String
+  color       Int     @default(0) // hex as int, 0 = default/no color
+  position    Int     @default(0) // higher = more senior in hierarchy
+  permissions BigInt  @default(0) // bitfield, see src/utils/permissions.ts
+  hoist       Boolean @default(false) // show separately in member list
+  mentionable Boolean @default(false)
+  isDefault   Boolean @default(false) // the @everyone role
+
+  guild   Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  members GuildMemberRole[]
+  overwrites ChannelPermissionOverwrite[]
+
+  @@index([guildId])
+}
+
+model GuildMemberRole {
+  guildMemberId String
+  roleId        String
+
+  guildMember GuildMember @relation(fields: [guildMemberId], references: [id], onDelete: Cascade)
+  role        Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([guildMemberId, roleId])
+  @@index([roleId])
+}
+
+model Category {
+  id       String @id
+  guildId  String
+  name     String
+  position Int    @default(0)
+
+  guild    Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channels Channel[]
+
+  @@index([guildId])
+}
+
+model Channel {
+  id              String      @id
+  guildId         String? // null for DM / GROUP_DM channels
+  categoryId      String?
+  type            ChannelType @default(TEXT)
+  name            String
+  topic           String?
+  position        Int         @default(0)
+  slowmodeSeconds Int         @default(0)
+  isNsfw          Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+
+  guild      Guild?    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  messages   Message[]
+  overwrites ChannelPermissionOverwrite[]
+  members    ChannelMember[] // participants, used for DM / GROUP_DM
+  invites    Invite[]
+  readStates ReadState[]
+
+  @@index([guildId])
+  @@index([categoryId])
+}
+
+// Only populated for DM / GROUP_DM channels — tracks who's in the conversation
+model ChannelMember {
+  channelId String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, userId])
+  @@index([userId])
+}
+
+model ChannelPermissionOverwrite {
+  id         String          @id
+  channelId  String
+  targetType OverwriteTarget
+  targetId   String // roleId or userId depending on targetType
+  allow      BigInt          @default(0)
+  deny       BigInt          @default(0)
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  role    Role?   @relation(fields: [targetId], references: [id], map: "overwrite_role_fk", onDelete: Cascade)
+
+  @@unique([channelId, targetType, targetId])
+}
+
+model Message {
+  id        String   @id
+  channelId String
+  authorId  String
+  content   String   @db.Text
+  replyToId String?
+  pinned    Boolean  @default(false)
+  editedAt  DateTime?
+  deletedAt DateTime? // soft delete, keeps audit trail
+  createdAt DateTime @default(now())
+
+  channel     Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replyTo     Message?     @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies     Message[]    @relation("MessageReply")
+  attachments Attachment[]
+  reactions   Reaction[]
+
+  @@index([channelId, createdAt])
+  @@index([authorId])
+}
+
+model Attachment {
+  id          String   @id
+  // Nullable: an attachment is uploaded first (via REST), then linked to a
+  // message when the message is created/sent — see message.service.ts.
+  messageId   String?
+  uploaderId  String
+  url         String
+  filename    String
+  contentType String
+  size        Int
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+
+  message Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+model Reaction {
+  id        String  @id
+  messageId String
+  userId    String
+  // Unicode emoji char, or "custom:<emojiId>" for server emoji
+  emoji     String
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+model CustomEmoji {
+  id        String   @id
+  guildId   String
+  name      String
+  imageUrl  String
+  createdBy String
+  createdAt DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, name])
+}
+
+model Friendship {
+  id          String       @id
+  requesterId String
+  addresseeId String
+  status      FriendStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId])
+}
+
+model Invite {
+  code      String    @id
+  guildId   String
+  channelId String
+  createdBy String
+  maxUses   Int? // null = unlimited
+  uses      Int       @default(0)
+  expiresAt DateTime? // null = never
+  createdAt DateTime  @default(now())
+
+  guild   Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  creator User    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([guildId])
+}
+
+model Ban {
+  id        String   @id
+  guildId   String
+  userId    String
+  reason    String?
+  bannedBy  String
+  createdAt DateTime @default(now())
+
+  guild  Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user   User  @relation("BanTarget", fields: [userId], references: [id], onDelete: Cascade)
+  issuer User  @relation("BanIssuedBy", fields: [bannedBy], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+}
+
+model AuditLogEntry {
+  id        String      @id
+  guildId   String
+  actorId   String
+  action    AuditAction
+  targetId  String?
+  reason    String?
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  actor User  @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+}
+
+// Tracks per-user read position per channel, used for unread badges / mention counts
+model ReadState {
+  userId            String
+  channelId         String
+  lastReadMessageId String?
+  mentionCount      Int      @default(0)
+  updatedAt         DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@id([userId, channelId])
+}
