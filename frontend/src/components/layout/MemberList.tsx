@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useAppStore } from "../../store/app";
 import { useUiStore } from "../../store/ui";
 import Avatar from "../common/Avatar";
+import { CloseIcon } from "../common/Icon";
 
 export default function MemberList() {
   const { guildId } = useParams();
@@ -9,8 +10,26 @@ export default function MemberList() {
   const members = useAppStore((s) => (guildId ? s.members[guildId] ?? [] : []));
   const presence = useAppStore((s) => s.presence);
   const openModal = useUiStore((s) => s.openModal);
+  const toggleMemberList = useUiStore((s) => s.toggleMemberList);
 
-  if (!guildId) return <aside className="member-list" style={{ display: isOpen ? "block" : undefined }} />;
+  // On mobile this panel is a fixed overlay that sits on top of the chat
+  // header, covering the same "Members" button that opened it - without its
+  // own close control there was no way to dismiss it once open. Hidden on
+  // desktop via CSS, where the header's toggle button already works fine.
+  const closeButton = (
+    <div className="member-list-header">
+      <span>Members</span>
+      <button className="icon-btn" onClick={toggleMemberList} title="Close"><CloseIcon size={16} /></button>
+    </div>
+  );
+
+  if (!guildId) {
+    return (
+      <aside className="member-list" style={{ display: isOpen ? "block" : undefined }}>
+        {closeButton}
+      </aside>
+    );
+  }
 
   const withStatus = members.map((m) => ({ ...m, liveStatus: presence[m.userId] ?? m.user.status }));
   const online = withStatus.filter((m) => m.liveStatus !== "OFFLINE" && m.liveStatus !== "INVISIBLE");
@@ -30,6 +49,7 @@ export default function MemberList() {
 
   return (
     <aside className="member-list">
+      {closeButton}
       {[...hoistedGroups.entries()].map(([roleName, group]) => (
         <MemberGroup key={roleName} label={`${roleName} - ${group.length}`} members={group} onSelect={(id) => openModal("user-profile", { userId: id, guildId })} />
       ))}

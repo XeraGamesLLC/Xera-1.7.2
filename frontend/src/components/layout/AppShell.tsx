@@ -35,7 +35,13 @@ export default function AppShell() {
 
   return (
     <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""} ${isMemberListOpen ? "member-list-open" : ""}`}>
-      <div className="sidebar-scrim" onClick={() => useUiStore.getState().setMobilePanel("chat")} />
+      <div
+        className="sidebar-scrim"
+        onClick={() => {
+          useUiStore.getState().setMobilePanel("chat");
+          if (useUiStore.getState().isMemberListOpen) useUiStore.getState().toggleMemberList();
+        }}
+      />
       <ServerRail />
       <ChannelSidebar key={guildId ?? "dm"} />
       <Outlet />

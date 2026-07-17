@@ -158,3 +158,49 @@ export function ImageIcon(props: IconProps) {
     </Base>
   );
 }
+
+// Discord-accurate status badges: shape-differentiated, not just color, so
+// they're distinguishable for colorblind users (a plain colored dot fails
+// red/green colorblindness specifically, which is the most common form —
+// online/DND being red-vs-green is exactly the pair that collides).
+// `cutout` punches through to the surrounding background color so the badge
+// reads clearly against an avatar image sitting behind it, same purpose the
+// old border-only dot served.
+export function StatusIcon({ status, size = 10, cutout = "var(--bg-dark)" }: { status: string; size?: number; cutout?: string }) {
+  const fill = { fill: cutout };
+  switch (status) {
+    case "ONLINE":
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" aria-label="Online">
+          <circle cx="10" cy="10" r="10" style={fill} />
+          <circle cx="10" cy="10" r="7" fill="var(--online)" />
+        </svg>
+      );
+    case "IDLE":
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" aria-label="Idle">
+          <circle cx="10" cy="10" r="10" style={fill} />
+          <circle cx="10" cy="10" r="7" fill="var(--idle)" />
+          <circle cx="6.5" cy="6.5" r="6" style={fill} />
+        </svg>
+      );
+    case "DND":
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" aria-label="Do Not Disturb">
+          <circle cx="10" cy="10" r="10" style={fill} />
+          <circle cx="10" cy="10" r="7" fill="var(--dnd)" />
+          <rect x="5.5" y="8.5" width="9" height="3" rx="1.5" style={fill} />
+        </svg>
+      );
+    case "OFFLINE":
+    case "INVISIBLE":
+    default:
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" aria-label="Offline">
+          <circle cx="10" cy="10" r="10" style={fill} />
+          <circle cx="10" cy="10" r="7" fill="var(--offline)" />
+          <circle cx="10" cy="10" r="3.5" style={fill} />
+        </svg>
+      );
+  }
+}

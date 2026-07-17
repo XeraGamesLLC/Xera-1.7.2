@@ -90,7 +90,12 @@ function handleConnection(socket: Socket) {
   socket.on("disconnect", async () => {
     const isFullyOffline = await trackDisconnect(userId);
     if (isFullyOffline) {
-      await prisma.user.update({ where: { id: userId }, data: { status: "OFFLINE" } }).catch(() => undefined);
+      // "Offline" here is purely a live/derived state (no active socket
+      // connections, tracked in Redis by trackConnect/trackDisconnect) - it
+      // must never be written to User.status, which is the user's actual
+      // chosen preference (ONLINE/IDLE/DND/INVISIBLE). Persisting "OFFLINE"
+      // here used to clobber that preference on every disconnect, so it was
+      // always lost and reset to ONLINE the next time they logged back in.
       broadcastPresence(userId, joinedGuildIds, "OFFLINE");
     }
   });
@@ -108,6 +113,10 @@ function handleConnection(socket: Socket) {
     const isFirstConnection = await trackConnect(userId);
     if (isFirstConnection) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
+      // The DB default for a brand-new account is OFFLINE (accurate before
+      // their first-ever connection) - flip that one-time default to ONLINE
+      // on first connect. Any other stored value here is a real preference
+      // the user explicitly chose and must be left untouched.
       if (user && user.status === "OFFLINE") {
         await prisma.user.update({ where: { id: userId }, data: { status: "ONLINE" } });
       }

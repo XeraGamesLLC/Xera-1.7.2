@@ -96,11 +96,25 @@
 @media (max-width: 600px) {
   .modal-card.wide {
     grid-template-columns: 1fr;
+    /* Stacking sidebar-above-content turns them into two grid rows instead
+       of two columns in one row. Without this, the leftover space from
+       min-height:500px (sized for the desktop side-by-side layout) gets
+       distributed onto the sidebar's auto-sized row, and flexbox's default
+       align-items:stretch then stretches every tab item to match - the
+       "elongated tabs" bug. auto/1fr rows plus min-height:0 keeps the
+       sidebar sized to its actual content and lets the content row absorb
+       any extra space instead. */
+    grid-template-rows: auto 1fr;
+    min-height: 0;
     max-height: 95vh;
   }
   .modal-sidebar {
     display: flex;
     overflow-x: auto;
     border-radius: 8px 8px 0 0;
+  }
+  .modal-sidebar-item {
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 }

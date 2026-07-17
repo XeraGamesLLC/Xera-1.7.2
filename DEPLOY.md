@@ -86,6 +86,16 @@ docker compose up -d --build
 docker compose exec backend npx prisma migrate deploy
 ```
 
+If `prisma migrate deploy` errors about a migration history mismatch (happens if the migration folder was ever rewritten upstream, not just extended), the database needs a full reset to pick it up:
+
+```bash
+docker compose down -v
+docker compose up -d --build
+docker compose exec backend npx prisma migrate deploy
+```
+
+**`-v` deletes every named volume** - not just the Postgres data, but the `uploads` volume too (avatars, custom emoji, message attachments, cached embed images - everything under `UPLOAD_DIR`). Never run `docker compose down -v` as a routine step; only reach for it when you specifically intend to wipe all data, and use plain `docker compose down` (no `-v`) for everything else. There's no partial version of this - it's all or nothing.
+
 ## 9. Scaling past one server
 
 The Socket.IO layer already uses the Redis adapter (`backend/src/sockets/index.ts`), so running multiple backend containers behind a load balancer with sticky-session-free WebSocket routing is a config change, not a rewrite - add a `backend` replica in `docker-compose.yml` (or move to a proper orchestrator) and put a load balancer in front. You'd want managed/clustered Postgres and Redis before pushing this hard, though - that's out of scope for the single-box setup here.

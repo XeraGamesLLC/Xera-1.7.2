@@ -209,23 +209,7 @@
   position: absolute;
   bottom: -2px;
   right: -2px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--bg-dark);
-}
-.status-dot.ONLINE {
-  background: var(--online);
-}
-.status-dot.IDLE {
-  background: var(--idle);
-}
-.status-dot.DND {
-  background: var(--dnd);
-}
-.status-dot.OFFLINE,
-.status-dot.INVISIBLE {
-  background: var(--offline);
+  display: flex;
 }
 
 /* --- Chat column --- */
@@ -287,6 +271,9 @@
      at its content's intrinsic width instead. */
   min-width: 0;
   overflow-x: hidden;
+}
+.member-list-header {
+  display: none;
 }
 .member-group-label {
   color: var(--text-muted);
@@ -404,6 +391,19 @@
   }
   .app-shell.member-list-open .member-list {
     transform: translateX(0);
+  }
+  .app-shell.member-list-open .sidebar-scrim {
+    display: block;
+  }
+  .member-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px 12px;
+    margin: -8px -8px 8px;
+    font-weight: 700;
+    color: var(--header-primary);
+    border-bottom: 1px solid var(--border-subtle);
   }
 }
 
