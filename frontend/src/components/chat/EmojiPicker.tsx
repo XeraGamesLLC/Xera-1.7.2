@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listEmojis } from "../../api/guilds";
+import { twemojiUrl } from "../../utils/twemoji";
 
 const CURATED_EMOJI = [
   "😀","😂","😅","😊","😉","😍","😘","😜","🤔","😎","😢","😭","😡","😱","🥳","🤯",
@@ -29,7 +30,7 @@ export default function EmojiPicker({ guildId, onSelect, onClose }: Props) {
       ))}
       {CURATED_EMOJI.map((e) => (
         <button key={e} onClick={() => onSelect(e)}>
-          {e}
+          <img src={twemojiUrl(e)} alt={e} draggable={false} />
         </button>
       ))}
     </div>

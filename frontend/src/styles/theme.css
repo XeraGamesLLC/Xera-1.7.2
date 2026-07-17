@@ -107,6 +107,16 @@ a:hover {
   background: transparent;
 }
 
+/* Twemoji images — inline with text at roughly the type's cap height,
+   matching how Discord sizes its own emoji rendering. Used in message
+   content, reaction pills/quick-react buttons, and the emoji picker. */
+img.emoji {
+  height: 1.2em;
+  width: 1.2em;
+  vertical-align: -0.2em;
+  object-fit: contain;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

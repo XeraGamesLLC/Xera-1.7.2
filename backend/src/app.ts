@@ -26,7 +26,10 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "blob:"],
+        // cdn.jsdelivr.net serves the Twemoji image set used for emoji
+        // rendering (frontend/src/utils/twemoji.ts) — the same emoji set
+        // Discord itself uses.
+        imgSrc: ["'self'", "data:", "blob:", "https://cdn.jsdelivr.net"],
         connectSrc: ["'self'", ...corsOrigins],
       },
     },

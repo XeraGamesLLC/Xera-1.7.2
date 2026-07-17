@@ -5,6 +5,7 @@ import { formatMessageTimestamp, formatShortTime } from "../../utils/time";
 import type { MentionContext } from "../../utils/markdown";
 import { emitWithAck } from "../../api/socket";
 import { ReplyIcon, EditIcon, TrashIcon } from "../common/Icon";
+import { twemojiUrl } from "../../utils/twemoji";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
 
@@ -91,7 +92,7 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
                 className={`reaction-pill ${users.includes(currentUserId) ? "mine" : ""}`}
                 onClick={() => toggleReaction(emoji)}
               >
-                {emoji} {users.length}
+                <ReactionGlyph emoji={emoji} /> {users.length}
               </button>
             ))}
           </div>
@@ -103,7 +104,7 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
       <div className="message-toolbar">
         {QUICK_REACTIONS.slice(0, 3).map((e) => (
           <button key={e} onClick={() => toggleReaction(e)} title="React">
-            {e}
+            <img src={twemojiUrl(e)} alt={e} draggable={false} className="emoji" />
           </button>
         ))}
         <button onClick={() => onReply(message)} title="Reply">
@@ -122,6 +123,16 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
       </div>
     </div>
   );
+}
+
+// Reactions store either a raw unicode emoji or "custom:<emojiId>" for a
+// server's custom emoji (see backend/prisma/schema.prisma). Custom-emoji
+// image rendering here is a pre-existing gap (no guild emoji lookup wired
+// into this component yet) — falls back to the raw string rather than
+// regressing further while wiring in Twemoji for the standard-emoji case.
+function ReactionGlyph({ emoji }: { emoji: string }) {
+  if (emoji.startsWith("custom:")) return <span>{emoji}</span>;
+  return <img src={twemojiUrl(emoji)} alt={emoji} draggable={false} className="emoji" />;
 }
 
 function groupReactions(reactions: Message["reactions"]): [string, string[]][] {
