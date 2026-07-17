@@ -6,6 +6,18 @@
      4th column to auto-place into and CSS Grid wrapped it to a new row
      below everything else instead of sitting beside the chat column. */
   grid-template-columns: 72px 240px 1fr 0px;
+  /* Without an explicit row track, the single implicit row sizes itself to
+     fit the tallest grid item's content (auto), not the container's own
+     100dvh - and grid/flex items default to min-height:auto, refusing to
+     shrink below their content's natural height. A chat column with enough
+     messages to exceed one screen would then grow the whole row (and the
+     app-shell itself) taller than the viewport instead of being clipped
+     and scrolled internally by .message-list's own overflow-y:auto -
+     pushing the header up and off-screen, with nothing actually scrollable
+     to get it back. minmax(0, 1fr) caps the row at the container height
+     and lets it shrink to 0, so overflow inside a column is finally the
+     column's problem to scroll, not the grid's problem to grow around. */
+  grid-template-rows: minmax(0, 1fr);
   background: var(--bg-base);
 }
 
@@ -34,6 +46,7 @@
   padding: 12px 0;
   gap: 8px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .server-pill {
@@ -114,6 +127,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .channel-sidebar-header {
@@ -217,6 +231,17 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* This is a CSS Grid item (a direct child of .app-shell) that is itself a
+     flex column wrapping .message-list (flex:1; overflow-y:auto). Grid and
+     flex items both default to min-height:auto, which refuses to shrink
+     below content's natural height - so with enough messages to exceed one
+     screen, this column (and the grid row/app-shell around it) grew taller
+     than the viewport instead of .message-list clipping and scrolling
+     internally. That pushed the chat header up and off-screen with nothing
+     actually scrollable to bring it back, and looked identical to "can't
+     scroll up" since the real scroll container never got a bounded height
+     to scroll within in the first place. */
+  min-height: 0;
   background: var(--bg-base);
 }
 
@@ -266,10 +291,12 @@
   background: var(--bg-dark);
   overflow-y: auto;
   padding: 16px 8px;
-  /* Grid items default to min-width:auto, which would stop this column from
-     actually shrinking to the 0px track size above and hold the layout open
-     at its content's intrinsic width instead. */
+  /* Grid items default to min-width:auto/min-height:auto, which would stop
+     this column from actually shrinking to the 0px track size above (or to
+     the row's height with enough members) and hold the layout open at its
+     content's intrinsic size instead. */
   min-width: 0;
+  min-height: 0;
   overflow-x: hidden;
 }
 .member-list-header {
