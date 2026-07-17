@@ -31,10 +31,18 @@ export default function GuildView() {
   // Same fix as DmView: landing here directly (refresh, deep link) skips
   // the sidebar click handlers that normally set mobilePanel to "chat"
   // before navigating, leaving the off-canvas sidebar open and, on
-  // mobile, intercepting touches meant for this view.
+  // mobile, intercepting touches meant for this view. Depending on
+  // [guildId, channelId] (not just running once on mount) matters because
+  // React Router reuses this same component instance when only the route
+  // params change - switching servers via the rail (which deliberately
+  // leaves mobilePanel on "channels" so the channel list is reachable)
+  // never remounts GuildView, so an empty-deps effect only fired for the
+  // very first guild visited and never again after that, leaving the
+  // channel sidebar stuck open on top of the header for every guild
+  // switch after the first.
   useEffect(() => {
     setMobilePanel("chat");
-  }, []);
+  }, [guildId, channelId]);
 
   if (!guild) return <main className="chat-column" />;
   const channel = channelId ? getGuildChannels(guild).find((c) => c.id === channelId) : undefined;

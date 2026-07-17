@@ -34,9 +34,13 @@ export default function DmView() {
   // intercepting every touch - unable to scroll the message list or tap
   // the hamburger to get back out. This view has to be able to correct
   // that on its own rather than depending on the caller to get it right.
+  // Depending on channelId (not just running once on mount) matters
+  // because React Router reuses this same component instance across DM
+  // conversations - an empty-deps effect only ever fixed the very first
+  // conversation opened this way, not any DM switched to afterward.
   useEffect(() => {
     setMobilePanel("chat");
-  }, []);
+  }, [channelId]);
 
   useEffect(() => {
     setReplyingTo(null);
