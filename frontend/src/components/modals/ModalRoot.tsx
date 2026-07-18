@@ -3,6 +3,7 @@ import CreateServerModal from "./CreateServerModal";
 import UserSettingsModal from "./UserSettingsModal";
 import ServerSettingsModal from "./ServerSettingsModal";
 import UserProfileModal from "./UserProfileModal";
+import ChannelModal from "./ChannelModal";
 import "../../styles/modals.css";
 
 export default function ModalRoot() {
@@ -22,6 +23,9 @@ export default function ModalRoot() {
       {activeModal === "user-settings" && <UserSettingsModal />}
       {activeModal === "server-settings" && <ServerSettingsModal guildId={props.guildId as string} />}
       {activeModal === "user-profile" && <UserProfileModal userId={props.userId as string} guildId={props.guildId as string | undefined} />}
+      {activeModal === "channel-editor" && (
+        <ChannelModal guildId={props.guildId as string} channel={props.channel as any} />
+      )}
     </div>
   );
 }

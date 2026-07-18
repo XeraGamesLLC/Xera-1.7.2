@@ -8,6 +8,7 @@ import { corsOrigins } from "../config/env";
 import { logger } from "../lib/logger";
 import { trackConnect, trackDisconnect, publicStatus } from "../services/presence.service";
 import { assertChannelPermission } from "../services/permission.service";
+import { isIpBanned } from "../services/ipBan.service";
 import { registerMessageHandlers } from "./handlers/message.handler";
 
 let io: Server | null = null;
@@ -40,6 +41,14 @@ export async function initSockets(httpServer: HttpServer) {
   io.adapter(createAdapter(pubClient, subClient));
 
   io.use(async (socket, next) => {
+    // socket.io doesn't honor Express's "trust proxy" setting, so the
+    // real client IP has to be read off x-forwarded-for by hand here,
+    // same header the reverse proxy sets that req.ip resolves from on
+    // the HTTP side.
+    const forwardedFor = socket.handshake.headers["x-forwarded-for"];
+    const ip = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor?.split(",")[0].trim()) || socket.handshake.address;
+    if (await isIpBanned(ip)) return next(new Error("This IP address has been banned from the platform."));
+
     const token = socket.handshake.auth?.token as string | undefined;
     if (!token) return next(new Error("Missing auth token"));
     const user = await verifyToken(token);

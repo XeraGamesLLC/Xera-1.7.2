@@ -26,6 +26,17 @@ enum ChannelType {
   GROUP_DM
 }
 
+// What a text channel is "for" — drives the default @everyone permission
+// overwrite applied when the channel is created/edited (see
+// applyPurposeOverwrite in channel.service.ts). NORMAL is the ordinary
+// anyone-can-type channel; ANNOUNCEMENT and RULES both restrict SEND_MESSAGES
+// to admins/owner and differ only in which icon the frontend renders for them.
+enum ChannelPurpose {
+  NORMAL
+  ANNOUNCEMENT
+  RULES
+}
+
 enum OverwriteTarget {
   ROLE
   MEMBER
@@ -247,6 +258,7 @@ model Channel {
   guildId         String? // null for DM / GROUP_DM channels
   categoryId      String?
   type            ChannelType @default(TEXT)
+  purpose         ChannelPurpose @default(NORMAL)
   name            String
   topic           String?
   position        Int         @default(0)
@@ -425,6 +437,18 @@ model Ban {
   issuer User  @relation("BanIssuedBy", fields: [bannedBy], references: [id], onDelete: Cascade)
 
   @@unique([guildId, userId])
+}
+
+// Platform-wide IP ban list — separate from Ban (which is per-guild). Only
+// the hardcoded super-admin identity (see src/utils/superAdmin.ts) can create
+// these. Checked on every request via ipBanGate before it reaches any route,
+// including login/register, so a banned IP can't just make a new account.
+model IpBan {
+  id        String   @id
+  ipAddress String   @unique
+  reason    String?
+  bannedBy  String
+  createdAt DateTime @default(now())
 }
 
 model AuditLogEntry {

@@ -140,6 +140,32 @@ export function SpeakerIcon(props: IconProps) {
   );
 }
 
+// Announcements-channel marker — a megaphone, distinct from the voice-channel
+// SpeakerIcon so the two purposes never look interchangeable at a glance.
+export function AnnouncementIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M7 10.5h2.3L17 5.5v13l-7.7-5H7z" strokeLinejoin="round" />
+      <path d="M4.5 10.5h2.5v6H5.8a1.3 1.3 0 0 1-1.3-1.3z" strokeLinejoin="round" />
+      <path d="M17 8.5a3.2 3.2 0 0 1 0 6.5" />
+      <path d="M8 16.5l.9 3" />
+    </Base>
+  );
+}
+
+// Rules-channel marker — an open book, kept visually distinct from
+// AnnouncementIcon even though both purposes share the same "read only"
+// permission behavior.
+export function RulebookIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 6c-1.6-1.1-3.8-1.6-6-1.6v13c2.2 0 4.4.5 6 1.6" strokeLinejoin="round" />
+      <path d="M12 6c1.6-1.1 3.8-1.6 6-1.6v13c-2.2 0-4.4.5-6 1.6" strokeLinejoin="round" />
+      <path d="M12 6v13" />
+    </Base>
+  );
+}
+
 export function CompassIcon(props: IconProps) {
   return (
     <Base {...props}>

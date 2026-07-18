@@ -184,8 +184,14 @@
   color: var(--header-primary);
   font-weight: 600;
 }
-.channel-row .mention-badge {
+.channel-row-trailing {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.channel-row .mention-badge {
   background: var(--danger);
   color: white;
   font-size: 11px;
@@ -194,6 +200,24 @@
   padding: 1px 6px;
   min-width: 16px;
   text-align: center;
+}
+.channel-edit-btn {
+  padding: 4px;
+  opacity: 0.7;
+}
+.channel-edit-btn:hover {
+  opacity: 1;
+}
+
+.add-channel-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  padding: 8px;
 }
 
 .user-panel {

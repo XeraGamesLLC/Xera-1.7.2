@@ -86,6 +86,35 @@
   margin: 2px;
 }
 
+.channel-purpose-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.channel-purpose-option input {
+  margin-top: 3px;
+}
+.channel-purpose-icon {
+  width: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.channel-purpose-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-normal);
+}
+.channel-purpose-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;

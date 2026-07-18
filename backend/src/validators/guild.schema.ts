@@ -30,6 +30,11 @@ export const createCategorySchema = z.object({
   name: z.string().trim().min(1).max(100),
 });
 
+// NORMAL: anyone with SEND_MESSAGES can type. ANNOUNCEMENT/RULES both
+// restrict SEND_MESSAGES to admins/owner (see applyPurposeOverwrite in
+// channel.service.ts) and only differ in which icon the frontend shows.
+const channelPurposeEnum = z.enum(["NORMAL", "ANNOUNCEMENT", "RULES"]);
+
 export const createChannelSchema = z.object({
   name: z
     .string()
@@ -38,6 +43,7 @@ export const createChannelSchema = z.object({
     .max(100)
     .regex(/^[a-z0-9-_]+$/i, "Channel names should not contain spaces or special characters"),
   type: z.enum(["TEXT", "VOICE"]).default("TEXT"),
+  purpose: channelPurposeEnum.default("NORMAL"),
   categoryId: z.string().nullable().optional(),
   topic: z.string().max(1024).nullable().optional(),
 });
@@ -45,6 +51,7 @@ export const createChannelSchema = z.object({
 export const updateChannelSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
   topic: z.string().max(1024).nullable().optional(),
+  purpose: channelPurposeEnum.optional(),
   categoryId: z.string().nullable().optional(),
   position: z.number().int().min(0).optional(),
   slowmodeSeconds: z.number().int().min(0).max(21600).optional(),

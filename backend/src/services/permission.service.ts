@@ -7,6 +7,7 @@ import {
   has,
   type PermissionFlag,
 } from "../utils/permissions";
+import { isSuperAdminUserId } from "./superAdmin.service";
 
 export async function getMemberWithRoles(guildId: string, userId: string) {
   return prisma.guildMember.findUnique({
@@ -19,6 +20,9 @@ export async function getGuildBasePermissions(guildId: string, userId: string): 
   const guild = await prisma.guild.findUnique({ where: { id: guildId } });
   if (!guild) throw new AppError(404, "Server not found");
   if (guild.ownerId === userId) return Permissions.ADMINISTRATOR;
+  // Platform super-admin: full admin in every server, even ones they haven't
+  // joined — see utils/superAdmin.ts for why this identity check is safe.
+  if (await isSuperAdminUserId(userId)) return Permissions.ADMINISTRATOR;
 
   const member = await getMemberWithRoles(guildId, userId);
   if (!member) throw new AppError(403, "You are not a member of this server");
@@ -34,6 +38,7 @@ export async function getChannelPermissions(channelId: string, userId: string): 
   const guild = await prisma.guild.findUnique({ where: { id: channel.guildId } });
   if (!guild) throw new AppError(404, "Server not found");
   if (guild.ownerId === userId) return Permissions.ADMINISTRATOR;
+  if (await isSuperAdminUserId(userId)) return Permissions.ADMINISTRATOR;
 
   const member = await getMemberWithRoles(channel.guildId, userId);
   if (!member) throw new AppError(403, "You are not a member of this server");

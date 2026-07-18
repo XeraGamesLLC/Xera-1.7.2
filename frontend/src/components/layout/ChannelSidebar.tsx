@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAppStore } from "../../store/app";
+import { useAppStore, type Channel } from "../../store/app";
 import { useAuthStore } from "../../store/auth";
 import { useUiStore } from "../../store/ui";
+import { useHasGuildPermission } from "../../hooks/useGuildPermissions";
 import { getGuild, listMembers } from "../../api/guilds";
 import { openDm } from "../../api/dms";
 import Avatar from "../common/Avatar";
 import UserPanel from "./UserPanel";
-import { GearIcon, UsersIcon, SpeakerIcon } from "../common/Icon";
+import { GearIcon, UsersIcon, SpeakerIcon, PlusIcon, EditIcon, AnnouncementIcon, RulebookIcon } from "../common/Icon";
 
 export default function ChannelSidebar() {
   const { guildId, channelId } = useParams();
@@ -49,6 +50,12 @@ export default function ChannelSidebar() {
     setMobilePanel("chat");
   }
 
+  const canManageChannels = useHasGuildPermission(guildId, "MANAGE_CHANNELS");
+
+  function editChannel(ch: Channel) {
+    openModal("channel-editor", { guildId, channel: ch });
+  }
+
   if (guildId) {
     if (!guildDetail) return <aside className="channel-sidebar" />;
     const uncategorized = guildDetail.channels ?? [];
@@ -61,15 +68,28 @@ export default function ChannelSidebar() {
           <span className="icon-btn" title="Server settings"><GearIcon /></span>
         </div>
         <div className="channel-list">
+          {canManageChannels && (
+            <button
+              type="button"
+              className="btn btn-secondary add-channel-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                openModal("channel-editor", { guildId });
+              }}
+            >
+              <PlusIcon size={14} /> Add Channel
+            </button>
+          )}
           {uncategorized.map((ch) => (
             <ChannelRow
               key={ch.id}
-              name={ch.name}
-              type={ch.type}
+              channel={ch}
               active={channelId === ch.id}
               unread={unreadChannelIds.has(ch.id)}
               mentions={mentionCounts[ch.id]}
+              canEdit={canManageChannels}
               onClick={() => selectChannel(ch.id)}
+              onEdit={() => editChannel(ch)}
             />
           ))}
           {categories.map((cat) => (
@@ -78,12 +98,13 @@ export default function ChannelSidebar() {
               {cat.channels.map((ch) => (
                 <ChannelRow
                   key={ch.id}
-                  name={ch.name}
-                  type={ch.type}
+                  channel={ch}
                   active={channelId === ch.id}
                   unread={unreadChannelIds.has(ch.id)}
                   mentions={mentionCounts[ch.id]}
+                  canEdit={canManageChannels}
                   onClick={() => selectChannel(ch.id)}
+                  onEdit={() => editChannel(ch)}
                 />
               ))}
             </div>
@@ -156,26 +177,49 @@ function groupLabel(c: { members?: { userId: string; user: { username: string } 
   );
 }
 
+function channelIcon(channel: Channel) {
+  if (channel.type === "VOICE") return <SpeakerIcon size={16} />;
+  if (channel.purpose === "ANNOUNCEMENT") return <AnnouncementIcon size={16} />;
+  if (channel.purpose === "RULES") return <RulebookIcon size={16} />;
+  return "#";
+}
+
 function ChannelRow({
-  name,
-  type,
+  channel,
   active,
   unread,
   mentions,
+  canEdit,
   onClick,
+  onEdit,
 }: {
-  name: string;
-  type: string;
+  channel: Channel;
   active: boolean;
   unread: boolean;
   mentions?: number;
+  canEdit: boolean;
   onClick: () => void;
+  onEdit: () => void;
 }) {
   return (
     <div className={`channel-row ${active ? "active" : ""} ${unread ? "unread" : ""}`} onClick={onClick}>
-      <span>{type === "VOICE" ? <SpeakerIcon size={16} /> : "#"}</span>
-      <span className="channel-name">{name}</span>
-      {!!mentions && <span className="mention-badge">{mentions}</span>}
+      <span>{channelIcon(channel)}</span>
+      <span className="channel-name">{channel.name}</span>
+      <span className="channel-row-trailing">
+        {!!mentions && <span className="mention-badge">{mentions}</span>}
+        {canEdit && (
+          <span
+            className="icon-btn channel-edit-btn"
+            title="Edit channel"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            <EditIcon size={13} />
+          </span>
+        )}
+      </span>
     </div>
   );
 }

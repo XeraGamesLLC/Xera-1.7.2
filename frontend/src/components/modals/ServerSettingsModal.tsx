@@ -25,29 +25,48 @@ import {
   listMembers,
   uploadGuildIcon,
 } from "../../api/guilds";
-import { Permissions, type PermissionFlag } from "../../utils/permissions";
+import { Permissions, hasPermission, type PermissionFlag } from "../../utils/permissions";
+import { useGuildPermissions, isSuperAdminUser } from "../../hooks/useGuildPermissions";
+import { ipBanUser } from "../../api/admin";
 import { CloseIcon, ImageIcon } from "../common/Icon";
 import { apiErrorMessage } from "../../api/client";
 
 type Tab = "overview" | "roles" | "members" | "invites" | "bans" | "audit-log";
 
+// Which permission (if any) is required just to see a given tab at all —
+// members without it never see these exist, instead of seeing a tab that
+// 403s the moment they click anything in it.
+const TAB_REQUIREMENT: Partial<Record<Tab, PermissionFlag>> = {
+  overview: "MANAGE_GUILD",
+  roles: "MANAGE_ROLES",
+  bans: "BAN_MEMBERS",
+  "audit-log": "VIEW_AUDIT_LOG",
+};
+
 export default function ServerSettingsModal({ guildId }: { guildId: string }) {
-  const [tab, setTab] = useState<Tab>("overview");
   const closeModal = useUiStore((s) => s.closeModal);
   const guild = useAppStore((s) => s.guildDetail[guildId]);
   const members = useAppStore((s) => s.members[guildId] ?? []);
   const currentUser = useAuthStore((s) => s.user)!;
   const navigate = useNavigate();
+  const permissionBits = useGuildPermissions(guildId);
+
+  const visibleTabs = (["overview", "roles", "members", "invites", "bans", "audit-log"] as Tab[]).filter((t) => {
+    const required = TAB_REQUIREMENT[t];
+    return !required || hasPermission(permissionBits, required);
+  });
+  const [tab, setTab] = useState<Tab>(visibleTabs[0] ?? "members");
 
   if (!guild) return null;
   const isOwner = guild.ownerId === currentUser.id;
+  const activeTab = visibleTabs.includes(tab) ? tab : visibleTabs[0];
 
   return (
     <div className="modal-card wide">
       <button className="modal-close" onClick={closeModal}><CloseIcon size={14} /></button>
       <div className="modal-sidebar">
-        {(["overview", "roles", "members", "invites", "bans", "audit-log"] as Tab[]).map((t) => (
-          <div key={t} className={`modal-sidebar-item ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
+        {visibleTabs.map((t) => (
+          <div key={t} className={`modal-sidebar-item ${activeTab === t ? "active" : ""}`} onClick={() => setTab(t)}>
             {t.replace("-", " ").replace(/^\w/, (c) => c.toUpperCase())}
           </div>
         ))}
@@ -85,7 +104,7 @@ export default function ServerSettingsModal({ guildId }: { guildId: string }) {
         )}
       </div>
       <div className="modal-content">
-        {tab === "overview" && (
+        {activeTab === "overview" && (
           <OverviewTab
             guildId={guildId}
             name={guild.name}
@@ -95,11 +114,11 @@ export default function ServerSettingsModal({ guildId }: { guildId: string }) {
             tagColor={guild.tagColor ?? null}
           />
         )}
-        {tab === "roles" && <RolesTab guildId={guildId} />}
-        {tab === "members" && <MembersTab guildId={guildId} members={members} currentUserId={currentUser.id} />}
-        {tab === "invites" && <InvitesTab guildId={guildId} />}
-        {tab === "bans" && <BansTab guildId={guildId} />}
-        {tab === "audit-log" && <AuditLogTab guildId={guildId} />}
+        {activeTab === "roles" && <RolesTab guildId={guildId} />}
+        {activeTab === "members" && <MembersTab guildId={guildId} members={members} currentUserId={currentUser.id} permissionBits={permissionBits} />}
+        {activeTab === "invites" && <InvitesTab guildId={guildId} />}
+        {activeTab === "bans" && <BansTab guildId={guildId} />}
+        {activeTab === "audit-log" && <AuditLogTab guildId={guildId} />}
       </div>
     </div>
   );
@@ -316,6 +335,33 @@ function RolesTab({ guildId }: { guildId: string }) {
                 }}
               />
             </div>
+            <div className="form-field">
+              <label>Role Color</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="color"
+                  value={`#${selected.color.toString(16).padStart(6, "0")}`}
+                  onChange={async (e) => {
+                    await updateRole(guildId, selected.id, { color: parseInt(e.target.value.slice(1), 16) });
+                    await refetch();
+                  }}
+                  style={{ width: 36, height: 32, padding: 0, border: "none", background: "none" }}
+                />
+                {selected.color > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ width: "auto" }}
+                    onClick={async () => {
+                      await updateRole(guildId, selected.id, { color: 0 });
+                      await refetch();
+                    }}
+                  >
+                    Reset to default
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="checkbox-row">
               <input
                 type="checkbox"
@@ -362,63 +408,121 @@ function RolesTab({ guildId }: { guildId: string }) {
   );
 }
 
-function MembersTab({ guildId, members, currentUserId }: { guildId: string; members: any[]; currentUserId: string }) {
+function MembersTab({
+  guildId,
+  members,
+  currentUserId,
+  permissionBits,
+}: {
+  guildId: string;
+  members: any[];
+  currentUserId: string;
+  permissionBits: bigint;
+}) {
   const guild = useAppStore((s) => s.guildDetail[guildId]);
   const roles = guild?.roles ?? [];
   const setMembers = useAppStore((s) => s.setMembers);
+  const currentUser = useAuthStore((s) => s.user);
+  const isSuperAdmin = isSuperAdminUser(currentUser);
+  const [ipBanBusyId, setIpBanBusyId] = useState<string | null>(null);
+  const [ipBanError, setIpBanError] = useState<string | null>(null);
+
+  const canManageRoles = hasPermission(permissionBits, "MANAGE_ROLES");
+  const canModerate = hasPermission(permissionBits, "MODERATE_MEMBERS");
+  const canKick = hasPermission(permissionBits, "KICK_MEMBERS");
+  const canBan = hasPermission(permissionBits, "BAN_MEMBERS");
 
   async function refetch() {
     setMembers(guildId, await listMembers(guildId));
   }
 
+  async function onIpBan(userId: string, label: string) {
+    if (!confirm(`Platform-wide IP ban ${label}? This blocks every known IP on file for their account and signs them out everywhere.`)) return;
+    setIpBanError(null);
+    setIpBanBusyId(userId);
+    try {
+      await ipBanUser(userId);
+    } catch (err) {
+      setIpBanError(apiErrorMessage(err, "Could not IP ban this user"));
+    } finally {
+      setIpBanBusyId(null);
+    }
+  }
+
   return (
     <div>
       <h2 style={{ marginTop: 0 }}>Members - {members.length}</h2>
-      {members.map((m) => (
-        <div key={m.id} className="settings-row">
-          <div>
-            <div style={{ fontWeight: 600 }}>{m.nickname || m.user.username}#{m.user.discriminator}</div>
+      {ipBanError && <div className="form-error">{ipBanError}</div>}
+      {members.map((m) => {
+        const isSelf = m.userId === currentUserId;
+        const showModControls = !isSelf && (canModerate || canKick || canBan);
+        return (
+          <div key={m.id} className="settings-row" style={{ flexWrap: "wrap", gap: 8 }}>
             <div>
-              {m.roles.map((r: any) => (
-                <span key={r.id} className="role-pill">{r.name}</span>
-              ))}
+              <div style={{ fontWeight: 600 }}>{m.nickname || m.user.username}#{m.user.discriminator}</div>
+              <div>
+                {m.roles.map((r: any) => (
+                  <span key={r.id} className="role-pill">{r.name}</span>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap" }}>
+              {canManageRoles && (
+                <>
+                  <select
+                    onChange={async (e) => {
+                      if (e.target.value) {
+                        await assignRole(guildId, m.userId, e.target.value);
+                        await refetch();
+                        e.target.value = "";
+                      }
+                    }}
+                    style={{ background: "var(--bg-input)", color: "var(--text-normal)", border: "none", borderRadius: 4 }}
+                  >
+                    <option value="">+ Add Role</option>
+                    {roles.filter((r) => !r.isDefault && !m.roles.some((mr: any) => mr.id === r.id)).map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                  {m.roles.filter((r: any) => !r.isDefault).map((r: any) => (
+                    <button key={r.id} className="btn btn-secondary" onClick={async () => { await removeRole(guildId, m.userId, r.id); await refetch(); }}>
+                      -{r.name}
+                    </button>
+                  ))}
+                </>
+              )}
+              {showModControls && (
+                <>
+                  {canModerate && (
+                    <button className="btn btn-secondary" onClick={async () => { await timeoutMember(guildId, m.userId, 10); await refetch(); }}>
+                      Timeout 10m
+                    </button>
+                  )}
+                  {canKick && (
+                    <button className="btn btn-secondary" onClick={async () => { await kickMember(guildId, m.userId); await refetch(); }}>
+                      Kick
+                    </button>
+                  )}
+                  {canBan && (
+                    <button className="btn btn-danger" onClick={async () => { if (confirm("Ban this member?")) { await banMember(guildId, m.userId); await refetch(); } }}>
+                      Ban
+                    </button>
+                  )}
+                </>
+              )}
+              {isSuperAdmin && !isSelf && (
+                <button
+                  className="btn btn-danger"
+                  disabled={ipBanBusyId === m.userId}
+                  onClick={() => onIpBan(m.userId, `${m.user.username}#${m.user.discriminator}`)}
+                >
+                  {ipBanBusyId === m.userId ? "Banning…" : "IP Ban"}
+                </button>
+              )}
             </div>
           </div>
-          {m.userId !== currentUserId && (
-            <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              <select
-                onChange={async (e) => {
-                  if (e.target.value) {
-                    await assignRole(guildId, m.userId, e.target.value);
-                    await refetch();
-                    e.target.value = "";
-                  }
-                }}
-                style={{ background: "var(--bg-input)", color: "var(--text-normal)", border: "none", borderRadius: 4 }}
-              >
-                <option value="">+ Add Role</option>
-                {roles.filter((r) => !r.isDefault && !m.roles.some((mr: any) => mr.id === r.id)).map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-              {m.roles.filter((r: any) => !r.isDefault).map((r: any) => (
-                <button key={r.id} className="btn btn-secondary" onClick={async () => { await removeRole(guildId, m.userId, r.id); await refetch(); }}>
-                  -{r.name}
-                </button>
-              ))}
-              <button className="btn btn-secondary" onClick={async () => { await timeoutMember(guildId, m.userId, 10); await refetch(); }}>
-                Timeout 10m
-              </button>
-              <button className="btn btn-secondary" onClick={async () => { await kickMember(guildId, m.userId); await refetch(); }}>
-                Kick
-              </button>
-              <button className="btn btn-danger" onClick={async () => { if (confirm("Ban this member?")) { await banMember(guildId, m.userId); await refetch(); } }}>
-                Ban
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

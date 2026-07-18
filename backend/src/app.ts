@@ -5,6 +5,7 @@ import path from "node:path";
 import { env, corsOrigins } from "./config/env";
 import { generalLimiter } from "./middleware/rateLimit";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { ipBanGate } from "./middleware/ipBanGate";
 
 import authRoutes from "./routes/auth.routes";
 import usersRoutes from "./routes/users.routes";
@@ -13,6 +14,7 @@ import channelsRoutes from "./routes/channels.routes";
 import friendsRoutes from "./routes/friends.routes";
 import dmsRoutes from "./routes/dms.routes";
 import invitesRoutes from "./routes/invites.routes";
+import adminRoutes from "./routes/admin.routes";
 
 export const app = express();
 
@@ -37,6 +39,7 @@ app.use(
   })
 );
 app.use(cors({ origin: corsOrigins }));
+app.use(ipBanGate);
 app.use(express.json({ limit: "256kb" }));
 app.use(generalLimiter);
 
@@ -81,6 +84,7 @@ app.use("/api/channels", channelsRoutes);
 app.use("/api/friends", friendsRoutes);
 app.use("/api/dms", dmsRoutes);
 app.use("/api/invites", invitesRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

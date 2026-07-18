@@ -20,11 +20,14 @@ export interface ChannelOverwrite {
   deny: string;
 }
 
+export type ChannelPurpose = "NORMAL" | "ANNOUNCEMENT" | "RULES";
+
 export interface Channel {
   id: string;
   guildId: string | null;
   categoryId: string | null;
   type: "TEXT" | "VOICE" | "DM" | "GROUP_DM";
+  purpose: ChannelPurpose;
   name: string;
   topic: string | null;
   position: number;

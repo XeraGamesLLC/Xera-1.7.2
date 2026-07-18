@@ -38,6 +38,16 @@ router.use(requireAuth);
 router.post("/", validate({ body: createGuildSchema }), async (req, res, next) => {
   try {
     const { guild } = await guildService.createGuild(req.userId!, req.body.name, req.body.discoverable);
+    // A live socket only joins a guild's room once, at connect time, from
+    // whatever guilds it was a member of then (see sockets/index.ts) - a
+    // guild created afterward in the same session is invisible to it until
+    // reconnect unless it's added to the room right here. Same fix already
+    // applied to the discovery-join and invite-join routes below.
+    try {
+      getIo().in(`user:${req.userId}`).socketsJoin(`guild:${guild.id}`);
+    } catch {
+      // socket server not initialized (tests) — fine, next connection will join normally
+    }
     res.status(201).json({ guild });
   } catch (err) {
     next(err);
