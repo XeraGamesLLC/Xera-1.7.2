@@ -47,7 +47,15 @@ export async function initSockets(httpServer: HttpServer) {
     // the HTTP side.
     const forwardedFor = socket.handshake.headers["x-forwarded-for"];
     const ip = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor?.split(",")[0].trim()) || socket.handshake.address;
-    if (await isIpBanned(ip)) return next(new Error("This IP address has been banned from the platform."));
+    try {
+      if (await isIpBanned(ip)) return next(new Error("This IP address has been banned from the platform."));
+    } catch (err) {
+      // Same "must never take the whole process down" reasoning as
+      // ipBanGate.ts on the HTTP side — an async io.use middleware that
+      // throws becomes an unhandled rejection, which crashes the entire
+      // Node process, not just this one connection.
+      logger.error("socket IP ban check failed open due to an error checking the ban list", { err });
+    }
 
     const token = socket.handshake.auth?.token as string | undefined;
     if (!token) return next(new Error("Missing auth token"));
