@@ -8,6 +8,7 @@ import { logout as apiLogout } from "../../api/auth";
 import { disconnectSocket } from "../../api/socket";
 import Avatar from "../common/Avatar";
 import ServerTagBadge from "../common/ServerTagBadge";
+import ImageCropperModal from "./ImageCropperModal";
 import { CloseIcon } from "../common/Icon";
 
 const STATUSES: { value: "ONLINE" | "IDLE" | "DND" | "INVISIBLE"; label: string }[] = [
@@ -27,6 +28,7 @@ export default function UserSettingsModal() {
   const [saving, setSaving] = useState(false);
   const guilds = useAppStore((s) => s.guilds);
   const taggedGuilds = guilds.filter((g) => g.tag);
+  const [cropperTarget, setCropperTarget] = useState<{ file: File; kind: "avatar" | "banner" } | null>(null);
 
   async function onPrimaryGuildChange(guildId: string) {
     const updated = await setPrimaryGuild(guildId || null);
@@ -43,17 +45,26 @@ export default function UserSettingsModal() {
     }
   }
 
-  async function onAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function onAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (e.target) e.target.value = "";
     if (!file) return;
-    const updated = await uploadAvatar(file);
-    setUser(updated);
+    setCropperTarget({ file, kind: "avatar" });
   }
 
-  async function onBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function onBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (e.target) e.target.value = "";
     if (!file) return;
-    const updated = await uploadBanner(file);
+    setCropperTarget({ file, kind: "banner" });
+  }
+
+  async function onCropConfirm(blob: Blob) {
+    if (!cropperTarget) return;
+    const { kind } = cropperTarget;
+    setCropperTarget(null);
+    const cropped = new File([blob], `${kind}.png`, { type: "image/png" });
+    const updated = kind === "avatar" ? await uploadAvatar(cropped) : await uploadBanner(cropped);
     setUser(updated);
   }
 
@@ -66,6 +77,7 @@ export default function UserSettingsModal() {
   }
 
   return (
+    <>
     <div className="modal-card">
       <button className="modal-close" onClick={closeModal}><CloseIcon size={14} /></button>
       <h1 style={{ color: "var(--header-primary)", marginTop: 0 }}>User Settings</h1>
@@ -144,5 +156,16 @@ export default function UserSettingsModal() {
         <button className="btn btn-danger" onClick={onLogout}>Log Out</button>
       </div>
     </div>
+    {cropperTarget && (
+      <ImageCropperModal
+        file={cropperTarget.file}
+        title={cropperTarget.kind === "avatar" ? "Edit Avatar" : "Edit Banner"}
+        shape={cropperTarget.kind === "avatar" ? "circle" : "rect"}
+        aspect={cropperTarget.kind === "avatar" ? 1 : 2.5}
+        onCancel={() => setCropperTarget(null)}
+        onConfirm={onCropConfirm}
+      />
+    )}
+    </>
   );
 }

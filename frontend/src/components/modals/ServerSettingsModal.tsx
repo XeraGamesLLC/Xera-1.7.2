@@ -30,6 +30,7 @@ import { useGuildPermissions, isSuperAdminUser } from "../../hooks/useGuildPermi
 import { ipBanUser } from "../../api/admin";
 import { CloseIcon, ImageIcon } from "../common/Icon";
 import { apiErrorMessage } from "../../api/client";
+import ImageCropperModal from "./ImageCropperModal";
 
 type Tab = "overview" | "roles" | "members" | "invites" | "bans" | "audit-log";
 
@@ -145,6 +146,7 @@ function OverviewTab({
   const [tagColorValue, setTagColorValue] = useState(tagColor ?? "#5865F2");
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cropperFile, setCropperFile] = useState<File | null>(null);
   const upsertGuild = useAppStore((s) => s.upsertGuild);
   const patchGuildDetail = useAppStore((s) => s.patchGuildDetail);
 
@@ -159,14 +161,19 @@ function OverviewTab({
     patchGuildDetail(guildId, guild);
   }
 
-  async function onIconChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function onIconChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (e.target) e.target.value = "";
     if (!file) return;
+    setCropperFile(file);
+  }
+
+  async function onIconCropped(blob: Blob) {
+    setCropperFile(null);
     setUploadingIcon(true);
     setError(null);
     try {
-      syncGuild(await uploadGuildIcon(guildId, file));
+      syncGuild(await uploadGuildIcon(guildId, new File([blob], "icon.png", { type: "image/png" })));
     } catch (err) {
       setError(apiErrorMessage(err, "Could not upload icon"));
     } finally {
@@ -175,6 +182,7 @@ function OverviewTab({
   }
 
   return (
+    <>
     <div>
       <h2 style={{ marginTop: 0 }}>Overview</h2>
       {error && <div className="form-error">{error}</div>}
@@ -248,6 +256,17 @@ function OverviewTab({
         Save
       </button>
     </div>
+    {cropperFile && (
+      <ImageCropperModal
+        file={cropperFile}
+        title="Edit Server Icon"
+        shape="circle"
+        aspect={1}
+        onCancel={() => setCropperFile(null)}
+        onConfirm={onIconCropped}
+      />
+    )}
+    </>
   );
 }
 

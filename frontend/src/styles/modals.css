@@ -122,6 +122,86 @@
   padding: 6px 0;
 }
 
+/* --- Image cropper (avatar / banner / icon uploads) --- */
+.cropper-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+}
+.cropper-card {
+  background: var(--bg-base);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 360px;
+  width: 100%;
+}
+.cropper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  color: var(--header-primary);
+  margin-bottom: 16px;
+}
+.cropper-header .modal-close {
+  position: static;
+}
+.cropper-viewport {
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  background: var(--bg-darkest);
+  touch-action: none;
+  cursor: grab;
+}
+.cropper-viewport.circle {
+  border-radius: 50%;
+}
+.cropper-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  user-select: none;
+  pointer-events: none;
+}
+.cropper-controls {
+  margin-top: 16px;
+}
+.cropper-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.cropper-zoom-row input[type="range"] {
+  flex: 1;
+}
+.cropper-rotate-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.cropper-rotate-row .btn {
+  width: auto;
+  flex: 1;
+  font-size: 13px;
+}
+.cropper-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.cropper-actions .btn {
+  flex: 1;
+}
+
 /* --- Profile modal --- */
 .profile-modal {
   padding: 0;
