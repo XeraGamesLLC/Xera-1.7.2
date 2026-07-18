@@ -47,7 +47,23 @@ export default function MessageList({ channelId, guildId, dmMembers, readReceipt
     });
     emitWithAck("channel:subscribe", { channelId } as any).catch(() => undefined);
     if (readReceiptUser) fetchReadStates(channelId).then((states) => setReadStates(channelId, states));
-  }, [channelId]);
+
+    // This is the one true "the user is now looking at this channel" event -
+    // clears its unread/mention state immediately (rather than depending on
+    // whichever sidebar click happened to get you here, which misses direct
+    // navigation like a guild icon's auto-redirect to its first channel) and
+    // tracks it as the active channel/guild so markUnread's "don't mark the
+    // channel I'm already looking at" guard actually has something to
+    // compare against - previously activeChannelId was never set at all.
+    const s = useAppStore.getState();
+    s.clearUnread(channelId);
+    s.clearMentionCount(channelId);
+    s.setActiveChannel(channelId);
+    s.setActiveGuild(guildId ?? null);
+    return () => {
+      useAppStore.getState().setActiveChannel(null);
+    };
+  }, [channelId, guildId]);
 
   useEffect(() => {
     const last = messages[messages.length - 1];

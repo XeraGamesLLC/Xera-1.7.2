@@ -23,6 +23,7 @@ export default function ChannelSidebar() {
   const friends = useAppStore((s) => s.friends);
   const presence = useAppStore((s) => s.presence);
   const mentionCounts = useAppStore((s) => s.mentionCounts);
+  const dmUnreadCounts = useAppStore((s) => s.dmUnreadCounts);
   const unreadChannelIds = useAppStore((s) => s.unreadChannelIds);
   const clearUnread = useAppStore((s) => s.clearUnread);
   const clearMentionCount = useAppStore((s) => s.clearMentionCount);
@@ -163,7 +164,7 @@ export default function ChannelSidebar() {
             >
               <Avatar url={other?.avatarUrl} name={label} size={24} status={c.type === "DM" ? presence[other?.id ?? ""] ?? other?.status : undefined} />
               <span className="channel-name">{label}</span>
-              {mentionCounts[c.id] > 0 && <span className="mention-badge">{mentionCounts[c.id]}</span>}
+              {dmUnreadCounts[c.id] > 0 && <span className="mention-badge">{dmUnreadCounts[c.id]}</span>}
             </div>
           );
         })}
@@ -215,6 +216,7 @@ function ChannelRow({
 }) {
   return (
     <div className={`channel-row ${active ? "active" : ""} ${unread ? "unread" : ""}`} onClick={onClick}>
+      {unread && !active && <span className="channel-unread-dot" />}
       <span>{channelIcon(channel)}</span>
       <span className="channel-name">{channel.name}</span>
       <span className="channel-row-trailing">

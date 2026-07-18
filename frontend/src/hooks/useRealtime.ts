@@ -27,10 +27,25 @@ export function useRealtime() {
     }
 
     function onMessageCreate(message: Message) {
-      useAppStore.getState().addMessage(message);
+      const s = useAppStore.getState();
+      s.addMessage(message);
       if (message.authorId !== userId) {
-        useAppStore.getState().markUnread(message.channelId);
+        s.markUnread(message.channelId);
+        // DM/group-DM channel rooms are all auto-joined at connect time
+        // (unlike guild channels, which only reach here once opened this
+        // session - see channel:activity below), so this is the one place
+        // that reliably sees every new DM regardless of which one you have
+        // open, which is what the red unread-count badge needs.
+        if (s.dmChannels.some((c) => c.id === message.channelId)) {
+          s.incrementDmUnread(message.channelId);
+        }
       }
+    }
+    function onChannelActivity({ channelId, guildId, authorId }: { channelId: string; guildId: string; authorId: string }) {
+      if (authorId === userId) return;
+      const s = useAppStore.getState();
+      s.registerChannelGuild(channelId, guildId);
+      s.markUnread(channelId);
     }
     function onMessageUpdate(message: Message) {
       useAppStore.getState().updateMessage(message);
@@ -100,6 +115,14 @@ export function useRealtime() {
     function onReadStateUpdate(payload: { channelId: string; userId: string; lastReadMessageId: string }) {
       useAppStore.getState().setReadState(payload.channelId, payload.userId, payload.lastReadMessageId);
     }
+    function onDmCreate({ channel }: { channel: any }) {
+      // Lets a brand-new incoming DM (or being added to a group DM) show up
+      // in the sidebar and count toward the unread badge immediately -
+      // without this, onMessageCreate's dmChannels.some(...) check below
+      // never recognizes the channel as one of "my" DMs until something
+      // else happened to refetch the list (e.g. visiting Friends).
+      useAppStore.getState().upsertDmChannel(channel);
+    }
     function onChannelDelete({ channelId }: { channelId: string }) {
       const s = useAppStore.getState();
       if (s.activeGuildId) s.removeChannel(s.activeGuildId, channelId);
@@ -132,6 +155,8 @@ export function useRealtime() {
     socket.on("channel:delete", onChannelDelete);
     socket.on("category:create", onCategoryCreate);
     socket.on("read-state:update", onReadStateUpdate);
+    socket.on("dm:create", onDmCreate);
+    socket.on("channel:activity", onChannelActivity);
     socket.on("role:create", onRoleOrMemberChange);
     socket.on("role:update", onRoleOrMemberChange);
     socket.on("role:delete", onRoleOrMemberChange);

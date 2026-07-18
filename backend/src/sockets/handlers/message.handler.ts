@@ -2,7 +2,7 @@ import type { Socket } from "socket.io";
 import { prisma } from "../../lib/prisma";
 import { redis } from "../../lib/redis";
 import { consumeRateLimit } from "../../middleware/rateLimit";
-import { emitToChannel, emitToUser } from "../index";
+import { emitToChannel, emitToUser, emitToGuild } from "../index";
 import * as messageService from "../../services/message.service";
 import { assertChannelPermission } from "../../services/permission.service";
 import { resolveEmbedForUrl, firstUrlIn } from "../../services/embed.service";
@@ -72,6 +72,24 @@ export function registerMessageHandlers(socket: Socket) {
       });
 
       emitToChannel(input.channelId, "message:create", message);
+
+      // A guild member is only in the socket room for a channel they've
+      // actually opened this session (see channel:subscribe) - full
+      // messages never reach anyone who hasn't. This lightweight,
+      // content-free ping goes to the whole guild room instead, purely so
+      // the sidebar/server-rail unread dots can light up for channels
+      // nobody currently has open. No message content is included, so it's
+      // safe to send to every member regardless of per-channel view
+      // permissions - if per-channel VIEW_CHANNEL restrictions ever become
+      // something the UI can actually configure, this needs to become
+      // permission-filtered like deliverMentions' @everyone path below.
+      if (channel.guildId) {
+        emitToGuild(channel.guildId, "channel:activity", {
+          channelId: input.channelId,
+          guildId: channel.guildId,
+          authorId: userId,
+        });
+      }
 
       await prisma.readState.upsert({
         where: { userId_channelId: { userId, channelId: input.channelId } },

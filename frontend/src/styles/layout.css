@@ -82,25 +82,42 @@
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
-  height: 8px;
+  height: 0;
   border-radius: 0 4px 4px 0;
   background: white;
   transition: height 0.15s ease;
+}
+/* Resting-but-unread: the short pill Discord shows on a server icon with
+   unread channels. Hover/active (below) override this to the taller pill -
+   both are 2-class selectors of equal specificity, so source order is what
+   makes hover/active win when a pill is both active and unread at once. */
+.server-pill.unread .pill-indicator {
+  height: 8px;
 }
 .server-pill.active .pill-indicator,
 .server-pill:hover .pill-indicator {
   height: 20px;
 }
-.server-pill.unread::after {
-  content: "";
+
+/* Red numbered badge (DM icon unread count) - top-right corner, like
+   Discord's own notification badges. */
+.unread-count-badge {
   position: absolute;
-  bottom: -2px;
+  top: -2px;
   right: -2px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: white;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--danger);
   border: 3px solid var(--bg-darkest);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .server-rail-divider {
@@ -183,6 +200,16 @@
 .channel-row.unread .channel-name {
   color: var(--header-primary);
   font-weight: 600;
+}
+.channel-unread-dot {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--header-primary);
 }
 .channel-row-trailing {
   margin-left: auto;

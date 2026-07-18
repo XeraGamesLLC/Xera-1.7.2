@@ -6,11 +6,21 @@ import logo from "../../assets/logo.png";
 
 export default function ServerRail() {
   const guilds = useAppStore((s) => s.guilds);
+  const dmUnreadCounts = useAppStore((s) => s.dmUnreadCounts);
+  const unreadChannelIds = useAppStore((s) => s.unreadChannelIds);
+  const channelGuild = useAppStore((s) => s.channelGuild);
   const { guildId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const setMobilePanel = useUiStore((s) => s.setMobilePanel);
   const openModal = useUiStore((s) => s.openModal);
+
+  const totalDmUnread = Object.values(dmUnreadCounts).reduce((sum, n) => sum + n, 0);
+  const unreadGuildIds = new Set<string>();
+  for (const cid of unreadChannelIds) {
+    const gid = channelGuild[cid];
+    if (gid) unreadGuildIds.add(gid);
+  }
 
   function goHome() {
     navigate("/app/friends");
@@ -29,15 +39,20 @@ export default function ServerRail() {
 
   return (
     <nav className="server-rail" aria-label="Servers">
-      <div className={`server-pill home-pill ${!guildId ? "active" : ""}`} onClick={goHome} title="Direct Messages">
+      <div
+        className={`server-pill home-pill ${!guildId ? "active" : ""} ${totalDmUnread > 0 ? "unread" : ""}`}
+        onClick={goHome}
+        title="Direct Messages"
+      >
         <span className="pill-indicator" />
         <img src={logo} alt="XRA" />
+        {totalDmUnread > 0 && <span className="unread-count-badge">{totalDmUnread > 99 ? "99+" : totalDmUnread}</span>}
       </div>
       <div className="server-rail-divider" />
       {guilds.map((g) => (
         <div
           key={g.id}
-          className={`server-pill ${guildId === g.id ? "active" : ""}`}
+          className={`server-pill ${guildId === g.id ? "active" : ""} ${unreadGuildIds.has(g.id) ? "unread" : ""}`}
           onClick={() => goToGuild(g.id)}
           title={g.name}
         >

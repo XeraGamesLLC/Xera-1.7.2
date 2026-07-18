@@ -3,7 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { createGroupDmSchema } from "../validators/friend.schema";
 import * as dmService from "../services/dm.service";
-import { getIo } from "../sockets";
+import { getIo, emitToUser } from "../sockets";
 
 const router = Router();
 router.use(requireAuth);
@@ -20,6 +20,11 @@ router.post("/:userId", async (req, res, next) => {
   try {
     const channel = await dmService.getOrCreateDmChannel(req.userId!, req.params.userId);
     joinBothToChannelRoom(channel.id, [req.userId!, req.params.userId]);
+    // The other participant's client has no other way to learn this DM
+    // exists until they happen to refetch their DM list - without this,
+    // a first message from someone new never shows up (no unread badge,
+    // no sidebar row) unless they manually reload or navigate to Friends.
+    emitToUser(req.params.userId, "dm:create", { channel });
     res.status(201).json({ channel });
   } catch (err) {
     next(err);
@@ -30,6 +35,9 @@ router.post("/group", validate({ body: createGroupDmSchema }), async (req, res, 
   try {
     const channel = await dmService.createGroupDm(req.userId!, req.body.participantIds, req.body.name);
     joinBothToChannelRoom(channel.id, [req.userId!, ...req.body.participantIds]);
+    for (const pid of req.body.participantIds) {
+      if (pid !== req.userId) emitToUser(pid, "dm:create", { channel });
+    }
     res.status(201).json({ channel });
   } catch (err) {
     next(err);

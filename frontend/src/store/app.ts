@@ -141,6 +141,16 @@ interface AppState {
   activeChannelId: string | null;
   mentionCounts: Record<string, number>;
   unreadChannelIds: Set<string>;
+  // Actual unread *message* counts for DM/group-DM channels, shown as the
+  // red numbered badge Discord uses on DM rows and the DM icon - distinct
+  // from mentionCounts, which only increments for an explicit @mention
+  // token and would almost never fire for an ordinary DM.
+  dmUnreadCounts: Record<string, number>;
+  // channelId -> guildId, learned from every place a channel is seen
+  // (guild detail fetch, channel:create, or the lightweight channel:activity
+  // ping below) - lets the server rail know which guild icon to light up
+  // for an unread channel it may not have ever loaded the full detail for.
+  channelGuild: Record<string, string>;
   // Per-channel, per-user last-read message id - used for Telegram-style
   // read receipts in DMs. Not used for unread badges (those are computed
   // server-side); this is purely "what has the other participant seen".
@@ -171,6 +181,8 @@ interface AppState {
   incrementMentionCount: (channelId: string) => void;
   markUnread: (channelId: string) => void;
   clearUnread: (channelId: string) => void;
+  incrementDmUnread: (channelId: string) => void;
+  registerChannelGuild: (channelId: string, guildId: string) => void;
   addChannel: (channel: Channel) => void;
   updateChannel: (channel: Channel) => void;
   removeChannel: (guildId: string, channelId: string) => void;
@@ -194,6 +206,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeChannelId: null,
   mentionCounts: {},
   unreadChannelIds: new Set(),
+  dmUnreadCounts: {},
+  channelGuild: {},
   readStates: {},
 
   setGuilds: (guilds) => set({ guilds }),
@@ -208,7 +222,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       guilds: s.guilds.filter((g) => g.id !== guildId),
       activeGuildId: s.activeGuildId === guildId ? null : s.activeGuildId,
     })),
-  setGuildDetail: (guildId, guild) => set((s) => ({ guildDetail: { ...s.guildDetail, [guildId]: guild } })),
+  setGuildDetail: (guildId, guild) =>
+    set((s) => {
+      const channelGuild = { ...s.channelGuild };
+      for (const ch of getGuildChannels(guild)) channelGuild[ch.id] = guildId;
+      return { guildDetail: { ...s.guildDetail, [guildId]: guild }, channelGuild };
+    }),
   // Merges rather than replaces — updateGuild()/uploadGuildIcon() only
   // return the bare Guild row (no categories/channels/roles), so replacing
   // guildDetail[guildId] wholesale with that response would wipe the
@@ -277,25 +296,33 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
   clearUnread: (channelId) =>
     set((s) => {
-      if (!s.unreadChannelIds.has(channelId)) return s;
+      const wasUnread = s.unreadChannelIds.has(channelId);
+      const hadDmCount = (s.dmUnreadCounts[channelId] ?? 0) > 0;
+      if (!wasUnread && !hadDmCount) return s;
       const next = new Set(s.unreadChannelIds);
       next.delete(channelId);
-      return { unreadChannelIds: next };
+      return { unreadChannelIds: next, dmUnreadCounts: { ...s.dmUnreadCounts, [channelId]: 0 } };
     }),
+  incrementDmUnread: (channelId) =>
+    set((s) => ({ dmUnreadCounts: { ...s.dmUnreadCounts, [channelId]: (s.dmUnreadCounts[channelId] ?? 0) + 1 } })),
+  registerChannelGuild: (channelId, guildId) =>
+    set((s) => (s.channelGuild[channelId] === guildId ? s : { channelGuild: { ...s.channelGuild, [channelId]: guildId } })),
 
   addChannel: (channel) =>
     set((s) => {
       if (!channel.guildId) return s;
       const guild = s.guildDetail[channel.guildId];
       if (!guild) return s;
+      const channelGuild = { ...s.channelGuild, [channel.id]: channel.guildId };
       if (channel.categoryId) {
         const categories = (guild.categories ?? []).map((c) =>
           c.id === channel.categoryId ? { ...c, channels: [...c.channels, channel] } : c
         );
-        return { guildDetail: { ...s.guildDetail, [channel.guildId]: { ...guild, categories } } };
+        return { guildDetail: { ...s.guildDetail, [channel.guildId]: { ...guild, categories } }, channelGuild };
       }
       return {
         guildDetail: { ...s.guildDetail, [channel.guildId]: { ...guild, channels: [...(guild.channels ?? []), channel] } },
+        channelGuild,
       };
     }),
   updateChannel: (channel) =>
