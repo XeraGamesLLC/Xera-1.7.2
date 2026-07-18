@@ -12,6 +12,8 @@ export interface XraUser {
   status: "ONLINE" | "IDLE" | "DND" | "INVISIBLE" | "OFFLINE";
   customStatus: string | null;
   primaryGuild?: PrimaryGuild | null;
+  createdAt?: string;
+  isDeveloper?: boolean;
 }
 
 const TOKEN_STORAGE_KEY = "xra_token";

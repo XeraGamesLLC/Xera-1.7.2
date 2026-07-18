@@ -83,6 +83,30 @@
   color: var(--text-faint);
 }
 
+.read-receipt {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
+}
+.read-receipt.read {
+  color: var(--xra-accent);
+}
+.timestamp-gutter .read-receipt {
+  display: block;
+  margin-top: 2px;
+  margin-left: auto;
+  width: fit-content;
+}
+
+.read-receipt-seen {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 16px 4px;
+}
+.read-receipt-seen .avatar {
+  opacity: 0.85;
+}
+
 .message-content {
   color: var(--text-normal);
   overflow-wrap: anywhere;

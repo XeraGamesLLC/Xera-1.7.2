@@ -94,6 +94,12 @@ export function useRealtime() {
     function onChannelUpdate({ channel }: { channel: any }) {
       useAppStore.getState().updateChannel(channel);
     }
+    function onCategoryCreate({ category }: { category: any }) {
+      useAppStore.getState().addCategory(category.guildId, category);
+    }
+    function onReadStateUpdate(payload: { channelId: string; userId: string; lastReadMessageId: string }) {
+      useAppStore.getState().setReadState(payload.channelId, payload.userId, payload.lastReadMessageId);
+    }
     function onChannelDelete({ channelId }: { channelId: string }) {
       const s = useAppStore.getState();
       if (s.activeGuildId) s.removeChannel(s.activeGuildId, channelId);
@@ -124,6 +130,8 @@ export function useRealtime() {
     socket.on("channel:create", onChannelCreate);
     socket.on("channel:update", onChannelUpdate);
     socket.on("channel:delete", onChannelDelete);
+    socket.on("category:create", onCategoryCreate);
+    socket.on("read-state:update", onReadStateUpdate);
     socket.on("role:create", onRoleOrMemberChange);
     socket.on("role:update", onRoleOrMemberChange);
     socket.on("role:delete", onRoleOrMemberChange);

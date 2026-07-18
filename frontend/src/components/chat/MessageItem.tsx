@@ -5,7 +5,7 @@ import EmbedCard from "./EmbedCard";
 import { formatMessageTimestamp, formatShortTime } from "../../utils/time";
 import type { MentionContext } from "../../utils/markdown";
 import { emitWithAck } from "../../api/socket";
-import { ReplyIcon, EditIcon, TrashIcon, FileIcon } from "../common/Icon";
+import { ReplyIcon, EditIcon, TrashIcon, FileIcon, CheckIcon, DoubleCheckIcon } from "../common/Icon";
 import { twemojiUrl } from "../../utils/twemoji";
 import ServerTagBadge from "../common/ServerTagBadge";
 
@@ -20,9 +20,21 @@ interface Props {
   onEdit: (message: Message) => void;
   onReply: (message: Message) => void;
   onOpenProfile: (userId: string) => void;
+  /** DM read receipts: whether the other participant has read this message yet (undefined = not a DM, no receipt shown). */
+  readReceipt?: "sent" | "read";
 }
 
-export default function MessageItem({ message, grouped, mentionContext, currentUserId, canManageMessages, onEdit, onReply, onOpenProfile }: Props) {
+export default function MessageItem({
+  message,
+  grouped,
+  mentionContext,
+  currentUserId,
+  canManageMessages,
+  onEdit,
+  onReply,
+  onOpenProfile,
+  readReceipt,
+}: Props) {
   const canEdit = message.authorId === currentUserId;
   const canDelete = canEdit || canManageMessages;
 
@@ -70,6 +82,7 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
             </span>
             <ServerTagBadge guild={message.author.primaryGuild} />
             <span className="message-timestamp">{formatMessageTimestamp(message.createdAt)}</span>
+            {readReceipt && <ReadReceiptMark state={readReceipt} />}
           </div>
         )}
         <MessageContent content={message.content} mentionContext={mentionContext} />
@@ -112,7 +125,10 @@ export default function MessageItem({ message, grouped, mentionContext, currentU
         )}
       </div>
 
-      <div className="timestamp-gutter">{grouped ? formatShortTime(message.createdAt) : ""}</div>
+      <div className="timestamp-gutter">
+        {grouped ? formatShortTime(message.createdAt) : ""}
+        {grouped && readReceipt && <ReadReceiptMark state={readReceipt} />}
+      </div>
 
       <div className="message-toolbar">
         {QUICK_REACTIONS.slice(0, 3).map((e) => (
@@ -159,4 +175,12 @@ function groupReactions(reactions: Message["reactions"]): [string, string[]][] {
 
 export function resolveUserDisplay(users: Record<string, PublicUser>, id: string): string | undefined {
   return users[id]?.username;
+}
+
+function ReadReceiptMark({ state }: { state: "sent" | "read" }) {
+  return (
+    <span className={`read-receipt ${state}`} title={state === "read" ? "Read" : "Sent"}>
+      {state === "read" ? <DoubleCheckIcon size={13} /> : <CheckIcon size={13} />}
+    </span>
+  );
 }

@@ -8,6 +8,7 @@ import { prisma } from "../lib/prisma";
 import { assertChannelPermission } from "../services/permission.service";
 import * as messageService from "../services/message.service";
 import { generateSnowflake } from "../utils/snowflake";
+import { emitToChannel } from "../sockets";
 import { z } from "zod";
 
 const router = Router();
@@ -97,7 +98,29 @@ router.put("/:channelId/read-state", async (req, res, next) => {
       create: { userId: req.userId!, channelId: req.params.channelId, lastReadMessageId, mentionCount: 0 },
       update: { lastReadMessageId, mentionCount: 0 },
     });
+    // Lets the other participant's client move its read-receipt indicator
+    // live, instead of only finding out next time it re-fetches the channel.
+    emitToChannel(req.params.channelId, "read-state:update", {
+      channelId: req.params.channelId,
+      userId: req.userId,
+      lastReadMessageId,
+    });
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Seeds the initial read-receipt state when a DM is opened - the socket
+// event above only covers updates that happen while you're already there.
+router.get("/:channelId/read-state", async (req, res, next) => {
+  try {
+    await assertCanView(req.params.channelId, req.userId!);
+    const states = await prisma.readState.findMany({
+      where: { channelId: req.params.channelId },
+      select: { userId: true, lastReadMessageId: true },
+    });
+    res.json({ readStates: states });
   } catch (err) {
     next(err);
   }

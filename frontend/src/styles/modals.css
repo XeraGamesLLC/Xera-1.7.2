@@ -122,6 +122,130 @@
   padding: 6px 0;
 }
 
+/* --- Profile modal --- */
+.profile-modal {
+  padding: 0;
+  overflow: hidden;
+}
+.profile-banner {
+  height: 120px;
+  background: linear-gradient(135deg, var(--xra-accent), var(--bg-darkest));
+  background-size: cover;
+  background-position: center;
+}
+.profile-body {
+  padding: 0 16px 20px;
+}
+.profile-avatar-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -40px;
+}
+.profile-avatar-wrap {
+  border-radius: 50%;
+  border: 6px solid var(--bg-base);
+  background: var(--bg-base);
+  width: 92px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.profile-actions {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+.profile-action-btn {
+  width: auto;
+}
+.profile-identity {
+  margin-top: 12px;
+}
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.profile-display-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--header-primary);
+}
+.profile-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--xra-accent);
+}
+.profile-username {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+.profile-custom-status {
+  color: var(--text-normal);
+  font-size: 14px;
+  margin-top: 6px;
+}
+.profile-inline-message {
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.profile-card {
+  background: var(--bg-dark);
+  border-radius: 8px;
+  padding: 4px 16px;
+  margin-top: 16px;
+}
+.profile-card-section {
+  padding: 14px 0;
+}
+.profile-card-section + .profile-card-section {
+  border-top: 1px solid var(--border-subtle);
+}
+.profile-card-section h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+}
+.profile-card-section p {
+  margin: 0;
+  color: var(--text-normal);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+.profile-member-since {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-normal);
+  font-size: 14px;
+}
+.profile-member-since svg {
+  color: var(--text-muted);
+}
+
+.settings-banner-preview {
+  height: 100px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 600px) {
   .modal-card.wide {
     grid-template-columns: 1fr;

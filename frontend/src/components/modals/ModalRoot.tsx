@@ -4,6 +4,7 @@ import UserSettingsModal from "./UserSettingsModal";
 import ServerSettingsModal from "./ServerSettingsModal";
 import UserProfileModal from "./UserProfileModal";
 import ChannelModal from "./ChannelModal";
+import CreateCategoryModal from "./CreateCategoryModal";
 import "../../styles/modals.css";
 
 export default function ModalRoot() {
@@ -26,6 +27,7 @@ export default function ModalRoot() {
       {activeModal === "channel-editor" && (
         <ChannelModal guildId={props.guildId as string} channel={props.channel as any} />
       )}
+      {activeModal === "create-category" && <CreateCategoryModal guildId={props.guildId as string} />}
     </div>
   );
 }

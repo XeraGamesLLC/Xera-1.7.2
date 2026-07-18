@@ -141,6 +141,10 @@ interface AppState {
   activeChannelId: string | null;
   mentionCounts: Record<string, number>;
   unreadChannelIds: Set<string>;
+  // Per-channel, per-user last-read message id - used for Telegram-style
+  // read receipts in DMs. Not used for unread badges (those are computed
+  // server-side); this is purely "what has the other participant seen".
+  readStates: Record<string, Record<string, string>>;
 
   setGuilds: (guilds: Guild[]) => void;
   upsertGuild: (guild: Guild) => void;
@@ -170,6 +174,9 @@ interface AppState {
   addChannel: (channel: Channel) => void;
   updateChannel: (channel: Channel) => void;
   removeChannel: (guildId: string, channelId: string) => void;
+  addCategory: (guildId: string, category: Category) => void;
+  setReadState: (channelId: string, userId: string, lastReadMessageId: string) => void;
+  setReadStates: (channelId: string, states: { userId: string; lastReadMessageId: string | null }[]) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -187,6 +194,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeChannelId: null,
   mentionCounts: {},
   unreadChannelIds: new Set(),
+  readStates: {},
 
   setGuilds: (guilds) => set({ guilds }),
   upsertGuild: (guild) =>
@@ -313,6 +321,25 @@ export const useAppStore = create<AppState>((set, get) => ({
       const channels = (guild.channels ?? []).filter((ch) => ch.id !== channelId);
       return { guildDetail: { ...s.guildDetail, [guildId]: { ...guild, categories, channels } } };
     }),
+  addCategory: (guildId, category) =>
+    set((s) => {
+      const guild = s.guildDetail[guildId];
+      if (!guild) return s;
+      if ((guild.categories ?? []).some((c) => c.id === category.id)) return s;
+      return { guildDetail: { ...s.guildDetail, [guildId]: { ...guild, categories: [...(guild.categories ?? []), { ...category, channels: category.channels ?? [] }] } } };
+    }),
+
+  setReadState: (channelId, userId, lastReadMessageId) =>
+    set((s) => ({
+      readStates: { ...s.readStates, [channelId]: { ...s.readStates[channelId], [userId]: lastReadMessageId } },
+    })),
+  setReadStates: (channelId, states) =>
+    set((s) => ({
+      readStates: {
+        ...s.readStates,
+        [channelId]: Object.fromEntries(states.filter((r) => r.lastReadMessageId).map((r) => [r.userId, r.lastReadMessageId as string])),
+      },
+    })),
 }));
 
 export function getGuildChannels(guild: Guild): Channel[] {

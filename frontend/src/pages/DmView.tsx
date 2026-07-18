@@ -64,6 +64,7 @@ export default function DmView() {
         channelId={channel.id}
         guildId={null}
         dmMembers={channel.members}
+        readReceiptUser={channel.type === "DM" ? others[0] : undefined}
         onEdit={(m) => setEditingMessage(m)}
         onReply={(m) => setReplyingTo(m)}
       />

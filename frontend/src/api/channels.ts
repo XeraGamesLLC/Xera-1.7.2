@@ -34,3 +34,13 @@ export async function uploadAttachment(channelId: string, file: File) {
 export async function markRead(channelId: string, lastReadMessageId: string) {
   await api.put(`/channels/${channelId}/read-state`, { lastReadMessageId });
 }
+
+export interface ReadStateEntry {
+  userId: string;
+  lastReadMessageId: string | null;
+}
+
+export async function fetchReadStates(channelId: string) {
+  const res = await api.get(`/channels/${channelId}/read-state`);
+  return res.data.readStates as ReadStateEntry[];
+}

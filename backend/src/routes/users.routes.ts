@@ -6,12 +6,13 @@ import { nanoid } from "nanoid";
 import { requireAuth } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { uploadLimiter } from "../middleware/rateLimit";
-import { avatarUpload } from "../middleware/upload";
+import { avatarUpload, bannerUpload } from "../middleware/upload";
 import { updateProfileSchema, updateStatusSchema, lookupUserSchema, updatePrimaryGuildSchema } from "../validators/user.schema";
 import { prisma } from "../lib/prisma";
 import { sanitizeUser } from "../services/auth.service";
 import { AppError } from "../middleware/errorHandler";
 import { env } from "../config/env";
+import { isSuperAdminIdentity } from "../utils/superAdmin";
 
 const router = Router();
 
@@ -115,6 +116,37 @@ router.post("/me/avatar", requireAuth, uploadLimiter, avatarUpload.single("avata
   }
 });
 
+router.post("/me/banner", requireAuth, uploadLimiter, bannerUpload.single("banner"), async (req, res, next) => {
+  try {
+    if (!req.file) throw new AppError(400, "No file uploaded");
+
+    const previous = await prisma.user.findUnique({ where: { id: req.userId }, select: { bannerUrl: true } });
+
+    // Same pipeline as the avatar upload above, just a wide aspect ratio
+    // (600x240, matches the reference profile layout) instead of a square.
+    const processedPath = path.join(path.dirname(req.file.path), `${nanoid(24)}.png`);
+    try {
+      await sharp(req.file.path).rotate().resize(600, 240, { fit: "cover" }).png().toFile(processedPath);
+    } catch {
+      throw new AppError(400, "Could not process that image - is it a valid image file?");
+    } finally {
+      await fs.unlink(req.file.path).catch(() => undefined);
+    }
+
+    const bannerUrl = `/uploads/banners/${path.basename(processedPath)}`;
+    const user = await prisma.user.update({ where: { id: req.userId }, data: { bannerUrl } });
+
+    if (previous?.bannerUrl?.startsWith("/uploads/banners/")) {
+      const oldPath = path.join(env.UPLOAD_DIR, previous.bannerUrl.slice("/uploads/".length));
+      await fs.unlink(oldPath).catch(() => undefined);
+    }
+
+    res.json({ user: sanitizeUser(user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 const PRIMARY_GUILD_SELECT = { id: true, name: true, tag: true, tagColor: true } as const;
 
 router.get("/lookup", requireAuth, validate({ query: lookupUserSchema }), async (req, res, next) => {
@@ -157,7 +189,19 @@ function publicProfile(user: {
   primaryGuild: { id: string; name: string; tag: string | null; tagColor: string | null } | null;
 }) {
   const { id, username, discriminator, avatarUrl, bannerUrl, aboutMe, status, customStatus, createdAt, primaryGuild } = user;
-  return { id, username, discriminator, avatarUrl, bannerUrl, aboutMe, status, customStatus, createdAt, primaryGuild };
+  return {
+    id,
+    username,
+    discriminator,
+    avatarUrl,
+    bannerUrl,
+    aboutMe,
+    status,
+    customStatus,
+    createdAt,
+    primaryGuild,
+    isDeveloper: isSuperAdminIdentity(user),
+  };
 }
 
 export default router;

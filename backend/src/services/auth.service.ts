@@ -8,6 +8,7 @@ import { sendVerificationEmail, sendPasswordResetEmail } from "./email.service";
 import { resolveAndUseInvite } from "./invite.service";
 import { env } from "../config/env";
 import ms from "../utils/ms";
+import { isSuperAdminIdentity } from "../utils/superAdmin";
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
@@ -199,7 +200,9 @@ export async function verifyEmail(rawToken: string) {
   ]);
 }
 
-export function sanitizeUser<T extends { passwordHash: string; tokenVersion?: number }>(user: T) {
+export function sanitizeUser<T extends { passwordHash: string; tokenVersion?: number; username: string; discriminator: string }>(
+  user: T
+) {
   const { passwordHash, tokenVersion, ...rest } = user;
-  return rest;
+  return { ...rest, isDeveloper: isSuperAdminIdentity(user) };
 }

@@ -60,6 +60,18 @@ export const avatarUpload = multer({
   },
 });
 
+export const bannerUpload = multer({
+  storage: makeStorage("banners"),
+  limits: { fileSize: env.MAX_AVATAR_SIZE_MB * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!IMAGE_EXTENSIONS.has(ext) || !AVATAR_MIME_ALLOWLIST.has(file.mimetype)) {
+      return cb(new AppError(400, "Unsupported banner file type"));
+    }
+    cb(null, true);
+  },
+});
+
 export const attachmentUpload = multer({
   storage: makeStorage("attachments"),
   limits: { fileSize: env.MAX_ATTACHMENT_SIZE_MB * 1024 * 1024 },

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth";
 import { useUiStore } from "../../store/ui";
 import { useAppStore } from "../../store/app";
-import { updateProfile, updateStatus, uploadAvatar, setPrimaryGuild } from "../../api/users";
+import { updateProfile, updateStatus, uploadAvatar, uploadBanner, setPrimaryGuild } from "../../api/users";
 import { logout as apiLogout } from "../../api/auth";
 import { disconnectSocket } from "../../api/socket";
 import Avatar from "../common/Avatar";
@@ -50,6 +50,13 @@ export default function UserSettingsModal() {
     setUser(updated);
   }
 
+  async function onBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const updated = await uploadBanner(file);
+    setUser(updated);
+  }
+
   async function onLogout() {
     disconnectSocket();
     await apiLogout();
@@ -62,6 +69,19 @@ export default function UserSettingsModal() {
     <div className="modal-card">
       <button className="modal-close" onClick={closeModal}><CloseIcon size={14} /></button>
       <h1 style={{ color: "var(--header-primary)", marginTop: 0 }}>User Settings</h1>
+
+      <div className="form-field">
+        <label>Profile Banner</label>
+        <div
+          className="settings-banner-preview"
+          style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined}
+        >
+          <label className="btn btn-secondary" style={{ width: "auto", cursor: "pointer" }}>
+            {user.bannerUrl ? "Change Banner" : "Upload Banner"}
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={onBannerChange} />
+          </label>
+        </div>
+      </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
         <Avatar url={user.avatarUrl} name={user.username} size={64} />

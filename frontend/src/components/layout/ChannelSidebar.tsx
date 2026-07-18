@@ -69,16 +69,28 @@ export default function ChannelSidebar() {
         </div>
         <div className="channel-list">
           {canManageChannels && (
-            <button
-              type="button"
-              className="btn btn-secondary add-channel-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                openModal("channel-editor", { guildId });
-              }}
-            >
-              <PlusIcon size={14} /> Add Channel
-            </button>
+            <div className="channel-sidebar-actions">
+              <button
+                type="button"
+                className="btn btn-secondary add-channel-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal("channel-editor", { guildId });
+                }}
+              >
+                <PlusIcon size={14} /> Add Channel
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary add-channel-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal("create-category", { guildId });
+                }}
+              >
+                <PlusIcon size={14} /> Add Category
+              </button>
+            </div>
           )}
           {uncategorized.map((ch) => (
             <ChannelRow

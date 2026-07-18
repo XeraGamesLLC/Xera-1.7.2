@@ -166,6 +166,47 @@ export function RulebookIcon(props: IconProps) {
   );
 }
 
+// Developer badge — a shield (platform-issued credential) with the same
+// bracket motif as the XRA logo, so it reads as "belongs to this platform"
+// rather than a generic achievement icon.
+export function DeveloperBadgeIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 3l7 3v5.5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" strokeLinejoin="round" />
+      <path d="M10 9.5L7.5 12l2.5 2.5" />
+      <path d="M14 9.5l2.5 2.5-2.5 2.5" />
+    </Base>
+  );
+}
+
+// Member-since marker — a simple calendar, used next to a formatted join date.
+export function CalendarIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="4" y="5.5" width="16" height="14" rx="2" />
+      <path d="M4 9.5h16" />
+      <path d="M8 3.5v4M16 3.5v4" />
+    </Base>
+  );
+}
+
+// Telegram-style "sent" / "read" receipt marks.
+export function CheckIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M5 12.5l4 4 10-10" />
+    </Base>
+  );
+}
+export function DoubleCheckIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M2 12.5l4 4 10-10" />
+      <path d="M9 13.5l1.5 1.5 9-9" />
+    </Base>
+  );
+}
+
 export function CompassIcon(props: IconProps) {
   return (
     <Base {...props}>

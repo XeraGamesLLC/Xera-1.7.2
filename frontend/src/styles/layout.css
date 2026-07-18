@@ -209,6 +209,11 @@
   opacity: 1;
 }
 
+.channel-sidebar-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
 .add-channel-btn {
   width: 100%;
   display: flex;
@@ -218,6 +223,13 @@
   margin-bottom: 8px;
   font-size: 13px;
   padding: 8px;
+}
+.channel-sidebar-actions .add-channel-btn {
+  width: auto;
+  flex: 1;
+  margin-bottom: 0;
+  white-space: nowrap;
+  padding: 8px 4px;
 }
 
 .user-panel {

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { Guild, Member, Role, Channel, ChannelPurpose } from "../store/app";
+import type { Guild, Member, Role, Channel, ChannelPurpose, Category } from "../store/app";
 
 export async function createGuild(name: string, discoverable?: boolean) {
   const res = await api.post("/guilds", { name, discoverable });
@@ -64,7 +64,7 @@ export async function listMembers(guildId: string) {
 
 export async function createCategory(guildId: string, name: string) {
   const res = await api.post(`/guilds/${guildId}/categories`, { name });
-  return res.data.category;
+  return res.data.category as Category & { guildId: string };
 }
 
 export async function createChannel(

@@ -2,11 +2,12 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAppStore, type Message, type Member, type PublicUser } from "../../store/app";
 import { useAuthStore } from "../../store/auth";
 import { useUiStore } from "../../store/ui";
-import { fetchMessages } from "../../api/channels";
+import { fetchMessages, fetchReadStates } from "../../api/channels";
 import { markRead } from "../../api/channels";
 import { emitWithAck } from "../../api/socket";
 import { hasPermission, combineRolePermissions } from "../../utils/permissions";
 import MessageItem from "./MessageItem";
+import Avatar from "../common/Avatar";
 import "../../styles/chat.css";
 
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
@@ -15,11 +16,13 @@ interface Props {
   channelId: string;
   guildId?: string | null;
   dmMembers?: { userId: string; user: PublicUser }[];
+  /** Set only for a 1:1 DM - enables Telegram-style read receipts against this specific user. */
+  readReceiptUser?: PublicUser;
   onEdit: (message: Message) => void;
   onReply: (message: Message) => void;
 }
 
-export default function MessageList({ channelId, guildId, dmMembers, onEdit, onReply }: Props) {
+export default function MessageList({ channelId, guildId, dmMembers, readReceiptUser, onEdit, onReply }: Props) {
   const messages = useAppStore((s) => s.messages[channelId] ?? []);
   const setMessages = useAppStore((s) => s.setMessages);
   const prependMessages = useAppStore((s) => s.prependMessages);
@@ -28,6 +31,8 @@ export default function MessageList({ channelId, guildId, dmMembers, onEdit, onR
   const roles = useAppStore((s) => (guildId ? s.guildDetail[guildId]?.roles ?? [] : []));
   const currentUser = useAuthStore((s) => s.user)!;
   const openModal = useUiStore((s) => s.openModal);
+  const setReadStates = useAppStore((s) => s.setReadStates);
+  const otherLastReadId = useAppStore((s) => (readReceiptUser ? s.readStates[channelId]?.[readReceiptUser.id] : undefined));
 
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -41,6 +46,7 @@ export default function MessageList({ channelId, guildId, dmMembers, onEdit, onR
       requestAnimationFrame(() => bottomRef.current?.scrollIntoView());
     });
     emitWithAck("channel:subscribe", { channelId } as any).catch(() => undefined);
+    if (readReceiptUser) fetchReadStates(channelId).then((states) => setReadStates(channelId, states));
   }, [channelId]);
 
   useEffect(() => {
@@ -97,24 +103,53 @@ export default function MessageList({ channelId, guildId, dmMembers, onEdit, onR
 
   const typingNames = [...(typing ?? [])].map((id) => nameMap[id] ?? "Someone");
 
+  // Telegram-style "seen" watermark: the small avatar sits under the newest
+  // message (from either side) that's <= the other participant's read
+  // pointer, not per-message - it moves as they read further, same as
+  // Telegram/WhatsApp. Message ids are monotonic snowflakes, so BigInt
+  // comparison gives correct ordering even across a digit-count boundary
+  // (string comparison would not).
+  let seenAnchorId: string | null = null;
+  if (readReceiptUser && otherLastReadId) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (BigInt(messages[i].id) <= BigInt(otherLastReadId)) {
+        seenAnchorId = messages[i].id;
+        break;
+      }
+    }
+  }
+
   return (
     <>
       <div className="message-list" ref={scrollRef} onScroll={onScroll}>
         {messages.map((m, i) => {
           const prev = messages[i - 1];
           const grouped = !!prev && prev.authorId === m.authorId && new Date(m.createdAt).getTime() - new Date(prev.createdAt).getTime() < GROUP_WINDOW_MS && !m.replyTo;
+          const readReceipt: "sent" | "read" | undefined =
+            readReceiptUser && m.authorId === currentUser.id
+              ? otherLastReadId && BigInt(m.id) <= BigInt(otherLastReadId)
+                ? "read"
+                : "sent"
+              : undefined;
           return (
-            <MessageItem
-              key={m.id}
-              message={m}
-              grouped={grouped}
-              mentionContext={mentionContext}
-              currentUserId={currentUser.id}
-              canManageMessages={canManageMessages}
-              onEdit={onEdit}
-              onReply={onReply}
-              onOpenProfile={(userId) => openModal("user-profile", { userId, guildId })}
-            />
+            <div key={m.id}>
+              <MessageItem
+                message={m}
+                grouped={grouped}
+                mentionContext={mentionContext}
+                currentUserId={currentUser.id}
+                canManageMessages={canManageMessages}
+                onEdit={onEdit}
+                onReply={onReply}
+                onOpenProfile={(userId) => openModal("user-profile", { userId, guildId })}
+                readReceipt={readReceipt}
+              />
+              {readReceiptUser && m.id === seenAnchorId && (
+                <div className="read-receipt-seen" title={`Seen by ${readReceiptUser.username}`}>
+                  <Avatar url={readReceiptUser.avatarUrl} name={readReceiptUser.username} size={16} />
+                </div>
+              )}
+            </div>
           );
         })}
         <div ref={bottomRef} />
