@@ -2,6 +2,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAppStore } from "../../store/app";
 import { useUiStore } from "../../store/ui";
 import { CompassIcon } from "../common/Icon";
+import logo from "../../assets/logo.png";
 
 export default function ServerRail() {
   const guilds = useAppStore((s) => s.guilds);
@@ -28,9 +29,9 @@ export default function ServerRail() {
 
   return (
     <nav className="server-rail" aria-label="Servers">
-      <div className={`server-pill ${!guildId ? "active" : ""}`} onClick={goHome} title="Direct Messages">
+      <div className={`server-pill home-pill ${!guildId ? "active" : ""}`} onClick={goHome} title="Direct Messages">
         <span className="pill-indicator" />
-        XRA
+        <img src={logo} alt="XRA" />
       </div>
       <div className="server-rail-divider" />
       {guilds.map((g) => (
