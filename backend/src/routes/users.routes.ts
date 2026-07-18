@@ -83,7 +83,15 @@ router.post("/me/avatar", requireAuth, uploadLimiter, avatarUpload.single("avata
     // upload, since the naive derived name matched the source file exactly.
     const processedPath = path.join(path.dirname(req.file.path), `${nanoid(24)}.png`);
     try {
-      await sharp(req.file.path).resize(256, 256, { fit: "cover" }).png().toFile(processedPath);
+      // .rotate() with no args reads the source's EXIF Orientation tag and
+      // physically rotates the pixels to match it before anything else runs -
+      // without it, a phone photo shot in portrait (sensor-oriented pixels
+      // plus an EXIF flag saying "rotate on display") gets resized/cropped
+      // in its raw sideways orientation, and the PNG output below has no
+      // metadata of its own, permanently baking in the wrong rotation with
+      // nothing left to correct it. Screenshots have no camera sensor and
+      // no such tag, which is why only real photos ever showed this.
+      await sharp(req.file.path).rotate().resize(256, 256, { fit: "cover" }).png().toFile(processedPath);
     } catch {
       throw new AppError(400, "Could not process that image - is it a valid image file?");
     } finally {

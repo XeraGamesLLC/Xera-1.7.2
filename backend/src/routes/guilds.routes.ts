@@ -96,7 +96,11 @@ router.post("/:guildId/icon", uploadLimiter, guildIconUpload.single("icon"), asy
 
     const processedPath = path.join(path.dirname(req.file.path), `${nanoid(24)}.png`);
     try {
-      await sharp(req.file.path).resize(256, 256, { fit: "cover" }).png().toFile(processedPath);
+      // See the equivalent avatar upload in users.routes.ts: .rotate() with
+      // no args applies the source's EXIF Orientation before resizing, or a
+      // portrait phone photo gets permanently baked in sideways once the
+      // PNG output drops that metadata.
+      await sharp(req.file.path).rotate().resize(256, 256, { fit: "cover" }).png().toFile(processedPath);
     } catch {
       throw new AppError(400, "Could not process that image - is it a valid image file?");
     } finally {
