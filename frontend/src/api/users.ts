@@ -2,6 +2,8 @@ import { api } from "./client";
 import type { XraUser } from "../store/auth";
 import type { PrimaryGuild } from "../store/app";
 
+export type FriendStatus = "NONE" | "FRIENDS" | "PENDING_OUTGOING" | "PENDING_INCOMING" | "BLOCKED";
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -14,6 +16,7 @@ export interface UserProfile {
   createdAt: string;
   primaryGuild: PrimaryGuild | null;
   isDeveloper: boolean;
+  friendStatus: FriendStatus;
 }
 
 export async function updateProfile(data: { aboutMe?: string; customStatus?: string | null }) {

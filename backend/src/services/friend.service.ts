@@ -81,6 +81,25 @@ export async function isBlocked(userA: string, userB: string): Promise<boolean> 
   return friendship?.status === "BLOCKED";
 }
 
+export type FriendStatus = "NONE" | "FRIENDS" | "PENDING_OUTGOING" | "PENDING_INCOMING" | "BLOCKED";
+
+/**
+ * Resolves what `viewerId` can actually do about `targetId` right now - lets
+ * the profile UI show "Remove Friend"/"Request Sent"/"Accept Request"
+ * instead of always offering "Add Friend" regardless of the real
+ * relationship, which is misleading (the request still gets rejected
+ * server-side, but a stale/never-fetched client-side friends list is not a
+ * safe thing to gate the button on, so this is computed fresh here instead).
+ */
+export async function getFriendStatus(viewerId: string, targetId: string): Promise<FriendStatus> {
+  if (viewerId === targetId) return "NONE";
+  const friendship = await findFriendshipEitherDirection(viewerId, targetId);
+  if (!friendship) return "NONE";
+  if (friendship.status === "BLOCKED") return "BLOCKED";
+  if (friendship.status === "ACCEPTED") return "FRIENDS";
+  return friendship.requesterId === viewerId ? "PENDING_OUTGOING" : "PENDING_INCOMING";
+}
+
 const PUBLIC_USER_SELECT = {
   id: true,
   username: true,

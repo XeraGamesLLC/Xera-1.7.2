@@ -13,6 +13,7 @@ import { sanitizeUser } from "../services/auth.service";
 import { AppError } from "../middleware/errorHandler";
 import { env } from "../config/env";
 import { isSuperAdminIdentity } from "../utils/superAdmin";
+import { getFriendStatus } from "../services/friend.service";
 
 const router = Router();
 
@@ -157,7 +158,7 @@ router.get("/lookup", requireAuth, validate({ query: lookupUserSchema }), async 
       include: { primaryGuild: { select: PRIMARY_GUILD_SELECT } },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({ user: publicProfile(user) });
+    res.json({ user: await publicProfile(user, req.userId!) });
   } catch (err) {
     next(err);
   }
@@ -170,24 +171,27 @@ router.get("/:id", requireAuth, async (req, res, next) => {
       include: { primaryGuild: { select: PRIMARY_GUILD_SELECT } },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({ user: publicProfile(user) });
+    res.json({ user: await publicProfile(user, req.userId!) });
   } catch (err) {
     next(err);
   }
 });
 
-function publicProfile(user: {
-  id: string;
-  username: string;
-  discriminator: string;
-  avatarUrl: string | null;
-  bannerUrl: string | null;
-  aboutMe: string | null;
-  status: string;
-  customStatus: string | null;
-  createdAt: Date;
-  primaryGuild: { id: string; name: string; tag: string | null; tagColor: string | null } | null;
-}) {
+async function publicProfile(
+  user: {
+    id: string;
+    username: string;
+    discriminator: string;
+    avatarUrl: string | null;
+    bannerUrl: string | null;
+    aboutMe: string | null;
+    status: string;
+    customStatus: string | null;
+    createdAt: Date;
+    primaryGuild: { id: string; name: string; tag: string | null; tagColor: string | null } | null;
+  },
+  viewerId: string
+) {
   const { id, username, discriminator, avatarUrl, bannerUrl, aboutMe, status, customStatus, createdAt, primaryGuild } = user;
   return {
     id,
@@ -201,6 +205,7 @@ function publicProfile(user: {
     createdAt,
     primaryGuild,
     isDeveloper: isSuperAdminIdentity(user),
+    friendStatus: await getFriendStatus(viewerId, id),
   };
 }
 
