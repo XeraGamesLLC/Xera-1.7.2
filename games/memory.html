@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Memory Match - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #board {
+        width: 264px;
+        margin: 10px auto;
+        overflow: hidden;
+    }
+    .cell {
+        float: left;
+        width: 58px;
+        height: 58px;
+        margin: 3px;
+        line-height: 58px;
+        text-align: center;
+        font-size: 28px;
+        border-radius: 8px;
+        background-color: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+    .cell.open { background-color: rgba(255,255,255,0.4); }
+    .cell.matched { background-color: rgba(80,220,120,0.4); }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Memory Match</h1></div>
+
+    <div class="panel">
+        <span class="stat">Moves: <b id="moves">0</b> &nbsp;&nbsp; Best: <b id="best">-</b></span>
+    </div>
+
+    <div id="board"></div>
+
+    <div class="btn-row"><span class="btn" id="restart">New Game</span></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var symbols = ['&#127826;', '&#127817;', '&#127822;', '&#127818;', '&#127815;', '&#127827;', '&#128021;', '&#128034;'];
+    var cells, first, second, lock, moves, matched, best;
+
+    function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    function build() {
+        var deck = shuffle(symbols.concat(symbols));
+        var boardEl = $('board');
+        boardEl.innerHTML = '';
+        cells = [];
+        first = null;
+        second = null;
+        lock = false;
+        moves = 0;
+        matched = 0;
+        $('moves').innerHTML = '0';
+        best = Store.get('memory_best', null);
+        $('best').innerHTML = best === null ? '-' : String(best);
+
+        for (var i = 0; i < deck.length; i++) {
+            var div = document.createElement('div');
+            div.className = 'cell';
+            div.id = 'm' + i;
+            boardEl.appendChild(div);
+            cells.push({ el: div, sym: deck[i], open: false, matched: false });
+
+            (function (idx) {
+                onTap(div, function () { tap(idx); });
+            })(i);
+        }
+    }
+
+    function tap(idx) {
+        var c = cells[idx];
+        if (lock || c.open || c.matched) {
+            return;
+        }
+        c.open = true;
+        c.el.className = 'cell open';
+        c.el.innerHTML = c.sym;
+
+        if (first === null) {
+            first = idx;
+            return;
+        }
+
+        second = idx;
+        moves += 1;
+        $('moves').innerHTML = String(moves);
+        lock = true;
+
+        setTimeout(function () {
+            var a = cells[first], b = cells[second];
+            if (a.sym === b.sym) {
+                a.matched = true;
+                b.matched = true;
+                a.el.className = 'cell matched';
+                b.el.className = 'cell matched';
+                matched += 2;
+                if (matched === cells.length) {
+                    if (best === null || moves < best) {
+                        best = moves;
+                        Store.set('memory_best', best);
+                        $('best').innerHTML = String(best);
+                    }
+                }
+            } else {
+                a.open = false;
+                b.open = false;
+                a.el.className = 'cell';
+                a.el.innerHTML = '';
+                b.el.className = 'cell';
+                b.el.innerHTML = '';
+            }
+            first = null;
+            second = null;
+            lock = false;
+        }, 550);
+    }
+
+    onTap($('restart'), build);
+    build();
+})();
+</script>
+</body>
+</html>

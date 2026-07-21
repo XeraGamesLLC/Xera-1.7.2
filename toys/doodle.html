@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Doodle Pad - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #swatches { text-align: center; padding: 10px 0; }
+    .swatch {
+        display: inline-block;
+        width: 34px;
+        height: 34px;
+        margin: 3px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.6);
+        vertical-align: middle;
+    }
+    .swatch.on { border-color: #fff; -webkit-box-shadow: 0 0 0 3px rgba(255,255,255,0.5); box-shadow: 0 0 0 3px rgba(255,255,255,0.5); }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Doodle Pad</h1></div>
+
+    <canvas id="pad" width="290" height="290"></canvas>
+
+    <div id="swatches"></div>
+
+    <div class="btn-row">
+        <span class="btn" id="clear">Clear</span>
+        <span class="btn" id="save">Save Image</span>
+    </div>
+    <div class="footer-note" id="savenote">Draw with your finger</div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var canvas = $('pad');
+    var ctx = canvas.getContext('2d');
+    var colors = ['#ffffff', '#ff5f6d', '#ffb347', '#ffd23f', '#9dffb0', '#7fd8ff', '#c956b0'];
+    var current = colors[0];
+    var drawing = false;
+    var lastX, lastY;
+
+    lockScroll(canvas);
+    ctx.fillStyle = '#0d0d1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    var swatchWrap = $('swatches');
+    for (var i = 0; i < colors.length; i++) {
+        var s = document.createElement('span');
+        s.className = 'swatch' + (i === 0 ? ' on' : '');
+        s.style.backgroundColor = colors[i];
+        swatchWrap.appendChild(s);
+
+        (function (idx, el) {
+            onTap(el, function () {
+                current = colors[idx];
+                var all = swatchWrap.getElementsByTagName('span');
+                for (var k = 0; k < all.length; k++) { all[k].className = 'swatch'; }
+                el.className = 'swatch on';
+            });
+        })(i, s);
+    }
+
+    function pos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var t = e.touches ? e.touches[0] : e;
+        return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    }
+
+    on(canvas, 'touchstart', function (e) {
+        drawing = true;
+        var p = pos(e);
+        lastX = p.x;
+        lastY = p.y;
+    });
+
+    on(canvas, 'touchmove', function (e) {
+        if (!drawing) { return; }
+        var p = pos(e);
+        ctx.strokeStyle = current;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        lastX = p.x;
+        lastY = p.y;
+    });
+
+    on(canvas, 'touchend', function () {
+        drawing = false;
+    });
+
+    onTap($('clear'), function () {
+        ctx.fillStyle = '#0d0d1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
+
+    onTap($('save'), function () {
+        try {
+            var data = canvas.toDataURL('image/png');
+            var win = window.open();
+            if (win) {
+                win.document.write('<body style="margin:0;background:#000;"><img src="' + data + '" style="width:100%;"/></body>');
+                $('savenote').innerHTML = 'Press and hold the image to save it';
+            } else {
+                $('savenote').innerHTML = 'Allow pop-ups to save the image';
+            }
+        } catch (e) {
+            $('savenote').innerHTML = 'Could not save image';
+        }
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Tic Tac Toe - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #board {
+        width: 264px;
+        margin: 10px auto;
+        overflow: hidden;
+    }
+    .cell {
+        float: left;
+        width: 84px;
+        height: 84px;
+        margin: 2px;
+        line-height: 84px;
+        text-align: center;
+        font-size: 40px;
+        font-weight: bold;
+        border-radius: 10px;
+        background-color: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+    .cell:active { background-color: rgba(255,255,255,0.3); }
+    #msg { min-height: 22px; font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Tic Tac Toe</h1></div>
+
+    <div class="panel">
+        <div id="msg">Your turn (X)</div>
+    </div>
+
+    <div id="board">
+        <div class="cell" id="c0"></div><div class="cell" id="c1"></div><div class="cell" id="c2"></div>
+        <div class="cell" id="c3"></div><div class="cell" id="c4"></div><div class="cell" id="c5"></div>
+        <div class="cell" id="c6"></div><div class="cell" id="c7"></div><div class="cell" id="c8"></div>
+    </div>
+
+    <div class="btn-row">
+        <span class="btn" id="modebtn">Mode: vs CPU</span>
+        <span class="btn" id="restart">Restart</span>
+    </div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var board, turn, over, twoPlayer;
+    var wins = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+
+    function reset() {
+        board = ['', '', '', '', '', '', '', '', ''];
+        turn = 'X';
+        over = false;
+        for (var i = 0; i < 9; i++) {
+            $('c' + i).innerHTML = '';
+        }
+        setMsg(twoPlayer ? 'X\'s turn' : 'Your turn (X)');
+    }
+
+    function setMsg(text) {
+        $('msg').innerHTML = text;
+    }
+
+    function checkWinner(b) {
+        for (var i = 0; i < wins.length; i++) {
+            var a = wins[i][0], c = wins[i][1], d = wins[i][2];
+            if (b[a] && b[a] === b[c] && b[a] === b[d]) {
+                return b[a];
+            }
+        }
+        if (b.join('').replace(/\s/g, '').length === 9 || b.indexOf('') === -1) {
+            return 'draw';
+        }
+        return null;
+    }
+
+    function place(i, mark) {
+        if (board[i] || over) {
+            return;
+        }
+        board[i] = mark;
+        $('c' + i).innerHTML = mark;
+
+        var result = checkWinner(board);
+        if (result) {
+            over = true;
+            if (result === 'draw') {
+                setMsg('Draw game');
+            } else {
+                setMsg(result + ' wins!');
+            }
+            return;
+        }
+
+        turn = mark === 'X' ? 'O' : 'X';
+
+        if (!twoPlayer && turn === 'O') {
+            setMsg('CPU thinking...');
+            setTimeout(cpuMove, 300);
+        } else {
+            setMsg(turn + '\'s turn' + (!twoPlayer ? ' (You)' : ''));
+        }
+    }
+
+    function cpuMove() {
+        if (over) { return; }
+        var move = findBestMove();
+        place(move, 'O');
+    }
+
+    function findBestMove() {
+        var i, b;
+        /* win if possible */
+        for (i = 0; i < 9; i++) {
+            if (!board[i]) {
+                b = board.slice();
+                b[i] = 'O';
+                if (checkWinner(b) === 'O') { return i; }
+            }
+        }
+        /* block player */
+        for (i = 0; i < 9; i++) {
+            if (!board[i]) {
+                b = board.slice();
+                b[i] = 'X';
+                if (checkWinner(b) === 'X') { return i; }
+            }
+        }
+        /* center, then corners, then edges */
+        if (!board[4]) { return 4; }
+        var corners = [0, 2, 6, 8];
+        var free = [];
+        for (i = 0; i < corners.length; i++) {
+            if (!board[corners[i]]) { free.push(corners[i]); }
+        }
+        if (free.length) { return free[Math.floor(Math.random() * free.length)]; }
+
+        free = [];
+        for (i = 0; i < 9; i++) {
+            if (!board[i]) { free.push(i); }
+        }
+        return free[Math.floor(Math.random() * free.length)];
+    }
+
+    for (var i = 0; i < 9; i++) {
+        (function (idx) {
+            onTap($('c' + idx), function () {
+                if (over) { return; }
+                if (!twoPlayer && turn !== 'X') { return; }
+                place(idx, turn);
+            });
+        })(i);
+    }
+
+    onTap($('restart'), reset);
+    onTap($('modebtn'), function () {
+        twoPlayer = !twoPlayer;
+        $('modebtn').innerHTML = twoPlayer ? 'Mode: 2 Player' : 'Mode: vs CPU';
+        reset();
+    });
+
+    twoPlayer = false;
+    reset();
+})();
+</script>
+</body>
+</html>

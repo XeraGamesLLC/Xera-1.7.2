@@ -1,0 +1,171 @@
+/* Shared styles - written to work on old WebKit (iOS 6 Safari) */
+
+* {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    -webkit-text-size-adjust: none;
+}
+
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    background-color: #2b1055;
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#2b1055), to(#7597de));
+    background-image: -webkit-linear-gradient(top, #2b1055, #7597de);
+    background-image: linear-gradient(to bottom, #2b1055, #7597de);
+    background-attachment: fixed;
+    color: #fff;
+    min-height: 100%;
+}
+
+a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.wrap {
+    padding: 14px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    padding: 10px 0 18px 0;
+}
+
+.header h1 {
+    font-size: 30px;
+    margin: 0;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.25);
+}
+
+.header p {
+    margin: 6px 0 0 0;
+    font-size: 14px;
+    color: #e6def7;
+}
+
+.backbar {
+    padding: 10px 14px;
+}
+
+.backbar a {
+    display: inline-block;
+    padding: 10px 16px;
+    background-color: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.backbar a:active {
+    background-color: rgba(255,255,255,0.35);
+}
+
+/* Tile grid on the hub page - float based, no flexbox/grid needed */
+.tile-grid {
+    overflow: hidden;
+    zoom: 1;
+}
+
+.tile {
+    display: block;
+    float: left;
+    width: 47%;
+    margin: 1.5%;
+    padding: 18px 8px;
+    text-align: center;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.35);
+    background-color: rgba(255,255,255,0.12);
+    -webkit-box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+}
+
+.tile:active {
+    background-color: rgba(255,255,255,0.3);
+}
+
+.tile .icon {
+    font-size: 34px;
+    line-height: 1;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.tile .label {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.section-title {
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #e6def7;
+    margin: 18px 4px 6px 4px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 18px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.4);
+    background-color: rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+.btn:active {
+    background-color: rgba(255,255,255,0.35);
+}
+
+.btn-row {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.btn-row .btn {
+    margin: 4px;
+}
+
+.panel {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.stat {
+    font-size: 15px;
+    margin: 4px 0;
+}
+
+.stat b {
+    font-size: 18px;
+}
+
+canvas {
+    display: block;
+    margin: 0 auto;
+    background-color: #000;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.4);
+    -webkit-touch-callout: none;
+}
+
+.footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: #cfc3ec;
+    padding: 20px 10px;
+}

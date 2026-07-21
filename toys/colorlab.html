@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Color Lab - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #swatch {
+        width: 100%;
+        height: 140px;
+        border-radius: 12px;
+        border: 2px solid rgba(255,255,255,0.4);
+        margin: 10px 0;
+        text-align: center;
+        line-height: 140px;
+        font-size: 20px;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    .slider-row { margin: 10px 0; }
+    .slider-row label { display: block; font-size: 14px; margin-bottom: 4px; }
+    .slider-row input { width: 100%; }
+    #history { overflow: hidden; margin-top: 10px; }
+    .hist-swatch {
+        float: left;
+        width: 30px;
+        height: 30px;
+        margin: 3px;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.4);
+    }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Color Lab</h1></div>
+
+    <div id="swatch">#ffffff</div>
+
+    <div class="slider-row">
+        <label>Red: <span id="rval">255</span></label>
+        <input type="range" id="r" min="0" max="255" value="255" />
+    </div>
+    <div class="slider-row">
+        <label>Green: <span id="gval">255</span></label>
+        <input type="range" id="g" min="0" max="255" value="255" />
+    </div>
+    <div class="slider-row">
+        <label>Blue: <span id="bval">255</span></label>
+        <input type="range" id="b" min="0" max="255" value="255" />
+    </div>
+
+    <div class="btn-row">
+        <span class="btn" id="randbtn">Random</span>
+        <span class="btn" id="savebtn">Save Color</span>
+    </div>
+
+    <div class="section-title">Saved Colors</div>
+    <div id="history"></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var r = $('r'), g = $('g'), b = $('b');
+    var swatch = $('swatch');
+    var history = Store.get('colorlab_history', []);
+
+    function pad(n) {
+        var s = n.toString(16);
+        return s.length === 1 ? '0' + s : s;
+    }
+
+    function toHex(rv, gv, bv) {
+        return '#' + pad(rv) + pad(gv) + pad(bv);
+    }
+
+    function brightness(rv, gv, bv) {
+        return (rv * 299 + gv * 587 + bv * 114) / 1000;
+    }
+
+    function update() {
+        var rv = parseInt(r.value, 10);
+        var gv = parseInt(g.value, 10);
+        var bv = parseInt(b.value, 10);
+        var hex = toHex(rv, gv, bv);
+
+        $('rval').innerHTML = String(rv);
+        $('gval').innerHTML = String(gv);
+        $('bval').innerHTML = String(bv);
+
+        swatch.style.backgroundColor = hex;
+        swatch.style.color = brightness(rv, gv, bv) > 150 ? '#222' : '#fff';
+        swatch.innerHTML = hex;
+    }
+
+    function renderHistory() {
+        var wrap = $('history');
+        wrap.innerHTML = '';
+        for (var i = 0; i < history.length; i++) {
+            var d = document.createElement('div');
+            d.className = 'hist-swatch';
+            d.style.backgroundColor = history[i];
+            wrap.appendChild(d);
+
+            (function (hex) {
+                onTap(d, function () {
+                    var m = hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+                    if (m) {
+                        r.value = parseInt(m[1], 16);
+                        g.value = parseInt(m[2], 16);
+                        b.value = parseInt(m[3], 16);
+                        update();
+                    }
+                });
+            })(history[i]);
+        }
+    }
+
+    on(r, 'change', update);
+    on(g, 'change', update);
+    on(b, 'change', update);
+    on(r, 'input', update);
+    on(g, 'input', update);
+    on(b, 'input', update);
+
+    onTap($('randbtn'), function () {
+        r.value = Math.floor(Math.random() * 256);
+        g.value = Math.floor(Math.random() * 256);
+        b.value = Math.floor(Math.random() * 256);
+        update();
+    });
+
+    onTap($('savebtn'), function () {
+        var hex = toHex(parseInt(r.value, 10), parseInt(g.value, 10), parseInt(b.value, 10));
+        history.unshift(hex);
+        if (history.length > 24) { history.length = 24; }
+        Store.set('colorlab_history', history);
+        renderHistory();
+    });
+
+    update();
+    renderHistory();
+})();
+</script>
+</body>
+</html>

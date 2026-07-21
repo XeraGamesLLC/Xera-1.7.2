@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Shoutbox - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #entry {
+        width: 100%;
+        height: 70px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.4);
+        background-color: rgba(255,255,255,0.12);
+        color: #fff;
+        font-size: 15px;
+        padding: 8px;
+    }
+    .post {
+        background-color: rgba(0,0,0,0.25);
+        border-radius: 10px;
+        padding: 10px;
+        margin: 8px 0;
+        text-align: left;
+    }
+    .post .when { font-size: 11px; color: #cfc3ec; margin-bottom: 4px; }
+    .post .text { font-size: 15px; word-wrap: break-word; }
+    .post .del {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #ffb3b3;
+    }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header">
+        <h1>Shoutbox</h1>
+        <p>A little board just for you</p>
+    </div>
+
+    <textarea id="entry" placeholder="Write something..."></textarea>
+    <div class="btn-row"><span class="btn" id="post">Post</span></div>
+
+    <div id="posts"></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var posts = Store.get('shoutbox_posts', []);
+
+    function fmtDate(ts) {
+        var d = new Date(ts);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var h = d.getHours();
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12;
+        if (h === 0) { h = 12; }
+        var min = d.getMinutes();
+        var minStr = min < 10 ? '0' + min : String(min);
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + h + ':' + minStr + ' ' + ampm;
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function render() {
+        var wrap = $('posts');
+        wrap.innerHTML = '';
+        if (!posts.length) {
+            var empty = document.createElement('div');
+            empty.className = 'footer-note';
+            empty.innerHTML = 'Nothing posted yet';
+            wrap.appendChild(empty);
+            return;
+        }
+        for (var i = 0; i < posts.length; i++) {
+            var p = posts[i];
+            var div = document.createElement('div');
+            div.className = 'post';
+            div.innerHTML = '<div class="when">' + fmtDate(p.ts) + '</div>' +
+                '<div class="text">' + escapeHtml(p.text) + '</div>' +
+                '<span class="del" id="del' + i + '">Delete</span>';
+            wrap.appendChild(div);
+
+            (function (idx) {
+                onTap($('del' + idx), function () {
+                    posts.splice(idx, 1);
+                    Store.set('shoutbox_posts', posts);
+                    render();
+                });
+            })(i);
+        }
+    }
+
+    onTap($('post'), function () {
+        var box = $('entry');
+        var text = box.value.replace(/^\s+|\s+$/g, '');
+        if (!text) { return; }
+        posts.unshift({ text: text, ts: (new Date()).getTime() });
+        Store.set('shoutbox_posts', posts);
+        box.value = '';
+        render();
+    });
+
+    render();
+})();
+</script>
+</body>
+</html>

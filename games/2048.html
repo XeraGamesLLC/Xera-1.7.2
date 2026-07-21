@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>2048 - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #board {
+        width: 272px;
+        height: 272px;
+        margin: 10px auto;
+        padding: 4px;
+        background-color: rgba(0,0,0,0.35);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .tile2048 {
+        float: left;
+        width: 60px;
+        height: 60px;
+        margin: 2px;
+        line-height: 60px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 6px;
+        background-color: rgba(255,255,255,0.08);
+        color: #fff;
+    }
+    .v2 { background-color: #6b6b9e; }
+    .v4 { background-color: #7f6bb0; }
+    .v8 { background-color: #a15fc2; }
+    .v16 { background-color: #c956b0; }
+    .v32 { background-color: #e8548d; }
+    .v64 { background-color: #ff5f6d; }
+    .v128 { background-color: #ff8a50; font-size: 17px; }
+    .v256 { background-color: #ffb347; font-size: 17px; }
+    .v512 { background-color: #ffd23f; font-size: 17px; color: #333; }
+    .v1024 { background-color: #9dffb0; font-size: 15px; color: #333; }
+    .v2048 { background-color: #7fffd4; font-size: 15px; color: #333; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>2048</h1></div>
+
+    <div class="panel">
+        <span class="stat">Score: <b id="score">0</b> &nbsp;&nbsp; Best: <b id="best">0</b></span>
+    </div>
+
+    <div id="board"></div>
+
+    <div class="btn-row"><span class="btn" id="restart">New Game</span></div>
+    <div class="footer-note">Swipe the board to slide the tiles</div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var size = 4;
+    var grid, score, best, over;
+    var boardEl = $('board');
+
+    function emptyGrid() {
+        var g = [];
+        for (var r = 0; r < size; r++) {
+            g.push([0, 0, 0, 0]);
+        }
+        return g;
+    }
+
+    function addRandom() {
+        var empties = [];
+        for (var r = 0; r < size; r++) {
+            for (var c = 0; c < size; c++) {
+                if (grid[r][c] === 0) { empties.push([r, c]); }
+            }
+        }
+        if (!empties.length) { return; }
+        var pick = empties[Math.floor(Math.random() * empties.length)];
+        grid[pick[0]][pick[1]] = Math.random() < 0.9 ? 2 : 4;
+    }
+
+    function render() {
+        boardEl.innerHTML = '';
+        for (var r = 0; r < size; r++) {
+            for (var c = 0; c < size; c++) {
+                var val = grid[r][c];
+                var div = document.createElement('div');
+                div.className = 'tile2048' + (val ? ' v' + val : '');
+                div.innerHTML = val ? String(val) : '';
+                boardEl.appendChild(div);
+            }
+        }
+        $('score').innerHTML = String(score);
+    }
+
+    function cloneGrid(g) {
+        var out = [];
+        for (var r = 0; r < size; r++) { out.push(g[r].slice()); }
+        return out;
+    }
+
+    function gridsEqual(a, b) {
+        for (var r = 0; r < size; r++) {
+            for (var c = 0; c < size; c++) {
+                if (a[r][c] !== b[r][c]) { return false; }
+            }
+        }
+        return true;
+    }
+
+    function compactLine(line) {
+        var vals = [];
+        for (var i = 0; i < line.length; i++) {
+            if (line[i] !== 0) { vals.push(line[i]); }
+        }
+        for (i = 0; i < vals.length - 1; i++) {
+            if (vals[i] === vals[i + 1]) {
+                vals[i] = vals[i] * 2;
+                score += vals[i];
+                vals.splice(i + 1, 1);
+            }
+        }
+        while (vals.length < size) { vals.push(0); }
+        return vals;
+    }
+
+    function reverse(arr) {
+        return arr.slice().reverse();
+    }
+
+    function getCol(g, c) {
+        var col = [];
+        for (var r = 0; r < size; r++) { col.push(g[r][c]); }
+        return col;
+    }
+
+    function setCol(g, c, col) {
+        for (var r = 0; r < size; r++) { g[r][c] = col[r]; }
+    }
+
+    function move(direction) {
+        if (over) { return; }
+        var before = cloneGrid(grid);
+        var r, c, line, newLine;
+
+        if (direction === 'left') {
+            for (r = 0; r < size; r++) {
+                grid[r] = compactLine(grid[r]);
+            }
+        } else if (direction === 'right') {
+            for (r = 0; r < size; r++) {
+                grid[r] = reverse(compactLine(reverse(grid[r])));
+            }
+        } else if (direction === 'up') {
+            for (c = 0; c < size; c++) {
+                line = getCol(grid, c);
+                newLine = compactLine(line);
+                setCol(grid, c, newLine);
+            }
+        } else if (direction === 'down') {
+            for (c = 0; c < size; c++) {
+                line = reverse(getCol(grid, c));
+                newLine = reverse(compactLine(line));
+                setCol(grid, c, newLine);
+            }
+        }
+
+        if (!gridsEqual(before, grid)) {
+            addRandom();
+            render();
+            if (score > best) {
+                best = score;
+                Store.set('t2048_best', best);
+                $('best').innerHTML = String(best);
+            }
+            checkOver();
+        }
+    }
+
+    function checkOver() {
+        for (var r = 0; r < size; r++) {
+            for (var c = 0; c < size; c++) {
+                if (grid[r][c] === 0) { return; }
+                if (c < size - 1 && grid[r][c] === grid[r][c + 1]) { return; }
+                if (r < size - 1 && grid[r][c] === grid[r + 1][c]) { return; }
+            }
+        }
+        over = true;
+        setTimeout(function () {
+            var d = document.createElement('div');
+            d.style.textAlign = 'center';
+            d.style.fontSize = '16px';
+            d.style.padding = '6px';
+            d.innerHTML = 'No more moves - tap New Game';
+            boardEl.parentNode.insertBefore(d, boardEl.nextSibling);
+        }, 50);
+    }
+
+    function reset() {
+        grid = emptyGrid();
+        score = 0;
+        over = false;
+        best = Store.get('t2048_best', 0);
+        $('best').innerHTML = String(best);
+        addRandom();
+        addRandom();
+        render();
+    }
+
+    lockScroll(boardEl);
+    attachSwipe(boardEl, move);
+    onTap($('restart'), reset);
+
+    reset();
+})();
+</script>
+</body>
+</html>

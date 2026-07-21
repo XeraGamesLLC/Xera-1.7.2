@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Pong - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Pong</h1></div>
+
+    <div class="panel">
+        <span class="stat">You: <b id="pscore">0</b> &nbsp;&nbsp; CPU: <b id="cscore">0</b></span>
+    </div>
+
+    <canvas id="game" width="280" height="340"></canvas>
+
+    <div class="btn-row"><span class="btn" id="restart">Restart</span></div>
+    <div class="footer-note">Drag left/right on the board to move your paddle</div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var canvas = $('game');
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+    var paddleW = 60, paddleH = 10;
+    var playerX, cpuX, ballX, ballY, ballVX, ballVY, pscore, cscore, timer;
+
+    lockScroll(canvas);
+
+    function reset() {
+        playerX = W / 2 - paddleW / 2;
+        cpuX = W / 2 - paddleW / 2;
+        ballX = W / 2;
+        ballY = H / 2;
+        ballVX = 2.4;
+        ballVY = 2.4;
+        pscore = 0;
+        cscore = 0;
+        $('pscore').innerHTML = '0';
+        $('cscore').innerHTML = '0';
+        if (timer) { clearInterval(timer); }
+        timer = setInterval(step, 20);
+    }
+
+    on(canvas, 'touchmove', function (e) {
+        var rect = canvas.getBoundingClientRect();
+        var t = e.touches[0];
+        var x = t.clientX - rect.left;
+        playerX = x - paddleW / 2;
+        if (playerX < 0) { playerX = 0; }
+        if (playerX > W - paddleW) { playerX = W - paddleW; }
+    });
+
+    function step() {
+        ballX += ballVX;
+        ballY += ballVY;
+
+        if (ballX <= 4 || ballX >= W - 4) {
+            ballVX = -ballVX;
+        }
+
+        /* cpu tracks ball with limited speed */
+        var target = ballX - paddleW / 2;
+        var cpuSpeed = 2.2;
+        if (cpuX < target) { cpuX += cpuSpeed; }
+        else if (cpuX > target) { cpuX -= cpuSpeed; }
+        if (cpuX < 0) { cpuX = 0; }
+        if (cpuX > W - paddleW) { cpuX = W - paddleW; }
+
+        /* cpu paddle near top */
+        if (ballY <= 22 && ballY >= 12 && ballX >= cpuX && ballX <= cpuX + paddleW && ballVY < 0) {
+            ballVY = -ballVY;
+        }
+        /* player paddle near bottom */
+        if (ballY >= H - 22 && ballY <= H - 12 && ballX >= playerX && ballX <= playerX + paddleW && ballVY > 0) {
+            ballVY = -ballVY;
+        }
+
+        if (ballY < 0) {
+            pscore += 1;
+            $('pscore').innerHTML = String(pscore);
+            serve();
+        } else if (ballY > H) {
+            cscore += 1;
+            $('cscore').innerHTML = String(cscore);
+            serve();
+        }
+
+        draw();
+    }
+
+    function serve() {
+        ballX = W / 2;
+        ballY = H / 2;
+        ballVX = (Math.random() > 0.5 ? 1 : -1) * 2.4;
+        ballVY = (Math.random() > 0.5 ? 1 : -1) * 2.4;
+    }
+
+    function draw() {
+        ctx.fillStyle = '#0d0d1a';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.setLineDash ? ctx.setLineDash([6, 6]) : null;
+        ctx.beginPath();
+        ctx.moveTo(0, H / 2);
+        ctx.lineTo(W, H / 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#7fd8ff';
+        ctx.fillRect(cpuX, 12, paddleW, paddleH);
+
+        ctx.fillStyle = '#9dffb0';
+        ctx.fillRect(playerX, H - 22, paddleW, paddleH);
+
+        ctx.fillStyle = '#ff5f6d';
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    onTap($('restart'), reset);
+
+    reset();
+})();
+</script>
+</body>
+</html>
