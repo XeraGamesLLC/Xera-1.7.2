@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/root/ios6
-ExecStart=/usr/bin/python3 /root/ios6/server.py 443
+WorkingDirectory=/root/ios6/Xera-1.7.2
+ExecStart=/usr/bin/python3 /root/ios6/Xera-1.7.2/server.py 443
 Restart=always
 RestartSec=3
 User=root
