@@ -4,11 +4,11 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/pocket-arcade
-ExecStart=/usr/bin/python3 /opt/pocket-arcade/server.py 6969
+WorkingDirectory=/root/ios6
+ExecStart=/usr/bin/python3 /root/ios6/server.py 443
 Restart=always
 RestartSec=3
-User=nobody
+User=root
 
 [Install]
 WantedBy=multi-user.target
