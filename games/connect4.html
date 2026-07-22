@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Connect Four - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Connect Four</h1></div>
+
+    <div class="panel">
+        <div id="msg">Your turn (red)</div>
+    </div>
+
+    <canvas id="game" width="266" height="228"></canvas>
+
+    <div class="btn-row"><span class="btn" id="restart">Restart</span></div>
+    <div class="footer-note">Tap a column to drop your piece</div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var canvas = $('game');
+    var ctx = canvas.getContext('2d');
+    var cols = 7, rows = 6, cell = 38;
+    var board, turn, over;
+
+    lockScroll(canvas);
+
+    function reset() {
+        board = [];
+        for (var r = 0; r < rows; r++) {
+            board.push([0, 0, 0, 0, 0, 0, 0]);
+        }
+        turn = 1;
+        over = false;
+        $('msg').innerHTML = 'Your turn (red)';
+        draw();
+    }
+
+    function lowestEmptyRow(c) {
+        for (var r = rows - 1; r >= 0; r--) {
+            if (board[r][c] === 0) { return r; }
+        }
+        return -1;
+    }
+
+    function checkWin(b, player) {
+        var r, c;
+        for (r = 0; r < rows; r++) {
+            for (c = 0; c < cols - 3; c++) {
+                if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) { return true; }
+            }
+        }
+        for (c = 0; c < cols; c++) {
+            for (r = 0; r < rows - 3; r++) {
+                if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) { return true; }
+            }
+        }
+        for (r = 0; r < rows - 3; r++) {
+            for (c = 0; c < cols - 3; c++) {
+                if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) { return true; }
+            }
+        }
+        for (r = 3; r < rows; r++) {
+            for (c = 0; c < cols - 3; c++) {
+                if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) { return true; }
+            }
+        }
+        return false;
+    }
+
+    function boardFull() {
+        for (var c = 0; c < cols; c++) {
+            if (lowestEmptyRow(c) !== -1) { return false; }
+        }
+        return true;
+    }
+
+    function drop(c, player) {
+        var r = lowestEmptyRow(c);
+        if (r === -1) { return false; }
+        board[r][c] = player;
+        return true;
+    }
+
+    function cloneBoard(b) {
+        var out = [];
+        for (var r = 0; r < rows; r++) { out.push(b[r].slice()); }
+        return out;
+    }
+
+    function cpuMove() {
+        var c, test, r;
+
+        for (c = 0; c < cols; c++) {
+            r = lowestEmptyRow(c);
+            if (r === -1) { continue; }
+            test = cloneBoard(board);
+            test[r][c] = 2;
+            if (checkWin(test, 2)) { drop(c, 2); return c; }
+        }
+        for (c = 0; c < cols; c++) {
+            r = lowestEmptyRow(c);
+            if (r === -1) { continue; }
+            test = cloneBoard(board);
+            test[r][c] = 1;
+            if (checkWin(test, 1)) { drop(c, 2); return c; }
+        }
+        var order = [3, 2, 4, 1, 5, 0, 6];
+        for (var i = 0; i < order.length; i++) {
+            if (lowestEmptyRow(order[i]) !== -1) {
+                drop(order[i], 2);
+                return order[i];
+            }
+        }
+        return -1;
+    }
+
+    function handleTap(x) {
+        if (over) { return; }
+        var c = Math.floor(x / cell);
+        if (c < 0 || c >= cols) { return; }
+        if (turn !== 1) { return; }
+        if (!drop(c, 1)) { return; }
+        draw();
+
+        if (checkWin(board, 1)) {
+            over = true;
+            $('msg').innerHTML = 'You win!';
+            return;
+        }
+        if (boardFull()) {
+            over = true;
+            $('msg').innerHTML = 'Draw game';
+            return;
+        }
+
+        turn = 2;
+        $('msg').innerHTML = 'CPU thinking...';
+        setTimeout(function () {
+            cpuMove();
+            draw();
+            if (checkWin(board, 2)) {
+                over = true;
+                $('msg').innerHTML = 'CPU wins';
+                return;
+            }
+            if (boardFull()) {
+                over = true;
+                $('msg').innerHTML = 'Draw game';
+                return;
+            }
+            turn = 1;
+            $('msg').innerHTML = 'Your turn (red)';
+        }, 350);
+    }
+
+    on(canvas, 'touchend', function (e) {
+        var rect = canvas.getBoundingClientRect();
+        var t = e.changedTouches[0];
+        handleTap(t.clientX - rect.left);
+    });
+
+    function draw() {
+        ctx.fillStyle = '#2255aa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (var r = 0; r < rows; r++) {
+            for (var c = 0; c < cols; c++) {
+                var cx = c * cell + cell / 2;
+                var cy = r * cell + cell / 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, cell / 2 - 4, 0, Math.PI * 2);
+                if (board[r][c] === 1) { ctx.fillStyle = '#ff5f6d'; }
+                else if (board[r][c] === 2) { ctx.fillStyle = '#ffd23f'; }
+                else { ctx.fillStyle = '#0d1a33'; }
+                ctx.fill();
+            }
+        }
+    }
+
+    onTap($('restart'), reset);
+
+    reset();
+})();
+</script>
+</body>
+</html>

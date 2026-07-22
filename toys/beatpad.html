@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Beat Pad - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #padgrid {
+        width: 264px;
+        margin: 10px auto;
+        overflow: hidden;
+    }
+    .beatpad {
+        float: left;
+        width: 80px;
+        height: 80px;
+        margin: 4px;
+        border-radius: 10px;
+        text-align: center;
+        line-height: 80px;
+        font-size: 14px;
+        font-weight: bold;
+        background-color: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+    .beatpad.hit { background-color: rgba(157,255,176,0.5); }
+    #rec.on { background-color: rgba(255,95,109,0.6); }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Beat Pad</h1></div>
+
+    <div id="padgrid">
+        <div class="beatpad" id="pad0">Kick</div>
+        <div class="beatpad" id="pad1">Snare</div>
+        <div class="beatpad" id="pad2">Hihat</div>
+        <div class="beatpad" id="pad3">Clap</div>
+        <div class="beatpad" id="pad4">Tom Lo</div>
+        <div class="beatpad" id="pad5">Tom Hi</div>
+        <div class="beatpad" id="pad6">Rim</div>
+        <div class="beatpad" id="pad7">Bell</div>
+    </div>
+
+    <div class="btn-row">
+        <span class="btn" id="rec">Record</span>
+        <span class="btn" id="play">Play Loop</span>
+        <span class="btn" id="clear">Clear</span>
+    </div>
+    <div id="status" class="footer-note">Tap pads to play. Record to build a loop.</div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var actx = AC ? new AC() : null;
+    var noiseBuffer = null;
+
+    function ensureNoise() {
+        if (!actx || noiseBuffer) { return; }
+        var len = actx.sampleRate * 1;
+        noiseBuffer = actx.createBuffer(1, len, actx.sampleRate);
+        var data = noiseBuffer.getChannelData(0);
+        for (var i = 0; i < len; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+    }
+
+    function envGain(node, startVal, time) {
+        var g = actx.createGain();
+        g.gain.setValueAtTime(startVal, actx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + time);
+        node.connect(g);
+        g.connect(actx.destination);
+        return g;
+    }
+
+    function playTone(freqStart, freqEnd, time) {
+        var osc = actx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freqStart, actx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freqEnd, actx.currentTime + time);
+        envGain(osc, 0.9, time);
+        osc.start(0);
+        osc.stop(actx.currentTime + time);
+    }
+
+    function playNoise(filterType, freq, time, gainStart) {
+        ensureNoise();
+        var src = actx.createBufferSource();
+        src.buffer = noiseBuffer;
+        var filt = actx.createBiquadFilter();
+        filt.type = filterType;
+        filt.frequency.value = freq;
+        src.connect(filt);
+        envGain(filt, gainStart, time);
+        src.start(0);
+        src.stop(actx.currentTime + time);
+    }
+
+    function playSquare(freq, time) {
+        var osc = actx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        envGain(osc, 0.3, time);
+        osc.start(0);
+        osc.stop(actx.currentTime + time);
+    }
+
+    var sounds = [
+        function () { playTone(150, 40, 0.35); },
+        function () { playNoise('bandpass', 1800, 0.2, 0.7); },
+        function () { playNoise('highpass', 7000, 0.08, 0.5); },
+        function () { playNoise('bandpass', 1200, 0.15, 0.6); },
+        function () { playTone(220, 120, 0.3); },
+        function () { playTone(320, 180, 0.25); },
+        function () { playSquare(1200, 0.05); },
+        function () {
+            playSquare(800, 0.3);
+            playSquare(540, 0.3);
+        }
+    ];
+
+    var recording = false;
+    var recordStart = 0;
+    var recordedHits = [];
+    var loopTimers = [];
+    var playing = false;
+
+    function hit(i) {
+        if (!actx) { return; }
+        if (actx.state === 'suspended') { actx.resume(); }
+        sounds[i]();
+        var el = $('pad' + i);
+        el.className = 'beatpad hit';
+        setTimeout(function () { el.className = 'beatpad'; }, 150);
+
+        if (recording) {
+            recordedHits.push({ pad: i, t: (new Date()).getTime() - recordStart });
+        }
+    }
+
+    for (var i = 0; i < 8; i++) {
+        (function (idx) {
+            on($('pad' + idx), 'touchstart', function (e) {
+                e.preventDefault();
+                hit(idx);
+            });
+        })(i);
+    }
+
+    onTap($('rec'), function () {
+        if (!recording) {
+            recording = true;
+            recordedHits = [];
+            recordStart = (new Date()).getTime();
+            $('rec').className = 'btn on';
+            $('rec').innerHTML = 'Stop';
+            $('status').innerHTML = 'Recording... tap pads';
+        } else {
+            recording = false;
+            $('rec').className = 'btn';
+            $('rec').innerHTML = 'Record';
+            $('status').innerHTML = recordedHits.length ? 'Loop saved (' + recordedHits.length + ' hits)' : 'Nothing recorded';
+        }
+    });
+
+    function stopLoop() {
+        for (var i = 0; i < loopTimers.length; i++) { clearTimeout(loopTimers[i]); }
+        loopTimers = [];
+        playing = false;
+        $('play').innerHTML = 'Play Loop';
+    }
+
+    onTap($('play'), function () {
+        if (playing) {
+            stopLoop();
+            return;
+        }
+        if (!recordedHits.length) {
+            $('status').innerHTML = 'Nothing to play yet';
+            return;
+        }
+        playing = true;
+        $('play').innerHTML = 'Stop Loop';
+        var duration = recordedHits[recordedHits.length - 1].t + 500;
+
+        function scheduleOnce() {
+            for (var i = 0; i < recordedHits.length; i++) {
+                (function (h) {
+                    loopTimers.push(setTimeout(function () { hit(h.pad); }, h.t));
+                })(recordedHits[i]);
+            }
+            loopTimers.push(setTimeout(function () {
+                if (playing) { scheduleOnce(); }
+            }, duration));
+        }
+        scheduleOnce();
+    });
+
+    onTap($('clear'), function () {
+        stopLoop();
+        recordedHits = [];
+        $('status').innerHTML = 'Cleared';
+    });
+})();
+</script>
+</body>
+</html>

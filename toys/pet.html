@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Pixel Pet - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #face {
+        font-size: 100px;
+        text-align: center;
+        margin: 10px 0;
+    }
+    #petname { text-align: center; font-size: 18px; font-weight: bold; }
+    .barrow { margin: 10px 0; }
+    .barrow .label { font-size: 13px; margin-bottom: 3px; }
+    .bar {
+        height: 16px;
+        border-radius: 8px;
+        background-color: rgba(0,0,0,0.3);
+        overflow: hidden;
+    }
+    .bar .fill {
+        height: 100%;
+        background-color: #9dffb0;
+    }
+    .fill.hunger { background-color: #ffb347; }
+    .fill.happy { background-color: #ff8fd0; }
+    .fill.energy { background-color: #7fd8ff; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Pixel Pet</h1></div>
+
+    <div id="petname">Buddy</div>
+    <div id="face">&#128054;</div>
+    <div id="msg" class="footer-note"></div>
+
+    <div class="barrow">
+        <div class="label">Hunger</div>
+        <div class="bar"><div class="fill hunger" id="hungerbar"></div></div>
+    </div>
+    <div class="barrow">
+        <div class="label">Happiness</div>
+        <div class="bar"><div class="fill happy" id="happybar"></div></div>
+    </div>
+    <div class="barrow">
+        <div class="label">Energy</div>
+        <div class="bar"><div class="fill energy" id="energybar"></div></div>
+    </div>
+
+    <div class="btn-row">
+        <span class="btn" id="feed">Feed</span>
+        <span class="btn" id="play">Play</span>
+        <span class="btn" id="sleep">Nap</span>
+    </div>
+    <div class="btn-row">
+        <span class="btn" id="rename">Rename</span>
+    </div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var state;
+
+    function clamp(v) {
+        if (v < 0) { return 0; }
+        if (v > 100) { return 100; }
+        return v;
+    }
+
+    function load() {
+        state = Store.get('pet_save', null);
+        if (!state) {
+            state = { name: 'Buddy', hunger: 90, happy: 90, energy: 90, lastTick: (new Date()).getTime() };
+            return;
+        }
+        var now = (new Date()).getTime();
+        var elapsedMin = (now - state.lastTick) / 60000;
+        if (elapsedMin > 0) {
+            state.hunger = clamp(state.hunger - elapsedMin * 0.8);
+            state.happy = clamp(state.happy - elapsedMin * 0.5);
+            state.energy = clamp(state.energy - elapsedMin * 0.3);
+        }
+        state.lastTick = now;
+    }
+
+    function save() {
+        state.lastTick = (new Date()).getTime();
+        Store.set('pet_save', state);
+    }
+
+    function moodFace() {
+        var avg = (state.hunger + state.happy + state.energy) / 3;
+        if (avg >= 80) { return '&#128054;'; }
+        if (avg >= 50) { return '&#128052;'; }
+        if (avg >= 25) { return '&#128060;'; }
+        return '&#128564;';
+    }
+
+    function moodMsg() {
+        var avg = (state.hunger + state.happy + state.energy) / 3;
+        if (state.hunger < 25) { return state.name + ' is hungry!'; }
+        if (state.energy < 25) { return state.name + ' is sleepy.'; }
+        if (state.happy < 25) { return state.name + ' wants to play.'; }
+        if (avg >= 80) { return state.name + ' is doing great!'; }
+        return state.name + ' is doing okay.';
+    }
+
+    function render() {
+        $('petname').innerHTML = state.name;
+        $('face').innerHTML = moodFace();
+        $('msg').innerHTML = moodMsg();
+        $('hungerbar').style.width = state.hunger + '%';
+        $('happybar').style.width = state.happy + '%';
+        $('energybar').style.width = state.energy + '%';
+    }
+
+    onTap($('feed'), function () {
+        state.hunger = clamp(state.hunger + 25);
+        save();
+        render();
+    });
+
+    onTap($('play'), function () {
+        state.happy = clamp(state.happy + 20);
+        state.energy = clamp(state.energy - 10);
+        save();
+        render();
+    });
+
+    onTap($('sleep'), function () {
+        state.energy = clamp(state.energy + 40);
+        save();
+        render();
+    });
+
+    onTap($('rename'), function () {
+        var n = window.prompt('New name for your pet:', state.name);
+        if (n) {
+            n = n.replace(/^\s+|\s+$/g, '').substring(0, 16);
+            if (n) { state.name = n; }
+        }
+        save();
+        render();
+    });
+
+    setInterval(function () {
+        state.hunger = clamp(state.hunger - 0.3);
+        state.happy = clamp(state.happy - 0.2);
+        state.energy = clamp(state.energy - 0.1);
+        save();
+        render();
+    }, 60000);
+
+    load();
+    save();
+    render();
+})();
+</script>
+</body>
+</html>

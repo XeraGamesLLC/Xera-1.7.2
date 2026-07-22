@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Hangman - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #word {
+        font-size: 26px;
+        font-weight: bold;
+        letter-spacing: 6px;
+        text-align: center;
+        margin: 10px 0;
+    }
+    #keys { text-align: center; }
+    .key {
+        display: inline-block;
+        width: 26px;
+        height: 32px;
+        line-height: 32px;
+        margin: 2px;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 6px;
+        background-color: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .key.used { opacity: 0.3; }
+    .key.good { background-color: rgba(157,255,176,0.4); }
+    .key.bad { background-color: rgba(255,95,109,0.4); }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Hangman</h1></div>
+
+    <canvas id="draw" width="140" height="140"></canvas>
+
+    <div id="word">_ _ _</div>
+    <div id="msg" class="footer-note"></div>
+
+    <div id="keys"></div>
+
+    <div class="btn-row"><span class="btn" id="restart">New Word</span></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var words = [
+        'PYTHON', 'BANANA', 'ROCKET', 'CASTLE', 'JUNGLE', 'PLANET', 'GUITAR', 'WIZARD',
+        'ISLAND', 'MARBLE', 'TURTLE', 'GARDEN', 'PIRATE', 'SPIDER', 'CANDLE', 'WINDOW'
+    ];
+    var canvas = $('draw');
+    var ctx = canvas.getContext('2d');
+    var current, guessed, wrong, maxWrong, over;
+
+    function drawGallows() {
+        ctx.clearRect(0, 0, 140, 140);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(10, 130);
+        ctx.lineTo(70, 130);
+        ctx.moveTo(30, 130);
+        ctx.lineTo(30, 10);
+        ctx.lineTo(90, 10);
+        ctx.lineTo(90, 25);
+        ctx.stroke();
+
+        var parts = [
+            function () { ctx.beginPath(); ctx.arc(90, 40, 15, 0, Math.PI * 2); ctx.stroke(); },
+            function () { ctx.beginPath(); ctx.moveTo(90, 55); ctx.lineTo(90, 90); ctx.stroke(); },
+            function () { ctx.beginPath(); ctx.moveTo(90, 65); ctx.lineTo(70, 80); ctx.stroke(); },
+            function () { ctx.beginPath(); ctx.moveTo(90, 65); ctx.lineTo(110, 80); ctx.stroke(); },
+            function () { ctx.beginPath(); ctx.moveTo(90, 90); ctx.lineTo(72, 115); ctx.stroke(); },
+            function () { ctx.beginPath(); ctx.moveTo(90, 90); ctx.lineTo(108, 115); ctx.stroke(); }
+        ];
+        for (var i = 0; i < wrong && i < parts.length; i++) {
+            parts[i]();
+        }
+    }
+
+    function renderWord() {
+        var out = '';
+        for (var i = 0; i < current.length; i++) {
+            out += (guessed[current[i]] ? current[i] : '_') + ' ';
+        }
+        $('word').innerHTML = out;
+    }
+
+    function newWord() {
+        current = words[Math.floor(Math.random() * words.length)];
+        guessed = {};
+        wrong = 0;
+        maxWrong = 6;
+        over = false;
+        $('msg').innerHTML = '';
+        renderWord();
+        drawGallows();
+        buildKeys();
+    }
+
+    function checkStatus() {
+        var complete = true;
+        for (var i = 0; i < current.length; i++) {
+            if (!guessed[current[i]]) { complete = false; break; }
+        }
+        if (complete) {
+            over = true;
+            $('msg').innerHTML = 'You got it!';
+        } else if (wrong >= maxWrong) {
+            over = true;
+            $('msg').innerHTML = 'Out of guesses - it was ' + current;
+            renderWord();
+            var all = {};
+            for (var i = 0; i < current.length; i++) { all[current[i]] = true; }
+            guessed = all;
+            renderWord();
+        }
+    }
+
+    function guess(letter, el) {
+        if (over || guessed[letter]) { return; }
+        guessed[letter] = true;
+        if (current.indexOf(letter) === -1) {
+            wrong += 1;
+            el.className = 'key used bad';
+            drawGallows();
+        } else {
+            el.className = 'key used good';
+        }
+        renderWord();
+        checkStatus();
+    }
+
+    function buildKeys() {
+        var wrap = $('keys');
+        wrap.innerHTML = '';
+        var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for (var i = 0; i < letters.length; i++) {
+            (function (letter) {
+                var k = document.createElement('span');
+                k.className = 'key';
+                k.innerHTML = letter;
+                wrap.appendChild(k);
+                onTap(k, function () { guess(letter, k); });
+            })(letters[i]);
+        }
+    }
+
+    onTap($('restart'), newWord);
+
+    newWord();
+})();
+</script>
+</body>
+</html>

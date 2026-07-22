@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Trivia - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #question { font-size: 18px; text-align: center; margin: 12px 0; min-height: 60px; }
+    .opt {
+        display: block;
+        padding: 12px;
+        margin: 6px 0;
+        border-radius: 8px;
+        background-color: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.3);
+        font-size: 15px;
+        text-align: center;
+    }
+    .opt.correct { background-color: rgba(157,255,176,0.4); border-color: #9dffb0; }
+    .opt.wrong { background-color: rgba(255,95,109,0.4); border-color: #ff5f6d; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Trivia</h1></div>
+
+    <div class="panel">
+        <span class="stat">Score: <b id="score">0</b> &nbsp;&nbsp; Question <b id="qnum">1</b>/<b id="qtotal">10</b></span>
+    </div>
+
+    <div id="question"></div>
+    <div id="options"></div>
+
+    <div class="btn-row"><span class="btn" id="next" style="display:none;">Next</span></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var bank = [
+        { q: 'What planet is known as the Red Planet?', o: ['Venus', 'Mars', 'Jupiter', 'Saturn'], a: 1 },
+        { q: 'How many legs does a spider have?', o: ['6', '8', '10', '12'], a: 1 },
+        { q: 'What is the largest ocean on Earth?', o: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], a: 3 },
+        { q: 'What gas do plants absorb from the air?', o: ['Oxygen', 'Nitrogen', 'Carbon Dioxide', 'Helium'], a: 2 },
+        { q: 'How many strings does a standard guitar have?', o: ['4', '5', '6', '7'], a: 2 },
+        { q: 'What is the capital of France?', o: ['Berlin', 'Madrid', 'Paris', 'Rome'], a: 2 },
+        { q: 'Which animal is known as the King of the Jungle?', o: ['Tiger', 'Lion', 'Elephant', 'Bear'], a: 1 },
+        { q: 'How many sides does a hexagon have?', o: ['5', '6', '7', '8'], a: 1 },
+        { q: 'What is the freezing point of water in Celsius?', o: ['0', '10', '32', '-10'], a: 0 },
+        { q: 'Which planet is closest to the Sun?', o: ['Earth', 'Venus', 'Mercury', 'Mars'], a: 2 },
+        { q: 'What do bees make?', o: ['Milk', 'Honey', 'Silk', 'Wax only'], a: 1 },
+        { q: 'How many continents are there?', o: ['5', '6', '7', '8'], a: 2 },
+        { q: 'What is the tallest animal on land?', o: ['Elephant', 'Giraffe', 'Horse', 'Camel'], a: 1 },
+        { q: 'Which fruit is known for keeping the doctor away?', o: ['Banana', 'Apple', 'Orange', 'Grape'], a: 1 },
+        { q: 'What is the main language spoken in Brazil?', o: ['Spanish', 'French', 'Portuguese', 'English'], a: 2 },
+        { q: 'How many colors are in a rainbow?', o: ['5', '6', '7', '8'], a: 2 },
+        { q: 'What do you call a baby dog?', o: ['Kitten', 'Puppy', 'Cub', 'Foal'], a: 1 },
+        { q: 'Which organ pumps blood through the body?', o: ['Lungs', 'Brain', 'Heart', 'Liver'], a: 2 },
+        { q: 'What shape has three sides?', o: ['Square', 'Triangle', 'Circle', 'Pentagon'], a: 1 },
+        { q: 'Which season comes after winter?', o: ['Summer', 'Fall', 'Spring', 'Autumn'], a: 2 }
+    ];
+
+    var round, idxInRound, score, answered, finished;
+    var roundSize = 10;
+
+    function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    function startRound() {
+        round = shuffle(bank.slice()).slice(0, roundSize);
+        idxInRound = 0;
+        score = 0;
+        finished = false;
+        $('next').innerHTML = 'Next';
+        $('score').innerHTML = '0';
+        $('qtotal').innerHTML = String(roundSize);
+        showQuestion();
+    }
+
+    function showQuestion() {
+        answered = false;
+        $('next').style.display = 'none';
+        var item = round[idxInRound];
+        $('qnum').innerHTML = String(idxInRound + 1);
+        $('question').innerHTML = item.q;
+
+        var wrap = $('options');
+        wrap.innerHTML = '';
+        for (var i = 0; i < item.o.length; i++) {
+            (function (i2) {
+                var d = document.createElement('div');
+                d.className = 'opt';
+                d.innerHTML = item.o[i2];
+                wrap.appendChild(d);
+                onTap(d, function () { selectAnswer(i2, d); });
+            })(i);
+        }
+    }
+
+    function selectAnswer(i, el) {
+        if (answered) { return; }
+        answered = true;
+        var item = round[idxInRound];
+        var opts = $('options').getElementsByClassName ? $('options').getElementsByClassName('opt') : $('options').children;
+
+        if (i === item.a) {
+            el.className = 'opt correct';
+            score += 1;
+            $('score').innerHTML = String(score);
+        } else {
+            el.className = 'opt wrong';
+            for (var k = 0; k < opts.length; k++) {
+                if (k === item.a) { opts[k].className = 'opt correct'; }
+            }
+        }
+        $('next').style.display = 'inline-block';
+    }
+
+    onTap($('next'), function () {
+        if (finished) {
+            startRound();
+            return;
+        }
+        idxInRound += 1;
+        if (idxInRound >= round.length) {
+            finished = true;
+            $('question').innerHTML = 'Round finished! Score: ' + score + '/' + roundSize;
+            $('options').innerHTML = '';
+            $('next').innerHTML = 'Play Again';
+            $('next').style.display = 'inline-block';
+            return;
+        }
+        showQuestion();
+    });
+
+    startRound();
+})();
+</script>
+</body>
+</html>

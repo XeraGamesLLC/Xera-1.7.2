@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Music - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    .track {
+        display: block;
+        padding: 12px 10px;
+        margin: 6px 0;
+        border-radius: 8px;
+        background-color: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.3);
+        font-size: 15px;
+    }
+    .track.playing {
+        background-color: rgba(157,255,176,0.35);
+        border-color: #9dffb0;
+    }
+    .track:active { background-color: rgba(255,255,255,0.3); }
+    #nowplaying {
+        font-size: 16px;
+        font-weight: bold;
+        min-height: 22px;
+    }
+    #status { font-size: 12px; color: #cfc3ec; min-height: 16px; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Music</h1></div>
+
+    <div class="panel">
+        <div id="nowplaying">Nothing playing</div>
+        <div id="status"></div>
+        <div class="btn-row">
+            <span class="btn" id="playpause">Play</span>
+            <span class="btn" id="stop">Stop</span>
+        </div>
+    </div>
+
+    <div class="section-title">Radio Stations</div>
+    <div id="radiolist"></div>
+
+    <div class="section-title">My Music</div>
+    <div id="musiclist"></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var stations = [
+        { name: 'Groove Salad (chill downtempo)', url: 'https://ice1.somafm.com/groovesalad-128-mp3' },
+        { name: 'Drone Zone (ambient)', url: 'https://ice1.somafm.com/dronezone-128-mp3' },
+        { name: 'Beat Blender (deep house)', url: 'https://ice1.somafm.com/beatblender-128-mp3' },
+        { name: 'Left Coast 70s', url: 'https://ice1.somafm.com/seventies-128-mp3' },
+        { name: 'Indie Pop Rock', url: 'https://ice1.somafm.com/indiepop-128-mp3' },
+        { name: 'Secret Agent (spy lounge)', url: 'https://ice1.somafm.com/secretagent-128-mp3' },
+        { name: 'Lush (mellow vocals)', url: 'https://ice1.somafm.com/lush-128-mp3' },
+        { name: 'Space Station Soma', url: 'https://ice1.somafm.com/spacestation-128-mp3' }
+    ];
+
+    var audio = new Audio();
+    var currentEl = null;
+    var currentName = '';
+
+    function setStatus(text) {
+        $('status').innerHTML = text;
+    }
+
+    function clearActive() {
+        if (currentEl) {
+            currentEl.className = currentEl.className.replace(' playing', '');
+        }
+    }
+
+    function playUrl(name, url, el) {
+        clearActive();
+        currentEl = el;
+        currentName = name;
+        if (el) { el.className += ' playing'; }
+        $('nowplaying').innerHTML = name;
+        setStatus('Loading...');
+        audio.src = url;
+        audio.play();
+        $('playpause').innerHTML = 'Pause';
+    }
+
+    on(audio, 'playing', function () { setStatus('Playing'); });
+    on(audio, 'waiting', function () { setStatus('Buffering...'); });
+    on(audio, 'error', function () { setStatus('Could not load this track'); });
+    on(audio, 'ended', function () {
+        $('playpause').innerHTML = 'Play';
+        setStatus('Finished');
+    });
+
+    onTap($('playpause'), function () {
+        if (!audio.src) { return; }
+        if (audio.paused) {
+            audio.play();
+            $('playpause').innerHTML = 'Pause';
+        } else {
+            audio.pause();
+            $('playpause').innerHTML = 'Play';
+            setStatus('Paused');
+        }
+    });
+
+    onTap($('stop'), function () {
+        audio.pause();
+        try { audio.currentTime = 0; } catch (e) {}
+        clearActive();
+        currentEl = null;
+        $('nowplaying').innerHTML = 'Nothing playing';
+        setStatus('');
+        $('playpause').innerHTML = 'Play';
+    });
+
+    var radioWrap = $('radiolist');
+    for (var i = 0; i < stations.length; i++) {
+        (function (s) {
+            var d = document.createElement('div');
+            d.className = 'track';
+            d.innerHTML = s.name;
+            radioWrap.appendChild(d);
+            onTap(d, function () { playUrl(s.name, s.url, d); });
+        })(stations[i]);
+    }
+
+    var musicWrap = $('musiclist');
+
+    function loadLibrary() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/music', true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) { return; }
+            if (xhr.status !== 200) {
+                musicWrap.innerHTML = '<div class="footer-note">Could not load your music folder</div>';
+                return;
+            }
+            var files;
+            try {
+                files = JSON.parse(xhr.responseText);
+            } catch (e) {
+                files = [];
+            }
+            if (!files.length) {
+                musicWrap.innerHTML = '<div class="footer-note">No music uploaded yet - drop mp3 files in the music folder on the server</div>';
+                return;
+            }
+            musicWrap.innerHTML = '';
+            for (var i = 0; i < files.length; i++) {
+                (function (name) {
+                    var d = document.createElement('div');
+                    d.className = 'track';
+                    d.innerHTML = name;
+                    musicWrap.appendChild(d);
+                    onTap(d, function () {
+                        playUrl(name, '/music/' + encodeURIComponent(name), d);
+                    });
+                })(files[i]);
+            }
+        };
+        xhr.send();
+    }
+
+    loadLibrary();
+})();
+</script>
+</body>
+</html>

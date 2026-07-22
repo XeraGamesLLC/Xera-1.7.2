@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Jokes - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #joke {
+        min-height: 160px;
+        padding: 16px;
+        border-radius: 12px;
+        background-color: rgba(0,0,0,0.25);
+        margin: 14px 0;
+        font-size: 17px;
+        line-height: 1.4;
+        text-align: center;
+    }
+    #setup { margin-bottom: 10px; }
+    #punchline { font-weight: bold; color: #ffd23f; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Jokes</h1></div>
+
+    <div id="joke">
+        <div id="setup"></div>
+        <div id="punchline"></div>
+    </div>
+
+    <div class="btn-row">
+        <span class="btn" id="reveal">Reveal Punchline</span>
+        <span class="btn" id="next">Next Joke</span>
+    </div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var jokes = [
+        ['Why did the scarecrow win an award?', "Because he was outstanding in his field."],
+        ['Why don\'t skeletons fight each other?', "They don't have the guts."],
+        ['What do you call a fish with no eyes?', "A fsh."],
+        ['Why did the bicycle fall over?', "It was two-tired."],
+        ['What do you call a bear with no teeth?', "A gummy bear."],
+        ['Why can\'t you give Elsa a balloon?', "She will let it go."],
+        ['What do you call cheese that isn\'t yours?', "Nacho cheese."],
+        ['Why did the golfer bring two pairs of pants?', "In case he got a hole in one."],
+        ['What do you call a sleeping dinosaur?', "A dino-snore."],
+        ['Why did the math book look sad?', "It had too many problems."],
+        ['What did one wall say to the other wall?', "I'll meet you at the corner."],
+        ['Why did the coffee file a police report?', "It got mugged."],
+        ['How does a penguin build its house?', "Igloos it together."],
+        ['What do you call a can opener that doesn\'t work?', "A can't opener."],
+        ['Why did the cookie go to the doctor?', "Because it was feeling crumby."],
+        ['What did the ocean say to the beach?', "Nothing, it just waved."],
+        ['Why don\'t eggs tell jokes?', "They'd crack each other up."],
+        ['What do you call a fake noodle?', "An impasta."],
+        ['Why was the broom late?', "It swept in."],
+        ['What kind of shoes do frogs wear?', "Open toad."]
+    ];
+
+    var order = [];
+
+    function reshuffle() {
+        order = [];
+        for (var i = 0; i < jokes.length; i++) { order.push(i); }
+        for (i = order.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = order[i];
+            order[i] = order[j];
+            order[j] = tmp;
+        }
+    }
+
+    var pos = 0;
+
+    function show() {
+        if (pos >= order.length) {
+            reshuffle();
+            pos = 0;
+        }
+        var j = jokes[order[pos]];
+        $('setup').innerHTML = j[0];
+        $('punchline').innerHTML = '';
+    }
+
+    onTap($('reveal'), function () {
+        var j = jokes[order[pos]];
+        $('punchline').innerHTML = j[1];
+    });
+
+    onTap($('next'), function () {
+        pos += 1;
+        show();
+    });
+
+    reshuffle();
+    show();
+})();
+</script>
+</body>
+</html>

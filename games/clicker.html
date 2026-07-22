@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Clicker - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #coinbtn {
+        display: block;
+        width: 180px;
+        height: 180px;
+        margin: 16px auto;
+        border-radius: 50%;
+        background-color: #ffd23f;
+        color: #3a2a00;
+        font-size: 22px;
+        font-weight: bold;
+        line-height: 180px;
+        text-align: center;
+        border: 6px solid rgba(255,255,255,0.4);
+        -webkit-box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+        box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    }
+    #coinbtn:active { -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.3); box-shadow: 0 1px 0 rgba(0,0,0,0.3); }
+    .upgrade {
+        padding: 10px;
+        margin: 6px 0;
+        border-radius: 8px;
+        background-color: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .upgrade .top { font-size: 15px; font-weight: bold; }
+    .upgrade .desc { font-size: 12px; color: #cfc3ec; }
+    .upgrade.disabled { opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Clicker</h1></div>
+
+    <div class="panel">
+        <span class="stat">Coins: <b id="coins">0</b></span><br/>
+        <span class="stat" style="font-size:13px;">+<span id="rate">0</span>/sec</span>
+    </div>
+
+    <div id="offlinemsg" class="footer-note"></div>
+
+    <span id="coinbtn">TAP</span>
+
+    <div class="section-title">Upgrades</div>
+    <div id="upgrades"></div>
+
+    <div class="btn-row"><span class="btn" id="reset">Reset Save</span></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var defs = [
+        { name: 'Tap Power', desc: '+1 coin per tap', base: 10, growth: 1.15, kind: 'click', amount: 1 },
+        { name: 'Helper', desc: '+1 coin/sec', base: 25, growth: 1.15, kind: 'auto', amount: 1 },
+        { name: 'Factory', desc: '+5 coins/sec', base: 150, growth: 1.17, kind: 'auto', amount: 5 },
+        { name: 'Mega Tap', desc: '+10 coins per tap', base: 500, growth: 1.2, kind: 'click', amount: 10 }
+    ];
+
+    var state;
+
+    function load() {
+        state = Store.get('clicker_save', null);
+        if (!state) {
+            state = { coins: 0, clickValue: 1, autoRate: 0, owned: [0, 0, 0, 0], lastSave: (new Date()).getTime() };
+            return;
+        }
+        var now = (new Date()).getTime();
+        var elapsedSec = Math.floor((now - state.lastSave) / 1000);
+        if (elapsedSec > 2 && state.autoRate > 0) {
+            var earned = Math.floor(elapsedSec * state.autoRate);
+            state.coins += earned;
+            $('offlinemsg').innerHTML = 'Welcome back! Earned ' + earned + ' coins while away.';
+        }
+        state.lastSave = now;
+    }
+
+    function save() {
+        state.lastSave = (new Date()).getTime();
+        Store.set('clicker_save', state);
+    }
+
+    function costFor(i) {
+        var d = defs[i];
+        return Math.ceil(d.base * Math.pow(d.growth, state.owned[i]));
+    }
+
+    function fmt(n) {
+        n = Math.floor(n);
+        if (n >= 1000000) { return (n / 1000000).toFixed(2) + 'M'; }
+        if (n >= 1000) { return (n / 1000).toFixed(1) + 'K'; }
+        return String(n);
+    }
+
+    function render() {
+        $('coins').innerHTML = fmt(state.coins);
+        $('rate').innerHTML = fmt(state.autoRate);
+        var wrap = $('upgrades');
+        wrap.innerHTML = '';
+        for (var i = 0; i < defs.length; i++) {
+            (function (idx) {
+                var d = defs[idx];
+                var cost = costFor(idx);
+                var div = document.createElement('div');
+                div.className = 'upgrade' + (state.coins < cost ? ' disabled' : '');
+                div.innerHTML = '<div class="top">' + d.name + ' (Lv ' + state.owned[idx] + ') - ' + cost + ' coins</div>' +
+                    '<div class="desc">' + d.desc + '</div>';
+                wrap.appendChild(div);
+                onTap(div, function () { buy(idx); });
+            })(i);
+        }
+    }
+
+    function buy(i) {
+        var cost = costFor(i);
+        if (state.coins < cost) { return; }
+        state.coins -= cost;
+        state.owned[i] += 1;
+        var d = defs[i];
+        if (d.kind === 'click') {
+            state.clickValue += d.amount;
+        } else {
+            state.autoRate += d.amount;
+        }
+        save();
+        render();
+    }
+
+    on($('coinbtn'), 'touchstart', function (e) {
+        e.preventDefault();
+        state.coins += state.clickValue;
+        render();
+    });
+
+    onTap($('reset'), function () {
+        Store.set('clicker_save', null);
+        state = { coins: 0, clickValue: 1, autoRate: 0, owned: [0, 0, 0, 0], lastSave: (new Date()).getTime() };
+        save();
+        render();
+    });
+
+    setInterval(function () {
+        if (state.autoRate > 0) {
+            state.coins += state.autoRate;
+            render();
+        }
+    }, 1000);
+
+    setInterval(save, 5000);
+
+    load();
+    render();
+})();
+</script>
+</body>
+</html>

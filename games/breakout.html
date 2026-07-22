@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Breakout - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Breakout</h1></div>
+
+    <div class="panel">
+        <span class="stat">Score: <b id="score">0</b> &nbsp;&nbsp; Lives: <b id="lives">3</b> &nbsp;&nbsp; Best: <b id="best">0</b></span>
+    </div>
+
+    <canvas id="game" width="280" height="380"></canvas>
+
+    <div class="btn-row"><span class="btn" id="restart">Restart</span></div>
+    <div class="footer-note">Drag left/right to move the paddle</div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var canvas = $('game');
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+    var paddleW = 60, paddleH = 10, paddleY = H - 24;
+    var paddleX, ballX, ballY, ballVX, ballVY, score, lives, best, bricks, alive, timer;
+
+    var rows = 5, cols = 7;
+    var brickW = 34, brickH = 14, brickPad = 4, brickTop = 34, brickLeft = 8;
+    var colors = ['#ff5f6d', '#ffb347', '#ffd23f', '#9dffb0', '#7fd8ff'];
+
+    lockScroll(canvas);
+
+    function buildBricks() {
+        bricks = [];
+        for (var r = 0; r < rows; r++) {
+            var row = [];
+            for (var c = 0; c < cols; c++) {
+                row.push(1);
+            }
+            bricks.push(row);
+        }
+    }
+
+    function resetBall() {
+        ballX = W / 2;
+        ballY = paddleY - 20;
+        ballVX = 2.2 * (Math.random() > 0.5 ? 1 : -1);
+        ballVY = -2.6;
+    }
+
+    function reset() {
+        paddleX = W / 2 - paddleW / 2;
+        score = 0;
+        lives = 3;
+        alive = true;
+        best = Store.get('breakout_best', 0);
+        $('score').innerHTML = '0';
+        $('lives').innerHTML = '3';
+        $('best').innerHTML = String(best);
+        buildBricks();
+        resetBall();
+        if (timer) { clearInterval(timer); }
+        timer = setInterval(step, 16);
+    }
+
+    on(canvas, 'touchmove', function (e) {
+        var rect = canvas.getBoundingClientRect();
+        var t = e.touches[0];
+        var x = t.clientX - rect.left;
+        paddleX = x - paddleW / 2;
+        if (paddleX < 0) { paddleX = 0; }
+        if (paddleX > W - paddleW) { paddleX = W - paddleW; }
+    });
+
+    function brickAt(px, py) {
+        for (var r = 0; r < rows; r++) {
+            for (var c = 0; c < cols; c++) {
+                if (!bricks[r][c]) { continue; }
+                var bx = brickLeft + c * (brickW + brickPad);
+                var by = brickTop + r * (brickH + brickPad);
+                if (px >= bx && px <= bx + brickW && py >= by && py <= by + brickH) {
+                    return { r: r, c: c };
+                }
+            }
+        }
+        return null;
+    }
+
+    function bricksLeft() {
+        var n = 0;
+        for (var r = 0; r < rows; r++) {
+            for (var c = 0; c < cols; c++) {
+                if (bricks[r][c]) { n++; }
+            }
+        }
+        return n;
+    }
+
+    function step() {
+        if (!alive) { return; }
+
+        ballX += ballVX;
+        ballY += ballVY;
+
+        if (ballX <= 4 || ballX >= W - 4) { ballVX = -ballVX; }
+        if (ballY <= 4) { ballVY = -ballVY; }
+
+        var hit = brickAt(ballX, ballY);
+        if (hit) {
+            bricks[hit.r][hit.c] = 0;
+            ballVY = -ballVY;
+            score += 10;
+            $('score').innerHTML = String(score);
+            if (bricksLeft() === 0) {
+                buildBricks();
+                resetBall();
+                ballVX *= 1.1;
+                ballVY *= 1.1;
+            }
+        }
+
+        if (ballY >= paddleY - 6 && ballY <= paddleY + paddleH && ballX >= paddleX && ballX <= paddleX + paddleW && ballVY > 0) {
+            ballVY = -Math.abs(ballVY);
+            var hitPos = (ballX - (paddleX + paddleW / 2)) / (paddleW / 2);
+            ballVX = hitPos * 3.2;
+        }
+
+        if (ballY > H) {
+            lives -= 1;
+            $('lives').innerHTML = String(lives);
+            if (lives <= 0) {
+                gameOver();
+                return;
+            }
+            resetBall();
+        }
+
+        draw();
+    }
+
+    function gameOver() {
+        alive = false;
+        clearInterval(timer);
+        if (score > best) {
+            best = score;
+            Store.set('breakout_best', best);
+            $('best').innerHTML = String(best);
+        }
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px Helvetica';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over', W / 2, H / 2 - 6);
+        ctx.font = '14px Helvetica';
+        ctx.fillText('Tap Restart', W / 2, H / 2 + 18);
+    }
+
+    function draw() {
+        ctx.fillStyle = '#0d0d1a';
+        ctx.fillRect(0, 0, W, H);
+
+        for (var r = 0; r < rows; r++) {
+            for (var c = 0; c < cols; c++) {
+                if (!bricks[r][c]) { continue; }
+                ctx.fillStyle = colors[r % colors.length];
+                ctx.fillRect(brickLeft + c * (brickW + brickPad), brickTop + r * (brickH + brickPad), brickW, brickH);
+            }
+        }
+
+        ctx.fillStyle = '#9dffb0';
+        ctx.fillRect(paddleX, paddleY, paddleW, paddleH);
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    onTap($('restart'), reset);
+
+    reset();
+})();
+</script>
+</body>
+</html>

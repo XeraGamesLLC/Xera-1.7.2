@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Reaction Test - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    #pad {
+        width: 100%;
+        height: 260px;
+        border-radius: 14px;
+        margin: 14px 0;
+        text-align: center;
+        line-height: 260px;
+        font-size: 22px;
+        font-weight: bold;
+        background-color: #7a2222;
+    }
+    #pad.ready { background-color: #2a7a3a; }
+    #pad.early { background-color: #444; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="header"><h1>Reaction Test</h1></div>
+
+    <div class="panel">
+        <span class="stat">Last: <b id="last">-</b> ms &nbsp;&nbsp; Best: <b id="best">-</b> ms</span>
+    </div>
+
+    <div id="pad">Tap to start</div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var pad = $('pad');
+    var state = 'idle';
+    var startTime = 0;
+    var waitTimer = null;
+    var best = Store.get('reaction_best', null);
+
+    $('best').innerHTML = best === null ? '-' : String(best);
+
+    function armRound() {
+        state = 'waiting';
+        pad.className = '';
+        pad.innerHTML = 'Wait for green...';
+        var delay = 1000 + Math.random() * 2500;
+        waitTimer = setTimeout(function () {
+            state = 'ready';
+            pad.className = 'ready';
+            pad.innerHTML = 'TAP NOW';
+            startTime = (new Date()).getTime();
+        }, delay);
+    }
+
+    on(pad, 'touchstart', function (e) {
+        e.preventDefault();
+        if (state === 'idle') {
+            armRound();
+            return;
+        }
+        if (state === 'waiting') {
+            clearTimeout(waitTimer);
+            state = 'early';
+            pad.className = 'early';
+            pad.innerHTML = 'Too soon! Tap to retry';
+            state = 'idle';
+            return;
+        }
+        if (state === 'ready') {
+            var ms = (new Date()).getTime() - startTime;
+            $('last').innerHTML = String(ms);
+            if (best === null || ms < best) {
+                best = ms;
+                Store.set('reaction_best', best);
+                $('best').innerHTML = String(best);
+            }
+            pad.className = '';
+            pad.innerHTML = ms + ' ms - tap to try again';
+            state = 'idle';
+        }
+    });
+})();
+</script>
+</body>
+</html>
