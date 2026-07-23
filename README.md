@@ -7,7 +7,9 @@ no flexbox/grid, no CSS variables.
 ## Games
 Snake, Pong, Tic Tac Toe (vs CPU or 2-player), Memory Match, Whack-a-Mole, 2048,
 Breakout, Flappy, Connect Four (vs CPU), Minesweeper, Simon Says, Reaction Test,
-Word Scramble, Hangman, Trivia, Clicker.
+Word Scramble, Hangman, Trivia, Claude Clicker (a full idle/incremental game
+with 15 tiers of "compute" buildings, a research tree, achievements, golden
+token events, and a prestige system).
 
 ## Toys
 Doodle Pad, Starfield, Color Lab, Shoutbox (a private local note board), Music
