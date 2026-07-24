@@ -95,6 +95,18 @@
         background-image: -webkit-linear-gradient(top, #96c98f 0%, #79b473 46%, #538d4e 46%, #3d6b39 100%);
         background-image: linear-gradient(to bottom, #96c98f 0%, #79b473 46%, #538d4e 46%, #3d6b39 100%);
     }
+    .app-badge.youtube {
+        background-color: #cc3b2e;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ef7a6a), color-stop(0.46, #dd5644), color-stop(0.46, #cc3b2e), color-stop(1, #a8271c));
+        background-image: -webkit-linear-gradient(top, #ef7a6a 0%, #dd5644 46%, #cc3b2e 46%, #a8271c 100%);
+        background-image: linear-gradient(to bottom, #ef7a6a 0%, #dd5644 46%, #cc3b2e 46%, #a8271c 100%);
+    }
+    .app-badge.ai {
+        background-color: #7a53c9;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ab8ce8), color-stop(0.46, #8f68d6), color-stop(0.46, #7a53c9), color-stop(1, #5c3aa3));
+        background-image: -webkit-linear-gradient(top, #ab8ce8 0%, #8f68d6 46%, #7a53c9 46%, #5c3aa3 100%);
+        background-image: linear-gradient(to bottom, #ab8ce8 0%, #8f68d6 46%, #7a53c9 46%, #5c3aa3 100%);
+    }
 
     .app-info { display: block; margin-left: 68px; }
     .app-title { display: block; font-size: 16px; font-weight: bold; color: #1c1c1e; }
@@ -145,6 +157,24 @@
                 <span class="app-title">Wordle</span>
                 <span class="app-desc">Guess the 5-letter word in 6 tries. A fresh random word every time you load the page.</span>
                 <span class="app-cta">Play &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="games/youtube.html">
+            <span class="app-badge youtube">&#128250;</span>
+            <span class="app-info">
+                <span class="app-title">YouTube Search</span>
+                <span class="app-desc">Search videos by title, channel and date. Metadata only - old WebKit can't run the real video player.</span>
+                <span class="app-cta">Open &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="games/askai.html">
+            <span class="app-badge ai">&#128161;</span>
+            <span class="app-info">
+                <span class="app-title">Ask AI</span>
+                <span class="app-desc">A simple chat page backed by Google Gemini's free tier, proxied through the server so old Safari can use it.</span>
+                <span class="app-cta">Open &rarr;</span>
             </span>
         </a>
     </div>
