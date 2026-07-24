@@ -1,26 +1,20 @@
 # Pocket Arcade
 
-A small static website of games and toys built to run on old browsers
-(tested against iOS 6 Safari / iPod touch 4th gen) — no ES6, no fetch,
-no flexbox/grid, no CSS variables.
+A small static site built to run on old browsers (tested against iOS 6
+Safari / iPod touch 4th gen) — no ES6, no fetch, no flexbox/grid, no CSS
+variables. The home screen mocks an iOS 6 SpringBoard with a single app
+icon that opens the one game here:
 
-## Games
-Snake, Pong, Tic Tac Toe (vs CPU or 2-player), Memory Match, Whack-a-Mole, 2048,
-Breakout, Flappy, Connect Four (vs CPU), Minesweeper, Simon Says, Reaction Test,
-Word Scramble, Hangman, Trivia, Claude Clicker (a full idle/incremental game
-with 15 tiers of "compute" buildings, a research tree, achievements, golden
-token events, and a prestige system).
+## Claude Clicker
+A full idle/incremental game (Cookie Clicker, but Claude/AI-themed and
+click-for-tokens) with 20 tiers of "compute" buildings, a research tree,
+active abilities on real-time-regenerating "cycles," bugs and insight
+mechanics, 49 achievements, golden token events, and a prestige system.
+Styled as a native-feeling iOS 6 app: navigation bar, grouped table-view
+rows, a segmented-control tab bar, and iOS-style toggle switches.
 
-## Toys
-Doodle Pad, Starfield, Color Lab, Shoutbox (a private local note board), Music
-(radio stations + your own local library), Magic 8 Ball, Jokes, Beat Pad, Pixel Pet.
-
-Drop your own MP3/OGG/M4A/WAV files into the `music/` folder on the server and
-they'll show up automatically in the Music player's "My Music" section. That
-folder is gitignored so your files won't be touched by `git pull`.
-
-All progress/high scores are saved with `localStorage`, so once the page
-has loaded once it keeps working even if the connection drops.
+Progress is saved with `localStorage`, so once the page has loaded once
+it keeps working even if the connection drops.
 
 ## Running it
 
