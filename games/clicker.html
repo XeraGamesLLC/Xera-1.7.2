@@ -45,6 +45,17 @@
     .statuscell { background-color: #fff; border-bottom: 1px solid #c8c7cc; padding: 12px 14px; text-align: center; }
     .statuscell .big { font-size: 27px; font-weight: bold; color: #1c1c1e; }
     .statuscell .small { font-size: 12px; color: #8e8e93; margin-top: 2px; }
+    .meterbar { height: 6px; background-color: #d8d8dc; border-radius: 3px; overflow: hidden; margin: 5px 30px 0 30px; }
+    .meterfill {
+        height: 100%;
+        width: 0%;
+        background-color: #ff9500;
+        background-image: -webkit-gradient(linear, left top, right top, from(#ffcc66), to(#ff5e3a));
+        background-image: -webkit-linear-gradient(left, #ffcc66, #ff5e3a);
+        background-image: linear-gradient(to right, #ffcc66, #ff5e3a);
+        -webkit-transition: width 0.4s;
+        transition: width 0.4s;
+    }
 
     #clickarea { position: relative; text-align: center; padding: 14px 0 4px 0; }
     #coinbtn {
@@ -110,6 +121,22 @@
         box-shadow: 0 1px 4px rgba(0,0,0,0.4);
         z-index: 5;
     }
+
+    .abilbar { overflow: hidden; zoom: 1; padding: 4px 12px 2px 12px; }
+    .abilitem {
+        float: left;
+        width: 22%;
+        margin: 0 1.5%;
+        text-align: center;
+        padding: 7px 2px;
+        border-radius: 8px;
+        background-color: #fff;
+        border: 1px solid #b0b3b8;
+    }
+    .abilitem .ai-icon { font-size: 21px; display: block; }
+    .abilitem .ai-cost { font-size: 9.5px; color: #2b78e3; font-weight: bold; margin-top: 2px; }
+    .abilitem.disabled { opacity: 0.42; }
+    .abilitem:active { background-color: #d9e6fb; }
 
     .segwrap { padding: 12px 12px 0 12px; overflow: hidden; zoom: 1; }
     .segctl { overflow: hidden; zoom: 1; border: 1px solid #2b78e3; border-radius: 7px; }
@@ -233,6 +260,8 @@
         <div class="big" id="tokens">0</div>
         <div class="small">+<span id="rate">0</span>/sec &middot; <span id="clickpower">1</span>/tap</div>
         <div class="small">&#128161; <span id="insight">0</span> insight</div>
+        <div class="small">&#128293; <span id="cycles">0</span>/<span id="cyclesmax">100</span> cycles</div>
+        <div class="meterbar"><div class="meterfill" id="cyclesfill"></div></div>
     </div>
 
     <div id="clickarea">
@@ -241,6 +270,8 @@
             <span class="c-label">PROMPT</span>
         </span>
     </div>
+
+    <div class="abilbar" id="abilbar"></div>
 
     <div class="segwrap">
         <div class="segctl">
@@ -394,6 +425,52 @@
     var ALIGN_ICON = '📜';
     var INSIGHT_ICON = '💡';
     var BUG_ICON = '🐛';
+    var CYCLE_ICON = '🔥';
+
+    var LUCK_UPGRADES = [
+        { name: 'Serendipity', desc: 'Golden tokens appear about 25% more often.', cost: 50000 },
+        { name: 'Lucky Day', desc: 'Golden token effects last 50% longer and windfalls pay 50% more.', cost: 750000 },
+        { name: 'Get Lucky', desc: 'Golden tokens stay on screen 50% longer before they vanish.', cost: 9000000 }
+    ];
+    var LUCK_ICON = '🎰';
+
+    var CYCLES_CAP_BASE = 100;
+    var CYCLES_REFILL_SECONDS = 90;
+
+    function cyclesCap() {
+        return CYCLES_CAP_BASE + state.weights * 5;
+    }
+
+    var ABILITIES = [
+        {
+            id: 'ab_frenzy', name: 'Force Frenzy', desc: 'Instantly trigger a random golden-token effect.', icon: '🔥', cost: 40,
+            run: function () { triggerGoldenEffect(); }
+        },
+        {
+            id: 'ab_instant', name: 'Instant Compute', desc: 'Cash in 90 seconds of production, right now.', icon: '💥', cost: 60,
+            run: function () {
+                var bonus = Math.max(computeCps() * 90, computeClickValue() * 80, 100);
+                bonus = Math.floor(bonus);
+                state.tokens += bonus;
+                state.lifetimeTokens += bonus;
+                state.allTimeTokens += bonus;
+                showToast('+' + fmt(bonus) + ' tokens, instantly!');
+            }
+        },
+        {
+            id: 'ab_sweep', name: 'Debug Sweep', desc: 'Squash every active bug for a 25% bonus payout.', icon: '🔨', cost: 20,
+            available: function () { return state.bugs.length > 0; },
+            run: function () { sweepBugs(); }
+        },
+        {
+            id: 'ab_extend', name: 'Extend Session', desc: 'Add 30 seconds to your active frenzy, if any.', icon: '⏳', cost: 30,
+            available: function () { return !!state.buff; },
+            run: function () {
+                state.buff.until += 30000;
+                showToast('Buff extended by 30 seconds!');
+            }
+        }
+    ];
 
     var TICKS = [
         'Tip: Claude never forgets. Until the context window runs out.',
@@ -411,7 +488,9 @@
         'The Neural Prism refracted one prompt into a thousand better ones.',
         'Quantum Compute is both working and not working until you check on it.',
         'Bugs are just emergent capabilities nobody asked for.',
-        'Insight accumulates slowly. Wisdom cannot be rushed, apparently.'
+        'Insight accumulates slowly. Wisdom cannot be rushed, apparently.',
+        'Cycles regenerate on their own. Spend them like you mean it.',
+        'Force Frenzy: because waiting for a golden token is for cowards.'
     ];
 
     var TOKEN_MILESTONES = [
@@ -448,6 +527,10 @@
     var INSIGHT_MILESTONES = [
         [10, 'Patient'],
         [50, 'Very Patient']
+    ];
+    var ABILITY_MILESTONES = [
+        [1, 'First Cast'],
+        [50, 'Spellslinger']
     ];
 
     var ACHIEVEMENTS = [];
@@ -525,6 +608,18 @@
                 });
             })(i);
         }
+        for (i = 0; i < ABILITY_MILESTONES.length; i++) {
+            (function (idx) {
+                var th = ABILITY_MILESTONES[idx][0];
+                ACHIEVEMENTS.push({
+                    id: 'ab_' + idx,
+                    name: ABILITY_MILESTONES[idx][1],
+                    desc: 'Cast ' + th + ' ability/abilities.',
+                    icon: '🏆',
+                    check: function (s) { return (s.abilitiesCast || 0) >= th; }
+                });
+            })(i);
+        }
         ACHIEVEMENTS.push({
             id: 'full_stack',
             name: 'Full Stack',
@@ -534,6 +629,13 @@
                 for (var k = 0; k < BUILDINGS.length; k++) { if (s.owned[k] < 1) { return false; } }
                 return true;
             }
+        });
+        ACHIEVEMENTS.push({
+            id: 'overclocked',
+            name: 'Overclocked',
+            desc: 'Reach a cycles capacity of 150 or higher.',
+            icon: '🏆',
+            check: function (s) { return (CYCLES_CAP_BASE + s.weights * 5) >= 150; }
         });
     })();
 
@@ -577,6 +679,8 @@
             bugs: [],
             bugAt: now + randRange(25000, 55000),
             bugsPopped: 0,
+            cycles: 0,
+            abilitiesCast: 0,
             opt: { shortNumbers: true, floatText: true },
             playStart: now,
             lastSave: now,
@@ -614,6 +718,8 @@
         if (!state.bugs) { state.bugs = []; }
         if (!state.bugAt) { state.bugAt = (new Date()).getTime() + randRange(25000, 55000); }
         if (typeof state.bugsPopped !== 'number') { state.bugsPopped = 0; }
+        if (typeof state.cycles !== 'number') { state.cycles = 0; }
+        if (typeof state.abilitiesCast !== 'number') { state.abilitiesCast = 0; }
         if (!state.opt) { state.opt = { shortNumbers: true, floatText: true }; }
         if (typeof state.opt.shortNumbers !== 'boolean') { state.opt.shortNumbers = true; }
         if (typeof state.opt.floatText !== 'boolean') { state.opt.floatText = true; }
@@ -658,6 +764,8 @@
             state.insightAt = now;
         }
 
+        state.cycles = Math.min(cyclesCap(), state.cycles + elapsedSec * (cyclesCap() / CYCLES_REFILL_SECONDS));
+
         state.lastSave = now;
     }
 
@@ -694,6 +802,16 @@
         return 1 + state.weights * 0.02;
     }
 
+    function achievementCount() {
+        var c = 0;
+        for (var k in state.achievements) { if (state.achievements[k]) { c++; } }
+        return c;
+    }
+
+    function masteryBonus() {
+        return achievementCount() * 0.002;
+    }
+
     function buffActive() {
         return state.buff && state.buff.until > (new Date()).getTime();
     }
@@ -705,7 +823,7 @@
             var lMult = Math.pow(1.02, state.levels[i] || 0);
             sum += state.owned[i] * BUILDINGS[i].cps * tMult * lMult;
         }
-        var globalMult = (1 + alignBonus()) * prestigeMult();
+        var globalMult = (1 + alignBonus() + masteryBonus()) * prestigeMult();
         var buffMult = (buffActive() && state.buff.type === 'frenzy') ? 7 : 1;
         return sum * globalMult * buffMult;
     }
@@ -713,7 +831,7 @@
     function computeClickValue() {
         var base = 1 + state.owned[0] * 0.1;
         var clickMult = Math.pow(2, clickUpgradeCount());
-        var globalMult = (1 + alignBonus()) * prestigeMult();
+        var globalMult = (1 + alignBonus() + masteryBonus()) * prestigeMult();
         var buffMult = (buffActive() && state.buff.type === 'clickfrenzy') ? 7 : 1;
         return base * clickMult * globalMult * buffMult;
     }
@@ -748,6 +866,9 @@
         $('rate').innerHTML = fmtDec(computeCps());
         $('clickpower').innerHTML = fmtDec(computeClickValue());
         $('insight').innerHTML = fmt(state.insight);
+        $('cycles').innerHTML = Math.floor(state.cycles);
+        $('cyclesmax').innerHTML = fmt(cyclesCap());
+        $('cyclesfill').style.width = Math.min(100, (state.cycles / cyclesCap()) * 100) + '%';
 
         var banner = $('buffbanner');
         if (buffActive()) {
@@ -809,6 +930,17 @@
                 list.push({ id: id, name: au.name, desc: au.desc, cost: alignCost(idx), icon: ALIGN_ICON, currency: 'tokens',
                     apply: function () { state.purchased[id] = true; } });
             })(aCount);
+        }
+
+        var lCount = 0;
+        for (i = 0; i < LUCK_UPGRADES.length; i++) { if (state.purchased['luck_' + i]) { lCount++; } }
+        if (lCount < LUCK_UPGRADES.length) {
+            (function (idx) {
+                var lu = LUCK_UPGRADES[idx];
+                var id = 'luck_' + idx;
+                list.push({ id: id, name: lu.name, desc: lu.desc, cost: lu.cost, icon: LUCK_ICON, currency: 'tokens',
+                    apply: function () { state.purchased[id] = true; } });
+            })(lCount);
         }
 
         for (i = 0; i < BUILDINGS.length; i++) {
@@ -990,6 +1122,7 @@
     function renderAll() {
         updateTopPanel();
         renderPrestige();
+        renderAbilities();
         renderActiveTab();
     }
 
@@ -1071,11 +1204,12 @@
         area.appendChild(div);
         goldenEl = div;
 
+        var life = state.purchased.luck_2 ? 18000 : 12000;
         var expired = false;
         var expireTimer = setTimeout(function () {
             expired = true;
             removeGolden();
-        }, 12000);
+        }, life);
 
         onTap(div, function () {
             if (expired) { return; }
@@ -1088,20 +1222,23 @@
     function removeGolden() {
         if (goldenEl && goldenEl.parentNode) { goldenEl.parentNode.removeChild(goldenEl); }
         goldenEl = null;
-        state.goldenAt = (new Date()).getTime() + randRange(35000, 80000);
+        var lo = 35000, hi = 80000;
+        if (state.purchased.luck_0) { lo *= 0.75; hi *= 0.75; }
+        state.goldenAt = (new Date()).getTime() + randRange(lo, hi);
     }
 
     function triggerGoldenEffect() {
         var now = (new Date()).getTime();
+        var luckyMult = state.purchased.luck_1 ? 1.5 : 1;
         var roll = Math.random();
         if (roll < 0.4) {
-            state.buff = { type: 'frenzy', until: now + 30000 };
-            showToast('TOKEN FRENZY! Production x7 for 30 seconds!');
+            state.buff = { type: 'frenzy', until: now + Math.floor(30000 * luckyMult) };
+            showToast('TOKEN FRENZY! Production x7 for ' + Math.floor(30 * luckyMult) + ' seconds!');
         } else if (roll < 0.75) {
-            state.buff = { type: 'clickfrenzy', until: now + 15000 };
-            showToast('PROMPT FRENZY! Taps x7 for 15 seconds!');
+            state.buff = { type: 'clickfrenzy', until: now + Math.floor(15000 * luckyMult) };
+            showToast('PROMPT FRENZY! Taps x7 for ' + Math.floor(15 * luckyMult) + ' seconds!');
         } else {
-            var bonus = Math.max(computeCps() * 60, computeClickValue() * 50, 50);
+            var bonus = Math.max(computeCps() * 60, computeClickValue() * 50, 50) * luckyMult;
             bonus = Math.floor(bonus);
             state.tokens += bonus;
             state.lifetimeTokens += bonus;
@@ -1163,6 +1300,53 @@
         if (Math.random() < 0.35) {
             state.bugs.push({ id: nextBugId++, stored: 0 });
             mountBugs();
+        }
+    }
+
+    function sweepBugs() {
+        if (state.bugs.length === 0) {
+            showToast('No bugs to squash.');
+            return;
+        }
+        var total = 0;
+        for (var i = 0; i < state.bugs.length; i++) { total += state.bugs[i].stored; }
+        var payout = Math.max(1, Math.floor(total * 1.25));
+        state.tokens += payout;
+        state.lifetimeTokens += payout;
+        state.allTimeTokens += payout;
+        state.bugsPopped = (state.bugsPopped || 0) + state.bugs.length;
+        for (var id in bugEls) {
+            if (bugEls[id] && bugEls[id].parentNode) { bugEls[id].parentNode.removeChild(bugEls[id]); }
+        }
+        bugEls = {};
+        state.bugs = [];
+        showToast('Debug sweep! +' + fmt(payout) + ' tokens');
+    }
+
+    function castAbility(ab) {
+        if (state.cycles < ab.cost) { return; }
+        if (ab.available && !ab.available()) { return; }
+        state.cycles -= ab.cost;
+        state.abilitiesCast = (state.abilitiesCast || 0) + 1;
+        ab.run();
+        save();
+        checkAchievements();
+        renderAll();
+    }
+
+    function renderAbilities() {
+        var wrap = $('abilbar');
+        wrap.innerHTML = '';
+        for (var i = 0; i < ABILITIES.length; i++) {
+            (function (ab) {
+                var usable = state.cycles >= ab.cost && (!ab.available || ab.available());
+                var div = document.createElement('div');
+                div.className = 'abilitem' + (usable ? '' : ' disabled');
+                div.title = ab.name + ' - ' + ab.desc;
+                div.innerHTML = '<span class="ai-icon">' + ab.icon + '</span><span class="ai-cost">' + ab.cost + '</span>';
+                wrap.appendChild(div);
+                onTap(div, function () { castAbility(ab); });
+            })(ABILITIES[i]);
         }
     }
 
@@ -1270,6 +1454,8 @@
             state.insightLifetime += insightTicks;
             state.insightAt += insightTicks * INSIGHT_INTERVAL;
         }
+
+        state.cycles = Math.min(cyclesCap(), state.cycles + cyclesCap() / CYCLES_REFILL_SECONDS);
 
         if (!goldenEl && now >= state.goldenAt) {
             spawnGolden();
