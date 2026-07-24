@@ -5,123 +5,116 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Pocket Arcade</title>
 <link rel="stylesheet" href="css/style.css" />
+<style>
+    /* Mocks an iOS 6 SpringBoard (home screen): status bar, wallpaper,
+       one app icon. Styled entirely local to this page. */
+    .wrap {
+        padding: 0;
+        max-width: 400px;
+        min-height: 480px;
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: #4f6fc2;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#7e9ce0), to(#33438c));
+        background-image: -webkit-linear-gradient(top, #7e9ce0, #33438c);
+        background-image: linear-gradient(to bottom, #7e9ce0, #33438c);
+        -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .statusbar {
+        background-color: #000;
+        padding: 3px 10px 4px 10px;
+        overflow: hidden;
+        zoom: 1;
+    }
+    .statusbar .sb-time {
+        float: left;
+        color: #fff;
+        font-size: 11px;
+        font-weight: bold;
+        line-height: 14px;
+        font-family: Helvetica, Arial, sans-serif;
+    }
+    .sb-right { float: right; overflow: hidden; zoom: 1; }
+    .sb-bars { float: left; height: 9px; margin: 2px 6px 0 0; overflow: hidden; zoom: 1; }
+    .sb-bar { float: left; width: 3px; margin-right: 1px; background-color: #fff; }
+    .sb-battery {
+        float: left;
+        width: 20px;
+        height: 10px;
+        border: 1px solid #fff;
+        border-radius: 2px;
+        position: relative;
+        margin-top: 2px;
+    }
+    .sb-battery-fill { position: absolute; top: 1px; left: 1px; bottom: 1px; width: 16px; background-color: #fff; border-radius: 1px; }
+    .sb-battery-nub { position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background-color: #fff; border-radius: 0 1px 1px 0; }
+
+    .homescreen-body { padding: 56px 0 18px 0; text-align: center; }
+
+    .appicon-link { display: inline-block; text-decoration: none; }
+    .appicon {
+        display: block;
+        width: 84px;
+        height: 84px;
+        margin: 0 auto;
+        border-radius: 18px;
+        background-color: #da7756;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#e2916f), to(#c2603f));
+        background-image: -webkit-linear-gradient(top, #e2916f, #c2603f);
+        background-image: linear-gradient(to bottom, #e2916f, #c2603f);
+        border: 1px solid rgba(0,0,0,0.25);
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+        font-size: 42px;
+        line-height: 84px;
+        text-align: center;
+    }
+    .appicon-link:active .appicon {
+        -webkit-box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    }
+    .appicon-label {
+        display: block;
+        margin-top: 8px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: bold;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+    }
+
+    .homescreen-hint {
+        text-align: center;
+        color: rgba(255,255,255,0.85);
+        font-size: 12px;
+        padding: 26px 30px 0 30px;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.4);
+    }
+</style>
 </head>
 <body>
 <div class="wrap">
-    <div class="header">
-        <h1>Pocket Arcade</h1>
-        <p>Tap something and have fun</p>
+    <div class="statusbar">
+        <span class="sb-time">9:41</span>
+        <span class="sb-right">
+            <span class="sb-bars">
+                <span class="sb-bar" style="height:4px;margin-top:5px;"></span>
+                <span class="sb-bar" style="height:6px;margin-top:3px;"></span>
+                <span class="sb-bar" style="height:8px;margin-top:1px;"></span>
+                <span class="sb-bar" style="height:9px;margin-top:0;"></span>
+            </span>
+            <span class="sb-battery"><span class="sb-battery-fill"></span><span class="sb-battery-nub"></span></span>
+        </span>
     </div>
 
-    <div class="section-title">Games</div>
-    <div class="tile-grid">
-        <a class="tile" href="games/snake.html">
-            <span class="icon">&#128034;</span>
-            <span class="label">Snake</span>
+    <div class="homescreen-body">
+        <a class="appicon-link" href="games/clicker.html">
+            <span class="appicon">&#10024;</span>
+            <span class="appicon-label">Claude Clicker</span>
         </a>
-        <a class="tile" href="games/pong.html">
-            <span class="icon">&#127934;</span>
-            <span class="label">Pong</span>
-        </a>
-        <a class="tile" href="games/tictactoe.html">
-            <span class="icon">&#10060;</span>
-            <span class="label">Tic Tac Toe</span>
-        </a>
-        <a class="tile" href="games/memory.html">
-            <span class="icon">&#127183;</span>
-            <span class="label">Memory Match</span>
-        </a>
-        <a class="tile" href="games/whackamole.html">
-            <span class="icon">&#128027;</span>
-            <span class="label">Whack-a-Mole</span>
-        </a>
-        <a class="tile" href="games/2048.html">
-            <span class="icon">&#128290;</span>
-            <span class="label">2048</span>
-        </a>
-        <a class="tile" href="games/breakout.html">
-            <span class="icon">&#129001;</span>
-            <span class="label">Breakout</span>
-        </a>
-        <a class="tile" href="games/flappy.html">
-            <span class="icon">&#128038;</span>
-            <span class="label">Flappy</span>
-        </a>
-        <a class="tile" href="games/connect4.html">
-            <span class="icon">&#128998;</span>
-            <span class="label">Connect Four</span>
-        </a>
-        <a class="tile" href="games/minesweeper.html">
-            <span class="icon">&#128163;</span>
-            <span class="label">Minesweeper</span>
-        </a>
-        <a class="tile" href="games/simon.html">
-            <span class="icon">&#127920;</span>
-            <span class="label">Simon Says</span>
-        </a>
-        <a class="tile" href="games/reaction.html">
-            <span class="icon">&#9889;</span>
-            <span class="label">Reaction Test</span>
-        </a>
-        <a class="tile" href="games/wordscramble.html">
-            <span class="icon">&#128220;</span>
-            <span class="label">Word Scramble</span>
-        </a>
-        <a class="tile" href="games/hangman.html">
-            <span class="icon">&#9760;</span>
-            <span class="label">Hangman</span>
-        </a>
-        <a class="tile" href="games/trivia.html">
-            <span class="icon">&#10067;</span>
-            <span class="label">Trivia</span>
-        </a>
-        <a class="tile" href="games/clicker.html">
-            <span class="icon">&#128302;</span>
-            <span class="label">Claude Clicker</span>
-        </a>
+        <div class="homescreen-hint">Tap the icon to start prompting.</div>
     </div>
-
-    <div class="section-title">Toys</div>
-    <div class="tile-grid">
-        <a class="tile" href="toys/doodle.html">
-            <span class="icon">&#9998;</span>
-            <span class="label">Doodle Pad</span>
-        </a>
-        <a class="tile" href="toys/starfield.html">
-            <span class="icon">&#10024;</span>
-            <span class="label">Starfield</span>
-        </a>
-        <a class="tile" href="toys/colorlab.html">
-            <span class="icon">&#127752;</span>
-            <span class="label">Color Lab</span>
-        </a>
-        <a class="tile" href="toys/shoutbox.html">
-            <span class="icon">&#128172;</span>
-            <span class="label">Shoutbox</span>
-        </a>
-        <a class="tile" href="toys/music.html">
-            <span class="icon">&#127925;</span>
-            <span class="label">Music</span>
-        </a>
-        <a class="tile" href="toys/eightball.html">
-            <span class="icon">&#127908;</span>
-            <span class="label">Magic 8 Ball</span>
-        </a>
-        <a class="tile" href="toys/jokes.html">
-            <span class="icon">&#128514;</span>
-            <span class="label">Jokes</span>
-        </a>
-        <a class="tile" href="toys/beatpad.html">
-            <span class="icon">&#129345;</span>
-            <span class="label">Beat Pad</span>
-        </a>
-        <a class="tile" href="toys/pet.html">
-            <span class="icon">&#128054;</span>
-            <span class="label">Pixel Pet</span>
-        </a>
-    </div>
-
-    <div class="footer-note">Made for the iPod &middot; works offline once loaded</div>
 </div>
 </body>
 </html>
