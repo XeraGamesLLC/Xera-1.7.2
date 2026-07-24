@@ -6,136 +6,148 @@
 <title>Pocket Arcade</title>
 <link rel="stylesheet" href="css/style.css" />
 <style>
-    /* Mocks an iOS 6 SpringBoard (home screen): status bar, wallpaper,
-       one app icon. Styled entirely local to this page. */
+    /* A glossy circa-2010 "Web 2.0" homepage - gradient masthead, drop-shadow
+       app cards - meant to be viewed as an ordinary webpage in Mobile Safari. */
     .wrap {
-        padding: 0;
-        max-width: 400px;
-        min-height: 480px;
+        background-color: #eef0f3;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#f6f7f9), to(#e2e5ea));
+        background-image: -webkit-linear-gradient(top, #f6f7f9, #e2e5ea);
+        background-image: linear-gradient(to bottom, #f6f7f9, #e2e5ea);
+        border: 1px solid #b7bcc4;
         border-radius: 10px;
         overflow: hidden;
-        background-color: #4f6fc2;
-        background-image: -webkit-gradient(linear, left top, left bottom, from(#7e9ce0), to(#33438c));
-        background-image: -webkit-linear-gradient(top, #7e9ce0, #33438c);
-        background-image: linear-gradient(to bottom, #7e9ce0, #33438c);
-        -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        padding: 0 0 16px 0;
+        -webkit-box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+        box-shadow: 0 3px 12px rgba(0,0,0,0.45);
     }
 
-    .statusbar {
-        background-color: #000;
-        padding: 3px 10px 4px 10px;
+    .masthead {
+        background-color: #4f6fc2;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #92acec), color-stop(0.48, #5d7fd6), color-stop(0.48, #4f6fc2), color-stop(1, #33438c));
+        background-image: -webkit-linear-gradient(top, #92acec 0%, #5d7fd6 48%, #4f6fc2 48%, #33438c 100%);
+        background-image: linear-gradient(to bottom, #92acec 0%, #5d7fd6 48%, #4f6fc2 48%, #33438c 100%);
+        border-bottom: 1px solid #26305e;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        padding: 24px 16px 20px 16px;
+        text-align: center;
+    }
+    .masthead h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        color: #fff;
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .masthead p {
+        margin: 6px 0 0 0;
+        font-size: 12px;
+        font-style: italic;
+        color: rgba(255,255,255,0.92);
+    }
+
+    .applist { padding: 16px 14px 0 14px; }
+
+    .appcard {
+        display: block;
+        text-decoration: none;
+        background-color: #fff;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#f2f4f7));
+        background-image: -webkit-linear-gradient(top, #ffffff, #f2f4f7);
+        background-image: linear-gradient(to bottom, #ffffff, #f2f4f7);
+        border: 1px solid #b7bcc4;
+        border-radius: 8px;
+        margin-bottom: 14px;
+        padding: 14px;
         overflow: hidden;
         zoom: 1;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.25);
     }
-    .statusbar .sb-time {
+    .appcard:active {
+        -webkit-box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .app-badge {
         float: left;
-        color: #fff;
-        font-size: 11px;
-        font-weight: bold;
-        line-height: 14px;
-        font-family: Helvetica, Arial, sans-serif;
-    }
-    .sb-right { float: right; overflow: hidden; zoom: 1; }
-    .sb-bars { float: left; height: 9px; margin: 2px 6px 0 0; overflow: hidden; zoom: 1; }
-    .sb-bar { float: left; width: 3px; margin-right: 1px; background-color: #fff; }
-    .sb-battery {
-        float: left;
-        width: 20px;
-        height: 10px;
-        border: 1px solid #fff;
-        border-radius: 2px;
-        position: relative;
-        margin-top: 2px;
-    }
-    .sb-battery-fill { position: absolute; top: 1px; left: 1px; bottom: 1px; width: 16px; background-color: #fff; border-radius: 1px; }
-    .sb-battery-nub { position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background-color: #fff; border-radius: 0 1px 1px 0; }
-
-    .homescreen-body { padding: 30px 0 10px 0; }
-
-    .icon-grid { overflow: hidden; zoom: 1; padding: 0 4px; }
-    .icon-slot { float: left; width: 25%; text-align: center; padding: 10px 0; }
-
-    .appicon-link { display: inline-block; text-decoration: none; }
-    .appicon {
-        display: block;
-        width: 62px;
-        height: 62px;
-        margin: 0 auto;
-        border-radius: 14px;
+        width: 54px;
+        height: 54px;
+        margin-right: 14px;
+        border-radius: 12px;
         border: 1px solid rgba(0,0,0,0.25);
-        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-        font-size: 30px;
-        line-height: 62px;
+        -webkit-box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+        font-size: 26px;
+        line-height: 54px;
         text-align: center;
     }
-    .appicon-link:active .appicon {
-        -webkit-box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-    }
-    .appicon.claude {
+    .app-badge.claude {
         background-color: #da7756;
-        background-image: -webkit-gradient(linear, left top, left bottom, from(#e2916f), to(#c2603f));
-        background-image: -webkit-linear-gradient(top, #e2916f, #c2603f);
-        background-image: linear-gradient(to bottom, #e2916f, #c2603f);
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #f4b294), color-stop(0.46, #e2916f), color-stop(0.46, #c2603f), color-stop(1, #9c4a30));
+        background-image: -webkit-linear-gradient(top, #f4b294 0%, #e2916f 46%, #c2603f 46%, #9c4a30 100%);
+        background-image: linear-gradient(to bottom, #f4b294 0%, #e2916f 46%, #c2603f 46%, #9c4a30 100%);
     }
-    .appicon.wordle {
+    .app-badge.wordle {
         background-color: #538d4e;
-        background-image: -webkit-gradient(linear, left top, left bottom, from(#79b473), to(#3d6b39));
-        background-image: -webkit-linear-gradient(top, #79b473, #3d6b39);
-        background-image: linear-gradient(to bottom, #79b473, #3d6b39);
-    }
-    .appicon-label {
-        display: block;
-        margin-top: 6px;
-        color: #fff;
-        font-size: 11px;
-        font-weight: bold;
-        text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #96c98f), color-stop(0.46, #79b473), color-stop(0.46, #538d4e), color-stop(1, #3d6b39));
+        background-image: -webkit-linear-gradient(top, #96c98f 0%, #79b473 46%, #538d4e 46%, #3d6b39 100%);
+        background-image: linear-gradient(to bottom, #96c98f 0%, #79b473 46%, #538d4e 46%, #3d6b39 100%);
     }
 
-    .homescreen-hint {
-        text-align: center;
-        color: rgba(255,255,255,0.85);
-        font-size: 12px;
-        padding: 20px 30px 0 30px;
-        text-shadow: 0 1px 1px rgba(0,0,0,0.4);
+    .app-info { display: block; margin-left: 68px; }
+    .app-title { display: block; font-size: 16px; font-weight: bold; color: #1c1c1e; }
+    .app-desc { display: block; font-size: 12px; color: #6d6f74; margin-top: 2px; }
+    .app-cta {
+        display: inline-block;
+        margin-top: 9px;
+        padding: 5px 14px;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+        border: 1px solid #1a4f9e;
+        background-color: #2b78e3;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #8ec0ff), color-stop(0.48, #5b9df9), color-stop(0.48, #2b78e3), color-stop(1, #1a4f9e));
+        background-image: -webkit-linear-gradient(top, #8ec0ff 0%, #5b9df9 48%, #2b78e3 48%, #1a4f9e 100%);
+        background-image: linear-gradient(to bottom, #8ec0ff 0%, #5b9df9 48%, #2b78e3 48%, #1a4f9e 100%);
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
+
+    .homefoot { text-align: center; color: #8b8f97; font-size: 11.5px; padding: 4px 20px 0 20px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-    <div class="statusbar">
-        <span class="sb-time">9:41</span>
-        <span class="sb-right">
-            <span class="sb-bars">
-                <span class="sb-bar" style="height:4px;margin-top:5px;"></span>
-                <span class="sb-bar" style="height:6px;margin-top:3px;"></span>
-                <span class="sb-bar" style="height:8px;margin-top:1px;"></span>
-                <span class="sb-bar" style="height:9px;margin-top:0;"></span>
-            </span>
-            <span class="sb-battery"><span class="sb-battery-fill"></span><span class="sb-battery-nub"></span></span>
-        </span>
+    <div class="masthead">
+        <h1>Pocket Arcade</h1>
+        <p>Games for old browsers</p>
     </div>
 
-    <div class="homescreen-body">
-        <div class="icon-grid">
-            <div class="icon-slot">
-                <a class="appicon-link" href="games/clicker.html">
-                    <span class="appicon claude">&#10024;</span>
-                    <span class="appicon-label">Claude Clicker</span>
-                </a>
-            </div>
-            <div class="icon-slot">
-                <a class="appicon-link" href="games/wordle.html">
-                    <span class="appicon wordle">&#127775;</span>
-                    <span class="appicon-label">Wordle</span>
-                </a>
-            </div>
-        </div>
-        <div class="homescreen-hint">Tap an icon to launch.</div>
+    <div class="applist">
+        <a class="appcard" href="games/clicker.html">
+            <span class="app-badge claude">&#10024;</span>
+            <span class="app-info">
+                <span class="app-title">Claude Clicker</span>
+                <span class="app-desc">Tap to earn tokens, build up your compute empire, and unlock research, abilities and achievements.</span>
+                <span class="app-cta">Play &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="games/wordle.html">
+            <span class="app-badge wordle">&#127775;</span>
+            <span class="app-info">
+                <span class="app-title">Wordle</span>
+                <span class="app-desc">Guess the 5-letter word in 6 tries. A fresh random word every time you load the page.</span>
+                <span class="app-cta">Play &rarr;</span>
+            </span>
+        </a>
     </div>
+
+    <div class="homefoot">Built for old browsers &middot; works offline once loaded</div>
 </div>
 </body>
 </html>

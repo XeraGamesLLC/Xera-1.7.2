@@ -6,30 +6,50 @@
 <title>Wordle - Pocket Arcade</title>
 <link rel="stylesheet" href="../css/style.css" />
 <style>
+    /* Styled like a glossy circa-2010 "Web 2.0" webpage, matching Claude
+       Clicker's look - not a mocked-up native app screen. */
     .wrap {
-        background-color: #c7cad0;
-        border-radius: 12px;
+        background-color: #eef0f3;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#f6f7f9), to(#e2e5ea));
+        background-image: -webkit-linear-gradient(top, #f6f7f9, #e2e5ea);
+        background-image: linear-gradient(to bottom, #f6f7f9, #e2e5ea);
+        border: 1px solid #b7bcc4;
+        border-radius: 10px;
         overflow: hidden;
         padding: 0 0 18px 0;
-        -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        -webkit-box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+        box-shadow: 0 3px 12px rgba(0,0,0,0.45);
     }
 
     .ios-navbar {
         background-color: #538d4e;
-        background-image: -webkit-gradient(linear, left top, left bottom, from(#79b473), to(#3d6b39));
-        background-image: -webkit-linear-gradient(top, #79b473, #3d6b39);
-        background-image: linear-gradient(to bottom, #79b473, #3d6b39);
-        border-bottom: 1px solid #2a4a27;
-        -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
-        padding: 10px 12px 8px 12px;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #96c98f), color-stop(0.48, #79b473), color-stop(0.48, #538d4e), color-stop(1, #3d6b39));
+        background-image: -webkit-linear-gradient(top, #96c98f 0%, #79b473 48%, #538d4e 48%, #3d6b39 100%);
+        background-image: linear-gradient(to bottom, #96c98f 0%, #79b473 48%, #538d4e 48%, #3d6b39 100%);
+        border-bottom: 1px solid #244020;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        padding: 14px 12px 12px 12px;
         text-align: center;
     }
-    .ios-navbar h1 { margin: 0; font-size: 20px; font-weight: bold; color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,0.4); }
-    .ios-navbar .sub { margin-top: 3px; font-size: 11px; color: rgba(255,255,255,0.9); min-height: 14px; }
+    .ios-navbar h1 { margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 0.5px; color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.15); }
+    .ios-navbar .sub { margin-top: 4px; font-size: 11px; font-style: italic; color: rgba(255,255,255,0.92); min-height: 14px; }
 
-    .statuscell { background-color: #fff; border-bottom: 1px solid #c8c7cc; padding: 10px 14px; text-align: center; font-size: 13px; color: #6d6f74; }
+    .statuscell {
+        background-color: #fff;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#f2f4f7));
+        background-image: -webkit-linear-gradient(top, #ffffff, #f2f4f7);
+        background-image: linear-gradient(to bottom, #ffffff, #f2f4f7);
+        margin: 10px 12px 0 12px;
+        border: 1px solid #c7cbd1;
+        border-radius: 8px;
+        padding: 9px 14px;
+        text-align: center;
+        font-size: 13px;
+        color: #6d6f74;
+        -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
     .statuscell b { color: #1c1c1e; }
 
     .board-wrap { text-align: center; padding: 16px 0 6px 0; }
@@ -42,10 +62,13 @@
         margin: 0 6px 0 0;
         padding: 0;
         border: 2px solid #d3d6da;
-        border-radius: 0;
+        border-radius: 3px;
         background-color: #fff;
-        -webkit-box-shadow: none;
-        box-shadow: none;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#eceef1));
+        background-image: -webkit-linear-gradient(top, #ffffff, #eceef1);
+        background-image: linear-gradient(to bottom, #ffffff, #eceef1);
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.15);
         text-align: center;
         line-height: 36px;
         font-size: 22px;
@@ -55,11 +78,29 @@
     }
     .wtile:last-child { margin-right: 0; }
     .wtile.filled { border-color: #878a8c; }
-    .wtile.correct { background-color: #6aaa64; border-color: #6aaa64; color: #fff; }
-    .wtile.present { background-color: #c9b458; border-color: #c9b458; color: #fff; }
-    .wtile.absent { background-color: #787c7e; border-color: #787c7e; color: #fff; }
+    .wtile.correct {
+        background-color: #6aaa64;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #8ec788), color-stop(0.5, #6aaa64), color-stop(0.5, #5c9857), color-stop(1, #4a7f47));
+        background-image: -webkit-linear-gradient(top, #8ec788 0%, #6aaa64 50%, #5c9857 50%, #4a7f47 100%);
+        background-image: linear-gradient(to bottom, #8ec788 0%, #6aaa64 50%, #5c9857 50%, #4a7f47 100%);
+        border-color: #4a7f47; color: #fff;
+    }
+    .wtile.present {
+        background-color: #c9b458;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #e0cd7f), color-stop(0.5, #c9b458), color-stop(0.5, #b8a24a), color-stop(1, #9a873a));
+        background-image: -webkit-linear-gradient(top, #e0cd7f 0%, #c9b458 50%, #b8a24a 50%, #9a873a 100%);
+        background-image: linear-gradient(to bottom, #e0cd7f 0%, #c9b458 50%, #b8a24a 50%, #9a873a 100%);
+        border-color: #9a873a; color: #fff;
+    }
+    .wtile.absent {
+        background-color: #787c7e;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#96999b), to(#666a6c));
+        background-image: -webkit-linear-gradient(top, #96999b, #666a6c);
+        background-image: linear-gradient(to bottom, #96999b, #666a6c);
+        border-color: #666a6c; color: #fff;
+    }
 
-    .keyboard { padding: 10px 4px 4px 4px; }
+    .keyboard { padding: 12px 4px 4px 4px; }
     .kb-row { overflow: hidden; zoom: 1; text-align: center; margin-bottom: 6px; }
     .kb-key {
         display: inline-block;
@@ -69,23 +110,51 @@
         margin: 0 2px;
         border-radius: 5px;
         background-color: #d3d6da;
-        border: 1px solid #b8bbbe;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ffffff), color-stop(0.5, #e2e4e7), color-stop(0.5, #cbced2), color-stop(1, #b5b8bc));
+        background-image: -webkit-linear-gradient(top, #ffffff 0%, #e2e4e7 50%, #cbced2 50%, #b5b8bc 100%);
+        background-image: linear-gradient(to bottom, #ffffff 0%, #e2e4e7 50%, #cbced2 50%, #b5b8bc 100%);
+        border: 1px solid #9a9da1;
         font-size: 13px;
         font-weight: bold;
         color: #1c1c1e;
         text-align: center;
         padding: 0 4px;
-        -webkit-box-shadow: 0 2px 0 rgba(0,0,0,0.15);
-        box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        text-shadow: 0 1px 0 rgba(255,255,255,0.6);
     }
     .kb-key:active { background-color: #bcbfc2; }
     .kb-key.wide { min-width: 44px; font-size: 11px; }
-    .kb-key.correct { background-color: #6aaa64; color: #fff; border-color: #6aaa64; }
-    .kb-key.present { background-color: #c9b458; color: #fff; border-color: #c9b458; }
-    .kb-key.absent { background-color: #787c7e; color: #fff; border-color: #787c7e; opacity: 0.65; }
+    .kb-key.correct { background-color: #6aaa64; background-image: -webkit-gradient(linear, left top, left bottom, from(#8ec788), to(#5c9857)); background-image: -webkit-linear-gradient(top, #8ec788, #5c9857); background-image: linear-gradient(to bottom, #8ec788, #5c9857); color: #fff; border-color: #4a7f47; text-shadow: none; }
+    .kb-key.present { background-color: #c9b458; background-image: -webkit-gradient(linear, left top, left bottom, from(#e0cd7f), to(#b8a24a)); background-image: -webkit-linear-gradient(top, #e0cd7f, #b8a24a); background-image: linear-gradient(to bottom, #e0cd7f, #b8a24a); color: #fff; border-color: #9a873a; text-shadow: none; }
+    .kb-key.absent { background-color: #787c7e; background-image: none; color: #fff; border-color: #5c5f61; opacity: 0.65; text-shadow: none; }
 
-    .grouptitle { font-size: 12px; color: #6d6f74; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 12px 4px 16px; }
-    .grouplist { margin: 0 12px; border-radius: 10px; overflow: hidden; border: 1px solid #b0b3b8; background-color: #fff; }
+    .grouptitle {
+        font-size: 11px;
+        color: #fff;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 16px 12px 0 12px;
+        padding: 6px 12px;
+        border-radius: 8px 8px 0 0;
+        background-color: #7a8291;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#9aa1ae), to(#666e7d));
+        background-image: -webkit-linear-gradient(top, #9aa1ae, #666e7d);
+        background-image: linear-gradient(to bottom, #9aa1ae, #666e7d);
+        border: 1px solid #565c69;
+        border-bottom: none;
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    }
+    .grouplist {
+        margin: 0 12px;
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+        border: 1px solid #b0b3b8;
+        background-color: #fff;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
     .row { background-color: #fff; padding: 10px 12px; text-align: center; }
     .row-title { font-size: 14.5px; font-weight: bold; color: #1c1c1e; }
 
@@ -99,18 +168,20 @@
         color: #fff;
         border-radius: 8px;
         background-color: #538d4e;
-        background-image: -webkit-gradient(linear, left top, left bottom, from(#79b473), to(#3d6b39));
-        background-image: -webkit-linear-gradient(top, #79b473, #3d6b39);
-        background-image: linear-gradient(to bottom, #79b473, #3d6b39);
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #96c98f), color-stop(0.48, #79b473), color-stop(0.48, #538d4e), color-stop(1, #3d6b39));
+        background-image: -webkit-linear-gradient(top, #96c98f 0%, #79b473 48%, #538d4e 48%, #3d6b39 100%);
+        background-image: linear-gradient(to bottom, #96c98f 0%, #79b473 48%, #538d4e 48%, #3d6b39 100%);
         border: 1px solid #2a4a27;
-        -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        -webkit-box-shadow: 0 2px 4px rgba(0,0,0,0.35);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.35);
         text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
     }
     .ios-btn:active {
         background-image: -webkit-gradient(linear, left top, left bottom, from(#3d6b39), to(#79b473));
         background-image: -webkit-linear-gradient(top, #3d6b39, #79b473);
         background-image: linear-gradient(to bottom, #3d6b39, #79b473);
+        -webkit-box-shadow: inset 0 2px 4px rgba(0,0,0,0.35);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.35);
     }
 
     #toast {
@@ -121,12 +192,15 @@
         width: 220px;
         text-align: center;
         padding: 16px 10px;
-        border-radius: 12px;
-        background-color: rgba(0,0,0,0.82);
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.25);
+        background-color: rgba(20,20,22,0.9);
         color: #fff;
         font-size: 13px;
         font-weight: bold;
         opacity: 0;
+        -webkit-box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         -webkit-transition: opacity 0.25s;
         transition: opacity 0.25s;
         pointer-events: none;
