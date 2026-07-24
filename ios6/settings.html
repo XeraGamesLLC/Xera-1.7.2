@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Settings - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    .wrap {
+        padding: 0;
+        max-width: 400px;
+        min-height: 560px;
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: #c9ccd2;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#d6d9de), to(#bcbfc6));
+        background-image: -webkit-linear-gradient(top, #d6d9de, #bcbfc6);
+        background-image: linear-gradient(to bottom, #d6d9de, #bcbfc6);
+        -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .navbar {
+        position: relative;
+        background-color: #d3d7dc;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#eef0f3), to(#b7bbc2));
+        background-image: -webkit-linear-gradient(top, #eef0f3, #b7bbc2);
+        background-image: linear-gradient(to bottom, #eef0f3, #b7bbc2);
+        border-bottom: 1px solid #8b8f96;
+        -webkit-box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+        padding: 10px 8px;
+        text-align: center;
+        min-height: 20px;
+    }
+    .navbar h1 { margin: 0; font-size: 17px; font-weight: bold; color: #2b2d31; }
+    .navback {
+        position: absolute;
+        left: 6px;
+        top: 6px;
+        padding: 5px 10px 5px 14px;
+        font-size: 14px;
+        font-weight: bold;
+        color: #fff;
+        background-color: #7f8896;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#9aa2ae), to(#6b7480));
+        background-image: -webkit-linear-gradient(top, #9aa2ae, #6b7480);
+        background-image: linear-gradient(to bottom, #9aa2ae, #6b7480);
+        border: 1px solid #555c66;
+        border-radius: 5px;
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+        display: none;
+    }
+    .navback.show { display: block; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .grouptitle { font-size: 12px; color: #5b5e64; text-transform: uppercase; margin: 16px 14px 4px 16px; }
+    .grouplist { margin: 0 10px; border-radius: 9px; overflow: hidden; border: 1px solid #9a9ea5; background-color: #fdfdfe; }
+
+    .row {
+        position: relative;
+        background-color: #fdfdfe;
+        padding: 10px 30px 10px 10px;
+        border-top: 1px solid #d8dade;
+        overflow: hidden;
+        zoom: 1;
+        min-height: 20px;
+    }
+    .row:first-child { border-top: none; }
+    .row.tappable:active { background-color: #cfe0fb; }
+    .row-icon {
+        float: left;
+        width: 29px;
+        height: 29px;
+        border-radius: 6px;
+        margin-right: 10px;
+        font-size: 16px;
+        line-height: 29px;
+        text-align: center;
+        color: #fff;
+        overflow: hidden;
+    }
+    .row-icon img { display: block; width: 29px; height: 29px; }
+    .row-title { font-size: 15px; color: #1c1c1e; line-height: 29px; }
+    .row-value { position: absolute; right: 26px; top: 10px; font-size: 14px; color: #7c7f85; }
+    .row-chevron {
+        position: absolute; right: 10px; top: 12px;
+        width: 8px; height: 8px;
+        border-top: 2px solid #b6b9c0; border-right: 2px solid #b6b9c0;
+        -webkit-transform: rotate(45deg); transform: rotate(45deg);
+    }
+
+    .ios-switch { float: right; width: 44px; height: 25px; margin-top: 2px; border-radius: 13px; background-color: #c7c7cc; position: relative; -webkit-transition: background-color 0.15s; transition: background-color 0.15s; }
+    .ios-switch.on { background-color: #4cd964; }
+    .ios-switch .thumb { position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background-color: #fff; -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.4); box-shadow: 0 1px 3px rgba(0,0,0,0.4); -webkit-transition: left 0.15s; transition: left 0.15s; }
+    .ios-switch.on .thumb { left: 21px; }
+
+    .slider-track { height: 3px; background-color: #b9bcc2; border-radius: 2px; margin: 14px 12px; position: relative; }
+    .slider-fill { position: absolute; top: 0; left: 0; height: 100%; background-color: #4a90e8; border-radius: 2px; }
+    .slider-knob { position: absolute; top: -8px; width: 19px; height: 19px; border-radius: 50%; background-color: #fff; border: 1px solid #999; -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.4); box-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+
+    .footnote { font-size: 11.5px; color: #6d6f74; text-align: center; padding: 12px 20px 4px 20px; }
+
+    /* small OS-level glyph badges (not in the extracted app-icon set) */
+    .ic-airplane { background-color: #eef0f3; }
+    .ic-airplane .g { color: #ff9500; }
+    .ic-wifi { background-color: #fff; }
+    .ic-bt { background-color: #fff; position: relative; }
+    .ic-bt-rune { position: absolute; left: 12px; top: 4px; width: 5px; height: 21px; border-right: 2px solid #4a90e8; }
+    .ic-bt-a, .ic-bt-b, .ic-bt-c, .ic-bt-d { position: absolute; width: 9px; height: 1px; background-color: #4a90e8; left: 8px; }
+    .ic-dnd { background-color: #35415c; }
+    .ic-notif { background-color: #45484c; }
+    .ic-general { background-color: #9498a0; }
+    .ic-sounds { background-color: #4a90e8; }
+    .ic-privacy { background-color: #9498a0; }
+    .ic-icloud { background-color: #5aabf0; }
+    .ic-twitter { background-color: #55acee; }
+    .ic-facebook { background-color: #3b5998; }
+    .ic-store { background-color: #4a90e8; }
+    .g { font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="home.html">&larr; Home</a></div>
+<div class="wrap" id="app">
+
+    <!-- ===== ROOT ===== -->
+    <div class="screen active" id="screen-root">
+        <div class="navbar"><h1>Settings</h1></div>
+
+        <div class="grouptitle">&nbsp;</div>
+        <div class="grouplist">
+            <div class="row"><span class="row-icon ic-airplane"><span class="g">&#9992;</span></span><span class="row-title">Airplane Mode</span><span class="ios-switch" id="sw-airplane"><span class="thumb"></span></span></div>
+            <div class="row tappable" data-go="wifi"><span class="row-icon ic-wifi"><span class="g" style="color:#4a90e8;">&#128246;</span></span><span class="row-title">Wi-Fi</span><span class="row-value">JHCDC,Guest</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="bluetooth"><span class="row-icon ic-bt"><span class="ic-bt-rune"></span></span><span class="row-title">Bluetooth</span><span class="row-value">Off</span><span class="row-chevron"></span></div>
+        </div>
+
+        <div class="grouptitle">&nbsp;</div>
+        <div class="grouplist">
+            <div class="row"><span class="row-icon ic-dnd"><span class="g">&#127769;</span></span><span class="row-title">Do Not Disturb</span><span class="ios-switch on" id="sw-dnd"><span class="thumb"></span></span></div>
+            <div class="row tappable" data-go="generic" data-title="Notifications" data-icon="ic-notif" data-glyph="&#128276;"><span class="row-icon ic-notif"><span class="g">&#128276;</span></span><span class="row-title">Notifications</span><span class="row-chevron"></span></div>
+        </div>
+
+        <div class="grouptitle">&nbsp;</div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="general"><span class="row-icon ic-general"><img src="../assets/ios6icons/settings.png" alt="" /></span><span class="row-title">General</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="sounds"><span class="row-icon ic-sounds"><span class="g">&#128266;</span></span><span class="row-title">Sounds</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="brightness"><span class="row-icon"><img src="../assets/ios6icons/photos.png" alt="" /></span><span class="row-title">Brightness &amp; Wallpaper</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Picture Frame" data-icon="" data-glyph=""><span class="row-icon"><img src="../assets/ios6icons/photos.png" alt="" /></span><span class="row-title">Picture Frame</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="privacy"><span class="row-icon ic-privacy"><span class="g">&#128274;</span></span><span class="row-title">Privacy</span><span class="row-chevron"></span></div>
+        </div>
+
+        <div class="grouptitle">&nbsp;</div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="iCloud" data-icon="ic-icloud" data-glyph="&#9729;"><span class="row-icon ic-icloud"><span class="g">&#9729;</span></span><span class="row-title">iCloud</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Mail, Contacts, Calendars" data-icon="" data-glyph=""><span class="row-icon"><img src="../assets/ios6icons/mail.png" alt="" /></span><span class="row-title">Mail, Contacts, Calendars</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Twitter" data-icon="ic-twitter" data-glyph="&#128038;"><span class="row-icon ic-twitter"><span class="g">&#128038;</span></span><span class="row-title">Twitter</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Facebook" data-icon="ic-facebook" data-glyph="f"><span class="row-icon ic-facebook"><span class="g" style="font-weight:bold;">f</span></span><span class="row-title">Facebook</span><span class="row-chevron"></span></div>
+        </div>
+
+        <div class="grouptitle">&nbsp;</div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="FaceTime"><span class="row-icon"><img src="../assets/ios6icons/facetime.png" alt="" /></span><span class="row-title">FaceTime</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Safari"><span class="row-icon"><img src="../assets/ios6icons/safari.png" alt="" /></span><span class="row-title">Safari</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Newsstand"><span class="row-icon"><img src="../assets/ios6icons/newsstand.png" alt="" /></span><span class="row-title">Newsstand</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Music"><span class="row-icon"><img src="../assets/ios6icons/music.png" alt="" /></span><span class="row-title">Music</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Videos"><span class="row-icon"><img src="../assets/ios6icons/videos.png" alt="" /></span><span class="row-title">Videos</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Photos &amp; Camera"><span class="row-icon"><img src="../assets/ios6icons/camera.png" alt="" /></span><span class="row-title">Photos &amp; Camera</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Notes"><span class="row-icon"><img src="../assets/ios6icons/notes.png" alt="" /></span><span class="row-title">Notes</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Store" data-icon="ic-store" data-glyph=""><span class="row-icon"><img src="../assets/ios6icons/appstore.png" alt="" /></span><span class="row-title">Store</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Reminders"><span class="row-icon"><img src="../assets/ios6icons/reminders.png" alt="" /></span><span class="row-title">Reminders</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Messages"><span class="row-icon"><img src="../assets/ios6icons/messages.png" alt="" /></span><span class="row-title">Messages</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Maps"><span class="row-icon"><img src="../assets/ios6icons/maps.png" alt="" /></span><span class="row-title">Maps</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Game Center"><span class="row-icon"><img src="../assets/ios6icons/gamecenter.png" alt="" /></span><span class="row-title">Game Center</span><span class="row-chevron"></span></div>
+        </div>
+        <div class="footnote">This is a look-alike recreation for fun - most rows lead to placeholder screens.</div>
+    </div>
+
+    <!-- ===== WI-FI ===== -->
+    <div class="screen" id="screen-wifi">
+        <div class="navbar"><span class="navback show" data-back="1">&lsaquo; Settings</span><h1>Wi-Fi</h1></div>
+        <div class="grouplist" style="margin-top:14px;">
+            <div class="row"><span class="row-title">Wi-Fi</span><span class="ios-switch on" id="sw-wifi"><span class="thumb"></span></span></div>
+        </div>
+        <div class="grouptitle">Choose a Network...</div>
+        <div class="grouplist">
+            <div class="row"><span class="row-title">JHCDC,Guest</span><span class="row-value" style="right:26px;">&#128274; &#128246;</span><span class="row-chevron" style="border:none;">&#10003;</span></div>
+            <div class="row"><span class="row-title">Pixel_5G</span><span class="row-value" style="right:26px;">&#128274; &#128246;</span></div>
+            <div class="row"><span class="row-title">NETGEAR-24</span><span class="row-value" style="right:26px;">&#128246;</span></div>
+            <div class="row"><span class="row-title">xfinitywifi</span><span class="row-value" style="right:26px;">&#128246;</span></div>
+        </div>
+        <div class="row tappable" style="border-radius:9px;margin:0 10px;border:1px solid #9a9ea5;" data-go="generic" data-title="Other..."><span class="row-title" style="color:#4a90e8;text-align:center;display:block;">Other...</span></div>
+        <div class="footnote">Ask to Join Networks: Notify</div>
+    </div>
+
+    <!-- ===== BLUETOOTH ===== -->
+    <div class="screen" id="screen-bluetooth">
+        <div class="navbar"><span class="navback show" data-back="1">&lsaquo; Settings</span><h1>Bluetooth</h1></div>
+        <div class="grouplist" style="margin-top:14px;">
+            <div class="row"><span class="row-title">Bluetooth</span><span class="ios-switch" id="sw-bt"><span class="thumb"></span></span></div>
+        </div>
+        <div class="footnote">Now discoverable as "iPod".</div>
+    </div>
+
+    <!-- ===== GENERAL ===== -->
+    <div class="screen" id="screen-general">
+        <div class="navbar"><span class="navback show" data-back="1">&lsaquo; Settings</span><h1>General</h1></div>
+        <div class="grouplist" style="margin-top:14px;">
+            <div class="row tappable" data-go="generic" data-title="About"><span class="row-title">About</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Software Update"><span class="row-title">Software Update</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Usage"><span class="row-title">Usage</span><span class="row-chevron"></span></div>
+        </div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="Siri"><span class="row-title">Siri</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="VPN"><span class="row-title">VPN</span><span class="row-value">Not Connected</span><span class="row-chevron"></span></div>
+        </div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="Auto-Lock"><span class="row-title">Auto-Lock</span><span class="row-value">2 Minutes</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Passcode Lock"><span class="row-title">Passcode Lock</span><span class="row-value">Off</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Restrictions"><span class="row-title">Restrictions</span><span class="row-value">Off</span><span class="row-chevron"></span></div>
+        </div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="Date &amp; Time"><span class="row-title">Date &amp; Time</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Keyboard"><span class="row-title">Keyboard</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="International"><span class="row-title">International</span><span class="row-chevron"></span></div>
+        </div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="Reset"><span class="row-title" style="color:#cc3327;">Reset</span><span class="row-chevron"></span></div>
+        </div>
+    </div>
+
+    <!-- ===== SOUNDS ===== -->
+    <div class="screen" id="screen-sounds">
+        <div class="navbar"><span class="navback show" data-back="1">&lsaquo; Settings</span><h1>Sounds</h1></div>
+        <div class="grouptitle" style="margin-top:14px;">Silent</div>
+        <div class="grouplist">
+            <div class="row"><span class="row-title">Vibrate on Silent</span><span class="ios-switch on"><span class="thumb"></span></span></div>
+        </div>
+        <div class="grouptitle">Ringer and Alerts</div>
+        <div class="grouplist">
+            <div class="row"><span class="row-title" style="line-height:1;">&#128266;</span><div class="slider-track" style="margin:4px 30px;"><span class="slider-fill" style="width:60%;"></span><span class="slider-knob" style="left:calc(60% - 9px);"></span></div><span class="row-title" style="float:right;line-height:1;">&#128265;</span></div>
+            <div class="row"><span class="row-title">Vibrate on Ring</span><span class="ios-switch on"><span class="thumb"></span></span></div>
+        </div>
+        <div class="grouptitle">Sounds</div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="Ringtone"><span class="row-title">Ringtone</span><span class="row-value">Marimba</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Text Tone"><span class="row-title">Text Tone</span><span class="row-value">Tri-tone</span><span class="row-chevron"></span></div>
+            <div class="row"><span class="row-title">Lock Sounds</span><span class="ios-switch on"><span class="thumb"></span></span></div>
+            <div class="row"><span class="row-title">Keyboard Clicks</span><span class="ios-switch on"><span class="thumb"></span></span></div>
+        </div>
+    </div>
+
+    <!-- ===== BRIGHTNESS ===== -->
+    <div class="screen" id="screen-brightness">
+        <div class="navbar"><span class="navback show" data-back="1">&lsaquo; Settings</span><h1>Brightness</h1></div>
+        <div class="grouplist" style="margin-top:14px;">
+            <div class="row"><span class="row-title" style="line-height:1;">&#9728;</span><div class="slider-track" style="margin:4px 30px;"><span class="slider-fill" style="width:75%;"></span><span class="slider-knob" style="left:calc(75% - 9px);"></span></div></div>
+            <div class="row"><span class="row-title">Auto-Brightness</span><span class="ios-switch on"><span class="thumb"></span></span></div>
+        </div>
+        <div class="grouptitle">Wallpaper</div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="Wallpaper"><span class="row-icon"><img src="../assets/ios6icons/photos.png" alt="" /></span><span class="row-title">Choose Wallpaper</span><span class="row-chevron"></span></div>
+        </div>
+    </div>
+
+    <!-- ===== PRIVACY ===== -->
+    <div class="screen" id="screen-privacy">
+        <div class="navbar"><span class="navback show" data-back="1">&lsaquo; Settings</span><h1>Privacy</h1></div>
+        <div class="grouplist" style="margin-top:14px;">
+            <div class="row tappable" data-go="generic" data-title="Location Services"><span class="row-title">Location Services</span><span class="row-value">On</span><span class="row-chevron"></span></div>
+        </div>
+        <div class="grouptitle">&nbsp;</div>
+        <div class="grouplist">
+            <div class="row tappable" data-go="generic" data-title="Contacts"><span class="row-title">Contacts</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Calendars"><span class="row-title">Calendars</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Reminders"><span class="row-title">Reminders</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Photos"><span class="row-title">Photos</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Bluetooth Sharing"><span class="row-title">Bluetooth Sharing</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Twitter"><span class="row-title">Twitter</span><span class="row-chevron"></span></div>
+            <div class="row tappable" data-go="generic" data-title="Facebook"><span class="row-title">Facebook</span><span class="row-chevron"></span></div>
+        </div>
+    </div>
+
+    <!-- ===== GENERIC FALLBACK ===== -->
+    <div class="screen" id="screen-generic">
+        <div class="navbar"><span class="navback show" data-back="1">&lsaquo; Back</span><h1 id="generic-title">Setting</h1></div>
+        <div class="footnote" style="padding-top:40px;">This part of the recreation is just for looks - there's nothing more configured here.</div>
+    </div>
+
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var stack = ['root'];
+
+    function show(id) {
+        var screens = document.querySelectorAll('.screen');
+        for (var i = 0; i < screens.length; i++) { screens[i].className = 'screen'; }
+        var el = $('screen-' + id);
+        if (el) { el.className = 'screen active'; }
+        window.scrollTo(0, 0);
+    }
+
+    function go(id) {
+        stack.push(id);
+        show(id);
+    }
+
+    function back() {
+        if (stack.length > 1) { stack.pop(); }
+        show(stack[stack.length - 1]);
+    }
+
+    var rows = document.querySelectorAll('.row.tappable');
+    for (var i = 0; i < rows.length; i++) {
+        (function (row) {
+            onTap(row, function () {
+                var dest = row.getAttribute('data-go');
+                if (dest === 'generic') {
+                    $('generic-title').innerHTML = row.getAttribute('data-title') || 'Setting';
+                }
+                go(dest);
+            });
+        })(rows[i]);
+    }
+
+    var backs = document.querySelectorAll('.navback');
+    for (var j = 0; j < backs.length; j++) {
+        onTap(backs[j], back);
+    }
+
+    var switches = document.querySelectorAll('.ios-switch');
+    for (var k = 0; k < switches.length; k++) {
+        (function (sw) {
+            onTap(sw, function () {
+                sw.className = sw.className.indexOf('on') >= 0 ? sw.className.replace(' on', '').replace('on', '') : sw.className + ' on';
+            });
+        })(switches[k]);
+    }
+})();
+</script>
+</body>
+</html>

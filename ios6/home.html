@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>iOS 6 Home - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    .wrap {
+        padding: 0;
+        max-width: 400px;
+        min-height: 560px;
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: #1c2b4a;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#3a5a8c), to(#0d1830));
+        background-image: -webkit-linear-gradient(top, #3a5a8c, #0d1830);
+        background-image: linear-gradient(to bottom, #3a5a8c, #0d1830);
+        -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .statusbar { background-color: #000; padding: 3px 10px 4px 10px; overflow: hidden; zoom: 1; }
+    .statusbar .sb-time { float: left; color: #fff; font-size: 11px; font-weight: bold; line-height: 14px; font-family: Helvetica, Arial, sans-serif; }
+    .sb-right { float: right; overflow: hidden; zoom: 1; }
+    .sb-bars { float: left; height: 9px; margin: 2px 6px 0 0; overflow: hidden; zoom: 1; }
+    .sb-bar { float: left; width: 3px; margin-right: 1px; background-color: #fff; }
+    .sb-battery { float: left; width: 20px; height: 10px; border: 1px solid #fff; border-radius: 2px; position: relative; margin-top: 2px; }
+    .sb-battery-fill { position: absolute; top: 1px; left: 1px; bottom: 1px; width: 16px; background-color: #fff; border-radius: 1px; }
+    .sb-battery-nub { position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background-color: #fff; border-radius: 0 1px 1px 0; }
+
+    .icongrid { overflow: hidden; zoom: 1; padding: 16px 8px 6px 8px; }
+    .icon-slot { float: left; width: 25%; text-align: center; padding: 8px 0; }
+    .icon-slot a { display: inline-block; text-decoration: none; }
+    .icon-slot img {
+        display: block;
+        width: 58px;
+        height: 58px;
+        margin: 0 auto;
+        border-radius: 12px;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    .icon-slot .badge {
+        display: block;
+        width: 58px;
+        height: 58px;
+        margin: 0 auto;
+        border-radius: 12px;
+        font-size: 30px;
+        line-height: 58px;
+        text-align: center;
+        border: 1px solid rgba(0,0,0,0.25);
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+    .badge.weather {
+        background-color: #4a9fe0;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#7cc3f5), to(#2f7cc4));
+        background-image: -webkit-linear-gradient(top, #7cc3f5, #2f7cc4);
+        background-image: linear-gradient(to bottom, #7cc3f5, #2f7cc4);
+    }
+    .badge.clock { background-color: #f5f5f5; }
+    .icon-label {
+        display: block;
+        margin-top: 5px;
+        color: #fff;
+        font-size: 11px;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+    }
+
+    .pagedots { text-align: center; padding: 6px 0; }
+    .pagedots span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: rgba(255,255,255,0.4); margin: 0 3px; }
+    .pagedots span.active { background-color: #fff; }
+
+    .dock {
+        margin: 6px 8px 10px 8px;
+        padding: 8px 6px;
+        border-radius: 16px;
+        background-color: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.2);
+        overflow: hidden;
+        zoom: 1;
+    }
+    .dock .icon-slot { width: 25%; padding: 0; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="statusbar">
+        <span class="sb-time">9:41</span>
+        <span class="sb-right">
+            <span class="sb-bars">
+                <span class="sb-bar" style="height:4px;margin-top:5px;"></span>
+                <span class="sb-bar" style="height:6px;margin-top:3px;"></span>
+                <span class="sb-bar" style="height:8px;margin-top:1px;"></span>
+                <span class="sb-bar" style="height:9px;margin-top:0;"></span>
+            </span>
+            <span class="sb-battery"><span class="sb-battery-fill"></span><span class="sb-battery-nub"></span></span>
+        </span>
+    </div>
+
+    <div class="icongrid">
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/camera.png" alt="" /><span class="icon-label">Camera</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/passbook.png" alt="" /><span class="icon-label">Passbook</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/newsstand.png" alt="" /><span class="icon-label">Newsstand</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/notes.png" alt="" /><span class="icon-label">Notes</span></a></div>
+
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/music.png" alt="" /><span class="icon-label">Music</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/photos.png" alt="" /><span class="icon-label">Photos</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><span class="badge weather">&#9925;</span><span class="icon-label">Weather</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/gamecenter.png" alt="" /><span class="icon-label">Game Center</span></a></div>
+
+        <div class="icon-slot"><a href="settings.html"><img src="../assets/ios6icons/settings.png" alt="" /><span class="icon-label">Settings</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/safari.png" alt="" /><span class="icon-label">Safari</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/calendar.png" alt="" /><span class="icon-label">Calendar</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/maps.png" alt="" /><span class="icon-label">Maps</span></a></div>
+
+        <div class="icon-slot"><a href="#" onclick="return false;"><span class="badge clock">&#128337;</span><span class="icon-label">Clock</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/appstore.png" alt="" /><span class="icon-label">App Store</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/mail.png" alt="" /><span class="icon-label">Mail</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/facetime.png" alt="" /><span class="icon-label">FaceTime</span></a></div>
+
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/videos.png" alt="" /><span class="icon-label">Videos</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/reminders.png" alt="" /><span class="icon-label">Reminders</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/itunes.png" alt="" /><span class="icon-label">iTunes</span></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/messages.png" alt="" /><span class="icon-label">Messages</span></a></div>
+    </div>
+
+    <div class="pagedots"><span class="active"></span><span></span></div>
+
+    <div class="dock">
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/safari.png" alt="" /></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/mail.png" alt="" /></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/messages.png" alt="" /></a></div>
+        <div class="icon-slot"><a href="#" onclick="return false;"><img src="../assets/ios6icons/music.png" alt="" /></a></div>
+    </div>
+</div>
+</body>
+</html>

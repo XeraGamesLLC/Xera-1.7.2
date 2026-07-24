@@ -107,6 +107,12 @@
         background-image: -webkit-linear-gradient(top, #ab8ce8 0%, #8f68d6 46%, #7a53c9 46%, #5c3aa3 100%);
         background-image: linear-gradient(to bottom, #ab8ce8 0%, #8f68d6 46%, #7a53c9 46%, #5c3aa3 100%);
     }
+    .app-badge.ios6 {
+        background-color: #7a8291;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #c3c9d2), color-stop(0.46, #9aa1ae), color-stop(0.46, #7a8291), color-stop(1, #565c69));
+        background-image: -webkit-linear-gradient(top, #c3c9d2 0%, #9aa1ae 46%, #7a8291 46%, #565c69 100%);
+        background-image: linear-gradient(to bottom, #c3c9d2 0%, #9aa1ae 46%, #7a8291 46%, #565c69 100%);
+    }
 
     .app-info { display: block; margin-left: 68px; }
     .app-title { display: block; font-size: 16px; font-weight: bold; color: #1c1c1e; }
@@ -174,6 +180,15 @@
             <span class="app-info">
                 <span class="app-title">Ask AI</span>
                 <span class="app-desc">A simple chat page backed by Google Gemini's free tier, proxied through the server so old Safari can use it.</span>
+                <span class="app-cta">Open &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="ios6/home.html">
+            <span class="app-badge ios6">&#9881;</span>
+            <span class="app-info">
+                <span class="app-title">iOS 6</span>
+                <span class="app-desc">A look-alike recreation of the iOS 6 Home Screen and Settings app, just for fun. Doesn't have to work, just look right.</span>
                 <span class="app-cta">Open &rarr;</span>
             </span>
         </a>
