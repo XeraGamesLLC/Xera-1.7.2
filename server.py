@@ -5,6 +5,7 @@ import http.server
 import json
 import os
 import random
+import re
 import socketserver
 import sys
 import urllib.error
@@ -14,16 +15,22 @@ import urllib.request
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 6969
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
-# --- Free API keys for the API-port pages -----------------------------
-# Both are free, no-credit-card keys you create yourself:
-#   YouTube Data API v3 : console.cloud.google.com -> enable "YouTube Data API v3" -> Credentials
-#   Gemini API          : aistudio.google.com/apikey
-# Leave blank and the matching page shows a friendly "not configured" message
-# instead of crashing.
-YOUTUBE_API_KEY = ""
+# --- Free API key for the Ask AI page ----------------------------------
+# Free, no-credit-card key you create yourself: aistudio.google.com/apikey
+# Leave blank and the page shows a friendly "not configured" message
+# instead of crashing. The video player needs no key at all - see below.
 GEMINI_API_KEY = ""
 GEMINI_MODEL = "gemini-3-flash-preview"
 HTTP_TIMEOUT = 15
+STREAM_CHUNK = 65536
+
+# Old WebKit caps out at TLS 1.0, which every modern HTTPS host (even fully
+# keyless, no-auth ones like archive.org) now rejects - confirmed directly
+# against archive.org's server, which sends back a protocol_version alert.
+# So every internet-facing page here talks to this server over plain HTTP,
+# and this server does the real HTTPS call on its behalf. That is true
+# regardless of whether the upstream API needs a key.
+ARCHIVE_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 WORDLE_PATH = "/games/wordle.html"
 WORDLE_PLACEHOLDER = "__WORDLE_WORD__"
@@ -100,8 +107,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path == WORDLE_PATH or self.path.startswith(WORDLE_PATH + "?"):
             self.serve_wordle()
             return
-        if self.path.startswith("/api/youtube/search"):
-            self.youtube_search()
+        if self.path.startswith("/api/archive/search"):
+            self.archive_search()
+            return
+        if self.path.startswith("/api/archive/video"):
+            self.archive_video()
             return
         super().do_GET()
 
@@ -159,49 +169,126 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
-    # --- YouTube (Data API v3, search metadata only - no playback) ------
+    # --- Video player (Internet Archive - free, keyless, direct MP4s) ---
 
-    def youtube_search(self):
-        if not YOUTUBE_API_KEY:
-            self.send_json({"error": "not_configured", "message": "No YouTube API key set in server.py yet."})
-            return
+    def archive_search(self):
         parsed = urllib.parse.urlparse(self.path)
         params = urllib.parse.parse_qs(parsed.query)
         query = (params.get("q") or [""])[0].strip()
         if not query:
             self.send_json({"error": "bad_request", "message": "Missing search query."})
             return
-        url = "https://www.googleapis.com/youtube/v3/search?" + urllib.parse.urlencode({
-            "part": "snippet",
-            "type": "video",
-            "maxResults": "12",
-            "q": query,
-            "key": YOUTUBE_API_KEY,
-        })
+        qs = urllib.parse.urlencode([
+            ("q", query + " AND mediatype:movies"),
+            ("fl[]", "identifier"),
+            ("fl[]", "title"),
+            ("fl[]", "description"),
+            ("rows", "15"),
+            ("page", "1"),
+            ("output", "json"),
+        ])
         try:
-            data = self.fetch_json(url)
+            data = self.fetch_json("https://archive.org/advancedsearch.php?" + qs)
         except urllib.error.HTTPError as e:
-            self.send_json({"error": "upstream_failed", "message": "YouTube API error (%d)." % e.code})
+            self.send_json({"error": "upstream_failed", "message": "Archive.org error (%d)." % e.code})
             return
         except (urllib.error.URLError, ValueError, OSError):
-            self.send_json({"error": "upstream_failed", "message": "Could not reach YouTube API."})
+            self.send_json({"error": "upstream_failed", "message": "Could not reach archive.org."})
             return
 
+        docs = ((data.get("response") or {}).get("docs")) or []
         results = []
-        for item in data.get("items", []):
-            snippet = item.get("snippet", {})
-            video_id = (item.get("id") or {}).get("videoId")
-            if not video_id:
+        for d in docs:
+            identifier = d.get("identifier")
+            if not identifier:
                 continue
-            thumb = ((snippet.get("thumbnails") or {}).get("default") or {}).get("url", "")
+            desc = d.get("description", "")
+            if isinstance(desc, list):
+                desc = " ".join(desc)
             results.append({
-                "id": video_id,
-                "title": snippet.get("title", ""),
-                "channel": snippet.get("channelTitle", ""),
-                "published": (snippet.get("publishedAt") or "")[:10],
-                "thumb": thumb,
+                "id": identifier,
+                "title": d.get("title") or identifier,
+                "desc": (desc or "")[:160],
             })
         self.send_json({"results": results})
+
+    def pick_video_file(self, files):
+        candidates = []
+        for f in files:
+            name = f.get("name", "")
+            fmt = (f.get("format") or "").lower()
+            if name.lower().endswith(".mp4") or "mpeg4" in fmt or "h.264" in fmt:
+                candidates.append(f)
+        if not candidates:
+            return None
+        # Archive.org's classic small/compatible derivative - best odds on old hardware.
+        for f in candidates:
+            if "512kb" in (f.get("format") or "").lower() or "512kb" in f.get("name", "").lower():
+                return f["name"]
+
+        def size_of(f):
+            try:
+                return int(f.get("size", 0))
+            except (TypeError, ValueError):
+                return 1 << 62
+        candidates.sort(key=size_of)
+        return candidates[0]["name"]
+
+    def archive_video(self):
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        identifier = (params.get("id") or [""])[0].strip()
+        if not identifier or not ARCHIVE_ID_RE.match(identifier):
+            self.send_error(400, "Missing or invalid id")
+            return
+        try:
+            meta = self.fetch_json("https://archive.org/metadata/" + urllib.parse.quote(identifier))
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+            self.send_error(502, "Could not reach archive.org")
+            return
+
+        filename = self.pick_video_file(meta.get("files", []))
+        if not filename:
+            self.send_error(404, "No playable video file found for this item")
+            return
+
+        upstream_url = "https://archive.org/download/%s/%s" % (
+            urllib.parse.quote(identifier), urllib.parse.quote(filename)
+        )
+        req_headers = {}
+        rng = self.headers.get("Range")
+        if rng:
+            req_headers["Range"] = rng
+        req = urllib.request.Request(upstream_url, headers=req_headers)
+        try:
+            upstream = urllib.request.urlopen(req, timeout=HTTP_TIMEOUT)
+        except urllib.error.HTTPError as e:
+            self.send_error(e.code, "Upstream error")
+            return
+        except (urllib.error.URLError, OSError):
+            self.send_error(502, "Could not reach archive.org")
+            return
+
+        with upstream:
+            status = getattr(upstream, "status", None) or upstream.getcode()
+            self.send_response(206 if status == 206 else 200)
+            self.send_header("Content-Type", "video/mp4")
+            self.send_header("Accept-Ranges", "bytes")
+            content_length = upstream.headers.get("Content-Length")
+            if content_length:
+                self.send_header("Content-Length", content_length)
+            content_range = upstream.headers.get("Content-Range")
+            if content_range:
+                self.send_header("Content-Range", content_range)
+            self.end_headers()
+            while True:
+                chunk = upstream.read(STREAM_CHUNK)
+                if not chunk:
+                    break
+                try:
+                    self.wfile.write(chunk)
+                except (BrokenPipeError, ConnectionResetError):
+                    break
 
     # --- Ask AI (Gemini free tier) ---------------------------------------
 
