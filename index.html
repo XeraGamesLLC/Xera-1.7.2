@@ -51,35 +51,46 @@
     .sb-battery-fill { position: absolute; top: 1px; left: 1px; bottom: 1px; width: 16px; background-color: #fff; border-radius: 1px; }
     .sb-battery-nub { position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background-color: #fff; border-radius: 0 1px 1px 0; }
 
-    .homescreen-body { padding: 56px 0 18px 0; text-align: center; }
+    .homescreen-body { padding: 30px 0 10px 0; }
+
+    .icon-grid { overflow: hidden; zoom: 1; padding: 0 4px; }
+    .icon-slot { float: left; width: 25%; text-align: center; padding: 10px 0; }
 
     .appicon-link { display: inline-block; text-decoration: none; }
     .appicon {
         display: block;
-        width: 84px;
-        height: 84px;
+        width: 62px;
+        height: 62px;
         margin: 0 auto;
-        border-radius: 18px;
-        background-color: #da7756;
-        background-image: -webkit-gradient(linear, left top, left bottom, from(#e2916f), to(#c2603f));
-        background-image: -webkit-linear-gradient(top, #e2916f, #c2603f);
-        background-image: linear-gradient(to bottom, #e2916f, #c2603f);
+        border-radius: 14px;
         border: 1px solid rgba(0,0,0,0.25);
         -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
         box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-        font-size: 42px;
-        line-height: 84px;
+        font-size: 30px;
+        line-height: 62px;
         text-align: center;
     }
     .appicon-link:active .appicon {
         -webkit-box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
         box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
     }
+    .appicon.claude {
+        background-color: #da7756;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#e2916f), to(#c2603f));
+        background-image: -webkit-linear-gradient(top, #e2916f, #c2603f);
+        background-image: linear-gradient(to bottom, #e2916f, #c2603f);
+    }
+    .appicon.wordle {
+        background-color: #538d4e;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#79b473), to(#3d6b39));
+        background-image: -webkit-linear-gradient(top, #79b473, #3d6b39);
+        background-image: linear-gradient(to bottom, #79b473, #3d6b39);
+    }
     .appicon-label {
         display: block;
-        margin-top: 8px;
+        margin-top: 6px;
         color: #fff;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: bold;
         text-shadow: 0 1px 1px rgba(0,0,0,0.6);
     }
@@ -88,7 +99,7 @@
         text-align: center;
         color: rgba(255,255,255,0.85);
         font-size: 12px;
-        padding: 26px 30px 0 30px;
+        padding: 20px 30px 0 30px;
         text-shadow: 0 1px 1px rgba(0,0,0,0.4);
     }
 </style>
@@ -109,11 +120,21 @@
     </div>
 
     <div class="homescreen-body">
-        <a class="appicon-link" href="games/clicker.html">
-            <span class="appicon">&#10024;</span>
-            <span class="appicon-label">Claude Clicker</span>
-        </a>
-        <div class="homescreen-hint">Tap the icon to start prompting.</div>
+        <div class="icon-grid">
+            <div class="icon-slot">
+                <a class="appicon-link" href="games/clicker.html">
+                    <span class="appicon claude">&#10024;</span>
+                    <span class="appicon-label">Claude Clicker</span>
+                </a>
+            </div>
+            <div class="icon-slot">
+                <a class="appicon-link" href="games/wordle.html">
+                    <span class="appicon wordle">&#127775;</span>
+                    <span class="appicon-label">Wordle</span>
+                </a>
+            </div>
+        </div>
+        <div class="homescreen-hint">Tap an icon to launch.</div>
     </div>
 </div>
 </body>

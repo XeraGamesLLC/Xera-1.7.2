@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Wordle - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    .wrap {
+        background-color: #c7cad0;
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 0 0 18px 0;
+        -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+
+    .ios-navbar {
+        background-color: #538d4e;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#79b473), to(#3d6b39));
+        background-image: -webkit-linear-gradient(top, #79b473, #3d6b39);
+        background-image: linear-gradient(to bottom, #79b473, #3d6b39);
+        border-bottom: 1px solid #2a4a27;
+        -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        padding: 10px 12px 8px 12px;
+        text-align: center;
+    }
+    .ios-navbar h1 { margin: 0; font-size: 20px; font-weight: bold; color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,0.4); }
+    .ios-navbar .sub { margin-top: 3px; font-size: 11px; color: rgba(255,255,255,0.9); min-height: 14px; }
+
+    .statuscell { background-color: #fff; border-bottom: 1px solid #c8c7cc; padding: 10px 14px; text-align: center; font-size: 13px; color: #6d6f74; }
+    .statuscell b { color: #1c1c1e; }
+
+    .board-wrap { text-align: center; padding: 16px 0 6px 0; }
+    .board-row { overflow: hidden; zoom: 1; width: 236px; margin: 0 auto 6px auto; }
+    .wtile {
+        display: block;
+        float: left;
+        width: 40px;
+        height: 40px;
+        margin: 0 6px 0 0;
+        padding: 0;
+        border: 2px solid #d3d6da;
+        border-radius: 0;
+        background-color: #fff;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+        text-align: center;
+        line-height: 36px;
+        font-size: 22px;
+        font-weight: bold;
+        color: #1c1c1e;
+        text-transform: uppercase;
+    }
+    .wtile:last-child { margin-right: 0; }
+    .wtile.filled { border-color: #878a8c; }
+    .wtile.correct { background-color: #6aaa64; border-color: #6aaa64; color: #fff; }
+    .wtile.present { background-color: #c9b458; border-color: #c9b458; color: #fff; }
+    .wtile.absent { background-color: #787c7e; border-color: #787c7e; color: #fff; }
+
+    .keyboard { padding: 10px 4px 4px 4px; }
+    .kb-row { overflow: hidden; zoom: 1; text-align: center; margin-bottom: 6px; }
+    .kb-key {
+        display: inline-block;
+        min-width: 26px;
+        height: 40px;
+        line-height: 40px;
+        margin: 0 2px;
+        border-radius: 5px;
+        background-color: #d3d6da;
+        border: 1px solid #b8bbbe;
+        font-size: 13px;
+        font-weight: bold;
+        color: #1c1c1e;
+        text-align: center;
+        padding: 0 4px;
+        -webkit-box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+        box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+    }
+    .kb-key:active { background-color: #bcbfc2; }
+    .kb-key.wide { min-width: 44px; font-size: 11px; }
+    .kb-key.correct { background-color: #6aaa64; color: #fff; border-color: #6aaa64; }
+    .kb-key.present { background-color: #c9b458; color: #fff; border-color: #c9b458; }
+    .kb-key.absent { background-color: #787c7e; color: #fff; border-color: #787c7e; opacity: 0.65; }
+
+    .grouptitle { font-size: 12px; color: #6d6f74; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 12px 4px 16px; }
+    .grouplist { margin: 0 12px; border-radius: 10px; overflow: hidden; border: 1px solid #b0b3b8; background-color: #fff; }
+    .row { background-color: #fff; padding: 10px 12px; text-align: center; }
+    .row-title { font-size: 14.5px; font-weight: bold; color: #1c1c1e; }
+
+    .ios-btn {
+        display: block;
+        margin: 12px;
+        padding: 11px;
+        text-align: center;
+        font-size: 15px;
+        font-weight: bold;
+        color: #fff;
+        border-radius: 8px;
+        background-color: #538d4e;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#79b473), to(#3d6b39));
+        background-image: -webkit-linear-gradient(top, #79b473, #3d6b39);
+        background-image: linear-gradient(to bottom, #79b473, #3d6b39);
+        border: 1px solid #2a4a27;
+        -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    }
+    .ios-btn:active {
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#3d6b39), to(#79b473));
+        background-image: -webkit-linear-gradient(top, #3d6b39, #79b473);
+        background-image: linear-gradient(to bottom, #3d6b39, #79b473);
+    }
+
+    #toast {
+        position: fixed;
+        left: 50%;
+        top: 38%;
+        margin-left: -110px;
+        width: 220px;
+        text-align: center;
+        padding: 16px 10px;
+        border-radius: 12px;
+        background-color: rgba(0,0,0,0.82);
+        color: #fff;
+        font-size: 13px;
+        font-weight: bold;
+        opacity: 0;
+        -webkit-transition: opacity 0.25s;
+        transition: opacity 0.25s;
+        pointer-events: none;
+        z-index: 30;
+    }
+    #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="ios-navbar">
+        <h1>Wordle</h1>
+        <div class="sub">Guess the 5-letter word in 6 tries</div>
+    </div>
+
+    <div class="statuscell">Guess <b id="guessnum">1</b> of 6</div>
+
+    <div class="board-wrap" id="board"></div>
+
+    <div class="keyboard" id="keyboard"></div>
+
+    <div id="endpanel" style="display:none;">
+        <div class="grouptitle">Result</div>
+        <div class="grouplist">
+            <div class="row"><span class="row-title" id="endmsg"></span></div>
+        </div>
+        <span class="ios-btn" id="playagain">Play Again</span>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    var ANSWER = '__WORDLE_WORD__'.toUpperCase();
+    var WORD_LEN = ANSWER.length;
+    var MAX_GUESSES = 6;
+
+    var KB_ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+
+    var currentRow = 0;
+    var currentGuess = '';
+    var gameOver = false;
+    var keyState = {};
+    var toastTimer = null;
+
+    function buildBoard() {
+        var board = $('board');
+        board.innerHTML = '';
+        for (var r = 0; r < MAX_GUESSES; r++) {
+            var rowDiv = document.createElement('div');
+            rowDiv.className = 'board-row';
+            for (var c = 0; c < WORD_LEN; c++) {
+                var tile = document.createElement('span');
+                tile.className = 'wtile';
+                tile.id = 'tile-' + r + '-' + c;
+                rowDiv.appendChild(tile);
+            }
+            board.appendChild(rowDiv);
+        }
+    }
+
+    function buildKeyboard() {
+        var kb = $('keyboard');
+        kb.innerHTML = '';
+        for (var r = 0; r < KB_ROWS.length; r++) {
+            var rowDiv = document.createElement('div');
+            rowDiv.className = 'kb-row';
+            if (r === 2) {
+                rowDiv.appendChild(makeKey('ENTER', 'ENTER', true));
+            }
+            var letters = KB_ROWS[r];
+            for (var c = 0; c < letters.length; c++) {
+                rowDiv.appendChild(makeKey(letters.charAt(c), letters.charAt(c), false));
+            }
+            if (r === 2) {
+                rowDiv.appendChild(makeKey('DEL', '⌫', true));
+            }
+            kb.appendChild(rowDiv);
+        }
+    }
+
+    function makeKey(action, label, wide) {
+        var key = document.createElement('span');
+        key.className = 'kb-key' + (wide ? ' wide' : '');
+        key.id = 'key-' + action;
+        key.innerHTML = label;
+        onTap(key, function () { handleKey(action); });
+        return key;
+    }
+
+    function handleKey(action) {
+        if (gameOver) { return; }
+        if (action === 'ENTER') {
+            submitGuess();
+        } else if (action === 'DEL') {
+            currentGuess = currentGuess.slice(0, -1);
+            renderCurrentRow();
+        } else if (/^[A-Z]$/.test(action)) {
+            if (currentGuess.length < WORD_LEN) {
+                currentGuess += action;
+                renderCurrentRow();
+            }
+        }
+    }
+
+    on(document, 'keydown', function (e) {
+        var key = e.key;
+        if (!key) { return; }
+        if (key === 'Enter') { handleKey('ENTER'); }
+        else if (key === 'Backspace') { handleKey('DEL'); }
+        else if (/^[a-zA-Z]$/.test(key)) { handleKey(key.toUpperCase()); }
+    });
+
+    function renderCurrentRow() {
+        for (var c = 0; c < WORD_LEN; c++) {
+            var tile = $('tile-' + currentRow + '-' + c);
+            var ch = currentGuess.charAt(c);
+            tile.innerHTML = ch;
+            tile.className = 'wtile' + (ch ? ' filled' : '');
+        }
+    }
+
+    function showToast(msg) {
+        var t = $('toast');
+        t.innerHTML = msg;
+        t.className = 'show';
+        if (toastTimer) { clearTimeout(toastTimer); }
+        toastTimer = setTimeout(function () { t.className = ''; }, 1600);
+    }
+
+    function scoreGuess(guess, answer) {
+        var result = [];
+        var answerChars = answer.split('');
+        var i;
+        for (i = 0; i < guess.length; i++) { result.push('absent'); }
+        for (i = 0; i < guess.length; i++) {
+            if (guess.charAt(i) === answer.charAt(i)) {
+                result[i] = 'correct';
+                answerChars[i] = null;
+            }
+        }
+        for (i = 0; i < guess.length; i++) {
+            if (result[i] === 'correct') { continue; }
+            var ch = guess.charAt(i);
+            var idx = -1;
+            for (var j = 0; j < answerChars.length; j++) {
+                if (answerChars[j] === ch) { idx = j; break; }
+            }
+            if (idx >= 0) {
+                result[i] = 'present';
+                answerChars[idx] = null;
+            }
+        }
+        return result;
+    }
+
+    var RANK = { absent: 0, present: 1, correct: 2 };
+    function updateKeyState(guess, feedback) {
+        for (var i = 0; i < guess.length; i++) {
+            var ch = guess.charAt(i);
+            var status = feedback[i];
+            if (!keyState[ch] || RANK[status] > RANK[keyState[ch]]) {
+                keyState[ch] = status;
+                var keyEl = $('key-' + ch);
+                if (keyEl) { keyEl.className = 'kb-key ' + status; }
+            }
+        }
+    }
+
+    function submitGuess() {
+        if (currentGuess.length < WORD_LEN) {
+            showToast('Not enough letters');
+            return;
+        }
+        var feedback = scoreGuess(currentGuess, ANSWER);
+        for (var c = 0; c < WORD_LEN; c++) {
+            var tile = $('tile-' + currentRow + '-' + c);
+            tile.className = 'wtile ' + feedback[c];
+        }
+        updateKeyState(currentGuess, feedback);
+
+        var won = currentGuess === ANSWER;
+        currentRow++;
+        $('guessnum').innerHTML = String(Math.min(currentRow + 1, MAX_GUESSES));
+
+        if (won) {
+            endGame(true);
+        } else if (currentRow >= MAX_GUESSES) {
+            endGame(false);
+        } else {
+            currentGuess = '';
+        }
+    }
+
+    function endGame(won) {
+        gameOver = true;
+        var panel = $('endpanel');
+        var msg = $('endmsg');
+        if (won) {
+            msg.innerHTML = 'You got it in ' + currentRow + ' / ' + MAX_GUESSES + '!';
+        } else {
+            msg.innerHTML = 'Out of guesses. The word was ' + ANSWER + '.';
+        }
+        panel.style.display = 'block';
+    }
+
+    onTap($('playagain'), function () {
+        window.location.reload();
+    });
+
+    buildBoard();
+    buildKeyboard();
+})();
+</script>
+</body>
+</html>
