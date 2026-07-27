@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Hacker News - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    .wrap {
+        background-color: #eef0f3;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#f6f7f9), to(#e2e5ea));
+        background-image: -webkit-linear-gradient(top, #f6f7f9, #e2e5ea);
+        background-image: linear-gradient(to bottom, #f6f7f9, #e2e5ea);
+        border: 1px solid #b7bcc4;
+        border-radius: 10px;
+        overflow: hidden;
+        padding: 0 0 18px 0;
+        -webkit-box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+        box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+    }
+
+    .ios-navbar {
+        background-color: #ff6600;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ffaa66), color-stop(0.48, #ff8033), color-stop(0.48, #ff6600), color-stop(1, #c94e00));
+        background-image: -webkit-linear-gradient(top, #ffaa66 0%, #ff8033 48%, #ff6600 48%, #c94e00 100%);
+        background-image: linear-gradient(to bottom, #ffaa66 0%, #ff8033 48%, #ff6600 48%, #c94e00 100%);
+        border-bottom: 1px solid #7a3000;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        padding: 14px 12px 12px 12px;
+        text-align: center;
+    }
+    .ios-navbar h1 { margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 0.5px; color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.15); }
+    .ios-navbar .sub { margin-top: 4px; font-size: 11px; font-style: italic; color: rgba(255,255,255,0.92); min-height: 14px; }
+
+    .grouptitle {
+        font-size: 11px;
+        color: #fff;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 14px 12px 0 12px;
+        padding: 6px 12px;
+        border-radius: 8px 8px 0 0;
+        background-color: #7a8291;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#9aa1ae), to(#666e7d));
+        background-image: -webkit-linear-gradient(top, #9aa1ae, #666e7d);
+        background-image: linear-gradient(to bottom, #9aa1ae, #666e7d);
+        border: 1px solid #565c69;
+        border-bottom: none;
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    }
+    .grouplist {
+        margin: 0 12px;
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+        border: 1px solid #b0b3b8;
+        background-color: #fff;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .row { display: block; text-decoration: none; background-color: #fff; padding: 10px 12px; border-top: 1px solid #e2e4e8; overflow: hidden; zoom: 1; }
+    .row:first-child { border-top: none; }
+    .row:active { background-color: #fff2e6; }
+    .row-rank { float: left; width: 22px; font-size: 13px; font-weight: bold; color: #ff6600; }
+    .row-body { display: block; margin-left: 22px; }
+    .row-title { font-size: 13.5px; font-weight: bold; color: #1c1c1e; display: block; }
+    .row-meta { font-size: 11px; color: #8e8e93; margin-top: 3px; display: block; }
+
+    .footnote { font-size: 11.5px; color: #6d6f74; text-align: center; padding: 12px 16px 0 16px; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="ios-navbar">
+        <h1>Hacker News</h1>
+        <div class="sub">Top stories right now</div>
+    </div>
+
+    <div class="grouptitle">Front Page</div>
+    <div class="grouplist" id="stories"></div>
+    <div class="footnote" id="status"></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    function xhrGet(url, cb) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) { return; }
+            if (xhr.status === 200) {
+                try { cb(null, JSON.parse(xhr.responseText)); }
+                catch (e) { cb('Bad response from server.'); }
+            } else {
+                cb('Request failed (status ' + xhr.status + ').');
+            }
+        };
+        xhr.send(null);
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function setStatus(msg) { $('status').innerHTML = msg || ''; }
+
+    function hostOf(url) {
+        var m = /^https?:\/\/([^\/]+)/.exec(url || '');
+        return m ? m[1].replace(/^www\./, '') : '';
+    }
+
+    function renderStories(items) {
+        var wrap = $('stories');
+        wrap.innerHTML = '';
+        if (!items || items.length === 0) {
+            setStatus('No stories right now.');
+            return;
+        }
+        setStatus('');
+        for (var i = 0; i < items.length; i++) {
+            var s = items[i];
+            var a = document.createElement('a');
+            a.className = 'row';
+            a.href = s.hnUrl;
+            var meta = s.score + ' points by ' + escapeHtml(s.by) + ' &middot; ' + s.comments + ' comments';
+            var domain = hostOf(s.url);
+            if (domain) { meta = escapeHtml(domain) + ' &middot; ' + meta; }
+            a.innerHTML =
+                '<span class="row-rank">' + (i + 1) + '</span>' +
+                '<span class="row-body">' +
+                '<span class="row-title">' + escapeHtml(s.title) + '</span>' +
+                '<span class="row-meta">' + meta + '</span>' +
+                '</span>';
+            wrap.appendChild(a);
+        }
+    }
+
+    function load() {
+        setStatus('Loading top stories...');
+        xhrGet('/api/hn/top', function (err, data) {
+            if (err) { setStatus(err); return; }
+            if (data.error) {
+                setStatus(data.message || 'Hacker News is not available right now.');
+                return;
+            }
+            renderStories(data.stories);
+        });
+    }
+
+    load();
+})();
+</script>
+</body>
+</html>

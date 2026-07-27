@@ -113,6 +113,24 @@
         background-image: -webkit-linear-gradient(top, #c3c9d2 0%, #9aa1ae 46%, #7a8291 46%, #565c69 100%);
         background-image: linear-gradient(to bottom, #c3c9d2 0%, #9aa1ae 46%, #7a8291 46%, #565c69 100%);
     }
+    .app-badge.weather {
+        background-color: #4a9fe0;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #7cc3f5), color-stop(0.46, #5ab0ec), color-stop(0.46, #4a9fe0), color-stop(1, #2f7cc4));
+        background-image: -webkit-linear-gradient(top, #7cc3f5 0%, #5ab0ec 46%, #4a9fe0 46%, #2f7cc4 100%);
+        background-image: linear-gradient(to bottom, #7cc3f5 0%, #5ab0ec 46%, #4a9fe0 46%, #2f7cc4 100%);
+    }
+    .app-badge.hn {
+        background-color: #ff6600;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ffaa66), color-stop(0.46, #ff8033), color-stop(0.46, #ff6600), color-stop(1, #c94e00));
+        background-image: -webkit-linear-gradient(top, #ffaa66 0%, #ff8033 46%, #ff6600 46%, #c94e00 100%);
+        background-image: linear-gradient(to bottom, #ffaa66 0%, #ff8033 46%, #ff6600 46%, #c94e00 100%);
+    }
+    .app-badge.wiki {
+        background-color: #4d4d4d;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #7a7a7a), color-stop(0.46, #5c5c5c), color-stop(0.46, #4d4d4d), color-stop(1, #262626));
+        background-image: -webkit-linear-gradient(top, #7a7a7a 0%, #5c5c5c 46%, #4d4d4d 46%, #262626 100%);
+        background-image: linear-gradient(to bottom, #7a7a7a 0%, #5c5c5c 46%, #4d4d4d 46%, #262626 100%);
+    }
 
     .app-info { display: block; margin-left: 68px; }
     .app-title { display: block; font-size: 16px; font-weight: bold; color: #1c1c1e; }
@@ -189,6 +207,33 @@
             <span class="app-info">
                 <span class="app-title">iOS 6</span>
                 <span class="app-desc">A look-alike recreation of the iOS 6 Home Screen and Settings app, just for fun. Doesn't have to work, just look right.</span>
+                <span class="app-cta">Open &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="games/weather.html">
+            <span class="app-badge weather">&#9925;</span>
+            <span class="app-info">
+                <span class="app-title">Weather</span>
+                <span class="app-desc">Current conditions and a 5-day forecast, localized automatically from your connection - no typing required.</span>
+                <span class="app-cta">Open &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="games/hackernews.html">
+            <span class="app-badge hn">&#9650;</span>
+            <span class="app-info">
+                <span class="app-title">Hacker News</span>
+                <span class="app-desc">The current front page - top stories, scores, and comment counts, straight from the Hacker News API.</span>
+                <span class="app-cta">Open &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="games/wiki.html">
+            <span class="app-badge wiki">&#127760;</span>
+            <span class="app-info">
+                <span class="app-title">Wikipedia</span>
+                <span class="app-desc">Search the free encyclopedia and read a summary, with a thumbnail, right on the page.</span>
                 <span class="app-cta">Open &rarr;</span>
             </span>
         </a>

@@ -113,6 +113,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/api/archive/video"):
             self.archive_video()
             return
+        if self.path.startswith("/api/weather"):
+            self.weather()
+            return
+        if self.path.startswith("/api/hn/top"):
+            self.hn_top()
+            return
+        if self.path.startswith("/api/wiki/search"):
+            self.wiki_search()
+            return
+        if self.path.startswith("/api/wiki/thumb"):
+            self.wiki_thumb()
+            return
         super().do_GET()
 
     def do_POST(self):
@@ -161,7 +173,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def fetch_json(self, url, data=None, headers=None):
         """GET (data=None) or POST (data=dict) a URL, return parsed JSON."""
-        req_headers = {"Content-Type": "application/json"}
+        req_headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "PocketArcade/1.0 (retro iOS6 hobby site; contact: jayttsxx@gmail.com)",
+        }
         if headers:
             req_headers.update(headers)
         body = json.dumps(data).encode("utf-8") if data is not None else None
@@ -327,6 +342,184 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_json({"error": "upstream_failed", "message": "Gemini gave an empty reply."})
             return
         self.send_json({"reply": reply})
+
+    # --- Weather (Open-Meteo + ip-api.com - free, keyless, IP-localized) -
+
+    WMO_ICONS = {
+        0: "☀", 1: "☀", 2: "⛅", 3: "☁",
+        45: "☁", 48: "☁",
+        51: "☔", 53: "☔", 55: "☔",
+        56: "☔", 57: "☔",
+        61: "☔", 63: "☔", 65: "☔",
+        66: "☔", 67: "☔",
+        71: "☃", 73: "☃", 75: "☃", 77: "☃",
+        80: "☔", 81: "☔", 82: "☔",
+        85: "☃", 86: "☃",
+        95: "⛈", 96: "⛈", 99: "⛈",
+    }
+
+    def weather_icon(self, code):
+        return self.WMO_ICONS.get(code, "☁")
+
+    def weather(self):
+        client_ip = self.client_address[0]
+        # Loopback/private addresses can't be geolocated - let ip-api.com
+        # fall back to geolocating this server's own public IP instead.
+        if client_ip in ("127.0.0.1", "::1") or client_ip.startswith("192.168.") or client_ip.startswith("10."):
+            client_ip = ""
+        try:
+            geo = self.fetch_json("http://ip-api.com/json/" + urllib.parse.quote(client_ip))
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+            self.send_json({"error": "upstream_failed", "message": "Could not determine location."})
+            return
+        if geo.get("status") != "success":
+            self.send_json({"error": "upstream_failed", "message": "Could not determine location."})
+            return
+
+        lat = geo.get("lat")
+        lon = geo.get("lon")
+        city = geo.get("city") or "Unknown"
+        region = geo.get("regionName") or ""
+
+        qs = urllib.parse.urlencode({
+            "latitude": lat,
+            "longitude": lon,
+            "current_weather": "true",
+            "daily": "weathercode,temperature_2m_max,temperature_2m_min",
+            "temperature_unit": "fahrenheit",
+            "timezone": "auto",
+        })
+        try:
+            fc = self.fetch_json("https://api.open-meteo.com/v1/forecast?" + qs)
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+            self.send_json({"error": "upstream_failed", "message": "Could not reach forecast service."})
+            return
+
+        current = fc.get("current_weather") or {}
+        daily = fc.get("daily") or {}
+        days = daily.get("time") or []
+        highs = daily.get("temperature_2m_max") or []
+        lows = daily.get("temperature_2m_min") or []
+        codes = daily.get("weathercode") or []
+
+        forecast = []
+        for i in range(min(5, len(days))):
+            forecast.append({
+                "date": days[i],
+                "hi": round(highs[i]) if i < len(highs) else None,
+                "lo": round(lows[i]) if i < len(lows) else None,
+                "icon": self.weather_icon(codes[i] if i < len(codes) else -1),
+            })
+
+        self.send_json({
+            "city": city,
+            "region": region,
+            "temp": round(current.get("temperature")) if current.get("temperature") is not None else None,
+            "icon": self.weather_icon(current.get("weathercode", -1)),
+            "forecast": forecast,
+        })
+
+    # --- Hacker News (Firebase API - free, keyless) -----------------------
+
+    def hn_top(self):
+        try:
+            ids = self.fetch_json("https://hacker-news.firebaseio.com/v0/topstories.json")
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+            self.send_json({"error": "upstream_failed", "message": "Could not reach Hacker News."})
+            return
+
+        stories = []
+        for item_id in (ids or [])[:15]:
+            try:
+                item = self.fetch_json("https://hacker-news.firebaseio.com/v0/item/%d.json" % item_id)
+            except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+                continue
+            if not item or item.get("type") != "story":
+                continue
+            stories.append({
+                "id": item.get("id"),
+                "title": item.get("title") or "(no title)",
+                "url": item.get("url") or ("https://news.ycombinator.com/item?id=%s" % item.get("id")),
+                "hnUrl": "https://news.ycombinator.com/item?id=%s" % item.get("id"),
+                "score": item.get("score", 0),
+                "by": item.get("by", "unknown"),
+                "comments": item.get("descendants", 0),
+            })
+        self.send_json({"stories": stories})
+
+    # --- Wikipedia (search + summary REST API - free, keyless) -----------
+
+    def wiki_search(self):
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        query = (params.get("q") or [""])[0].strip()
+        if not query:
+            self.send_json({"error": "bad_request", "message": "Missing search query."})
+            return
+
+        search_qs = urllib.parse.urlencode({
+            "action": "query", "list": "search", "srsearch": query,
+            "srlimit": "1", "format": "json",
+        })
+        try:
+            search = self.fetch_json("https://en.wikipedia.org/w/api.php?" + search_qs)
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+            self.send_json({"error": "upstream_failed", "message": "Could not reach Wikipedia."})
+            return
+
+        hits = ((search.get("query") or {}).get("search")) or []
+        if not hits:
+            self.send_json({"error": "not_found", "message": "No matching article found."})
+            return
+        title = hits[0].get("title")
+
+        try:
+            summary = self.fetch_json(
+                "https://en.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(title)
+            )
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+            self.send_json({"error": "upstream_failed", "message": "Could not reach Wikipedia."})
+            return
+
+        thumb = (summary.get("thumbnail") or {}).get("source", "")
+        self.send_json({
+            "title": summary.get("title") or title,
+            "extract": summary.get("extract") or "",
+            "thumb": thumb,
+            "url": (summary.get("content_urls") or {}).get("desktop", {}).get("page", ""),
+        })
+
+    def wiki_thumb(self):
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        img_url = (params.get("url") or [""])[0]
+        img_host = urllib.parse.urlparse(img_url).hostname or ""
+        if not img_url.startswith("https://") or not (
+            img_host == "upload.wikimedia.org" or img_host.endswith(".wikimedia.org")
+        ):
+            self.send_error(400, "Invalid thumbnail url")
+            return
+        try:
+            upstream = urllib.request.urlopen(img_url, timeout=HTTP_TIMEOUT)
+        except (urllib.error.HTTPError, urllib.error.URLError, OSError):
+            self.send_error(502, "Could not reach Wikimedia")
+            return
+        with upstream:
+            self.send_response(200)
+            self.send_header("Content-Type", upstream.headers.get("Content-Type", "image/jpeg"))
+            content_length = upstream.headers.get("Content-Length")
+            if content_length:
+                self.send_header("Content-Length", content_length)
+            self.send_header("Cache-Control", "max-age=3600")
+            self.end_headers()
+            while True:
+                chunk = upstream.read(STREAM_CHUNK)
+                if not chunk:
+                    break
+                try:
+                    self.wfile.write(chunk)
+                except (BrokenPipeError, ConnectionResetError):
+                    break
 
 
 class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):

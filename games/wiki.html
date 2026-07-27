@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Wikipedia - Pocket Arcade</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+    .wrap {
+        background-color: #eef0f3;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#f6f7f9), to(#e2e5ea));
+        background-image: -webkit-linear-gradient(top, #f6f7f9, #e2e5ea);
+        background-image: linear-gradient(to bottom, #f6f7f9, #e2e5ea);
+        border: 1px solid #b7bcc4;
+        border-radius: 10px;
+        overflow: hidden;
+        padding: 0 0 18px 0;
+        -webkit-box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+        box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+    }
+
+    .ios-navbar {
+        background-color: #4d4d4d;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #7a7a7a), color-stop(0.48, #5c5c5c), color-stop(0.48, #4d4d4d), color-stop(1, #262626));
+        background-image: -webkit-linear-gradient(top, #7a7a7a 0%, #5c5c5c 48%, #4d4d4d 48%, #262626 100%);
+        background-image: linear-gradient(to bottom, #7a7a7a 0%, #5c5c5c 48%, #4d4d4d 48%, #262626 100%);
+        border-bottom: 1px solid #111;
+        -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        padding: 14px 12px 12px 12px;
+        text-align: center;
+    }
+    .ios-navbar h1 { margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 0.5px; color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.15); }
+    .ios-navbar .sub { margin-top: 4px; font-size: 11px; font-style: italic; color: rgba(255,255,255,0.92); min-height: 14px; }
+
+    .searchpanel {
+        background-color: #fff;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#f2f4f7));
+        background-image: -webkit-linear-gradient(top, #ffffff, #f2f4f7);
+        background-image: linear-gradient(to bottom, #ffffff, #f2f4f7);
+        margin: 10px 12px 0 12px;
+        border: 1px solid #c7cbd1;
+        border-radius: 8px;
+        padding: 10px 12px;
+        overflow: hidden;
+        zoom: 1;
+        -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    #q {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 14px;
+        border: 1px solid #b6b9bd;
+        border-radius: 6px;
+        -webkit-box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        margin-bottom: 8px;
+    }
+    .ios-btn {
+        display: block;
+        padding: 10px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: bold;
+        color: #fff;
+        border-radius: 6px;
+        background-color: #4d4d4d;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #7a7a7a), color-stop(0.48, #5c5c5c), color-stop(0.48, #4d4d4d), color-stop(1, #262626));
+        background-image: -webkit-linear-gradient(top, #7a7a7a 0%, #5c5c5c 48%, #4d4d4d 48%, #262626 100%);
+        background-image: linear-gradient(to bottom, #7a7a7a 0%, #5c5c5c 48%, #4d4d4d 48%, #262626 100%);
+        border: 1px solid #111;
+        -webkit-box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    }
+    .ios-btn:active {
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#262626), to(#5c5c5c));
+        background-image: -webkit-linear-gradient(top, #262626, #5c5c5c);
+        background-image: linear-gradient(to bottom, #262626, #5c5c5c);
+        -webkit-box-shadow: inset 0 2px 4px rgba(0,0,0,0.35);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    .resultpanel {
+        margin: 14px 12px 0 12px;
+        padding: 14px;
+        background-color: #fff;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#f2f4f7));
+        background-image: -webkit-linear-gradient(top, #ffffff, #f2f4f7);
+        background-image: linear-gradient(to bottom, #ffffff, #f2f4f7);
+        border: 1px solid #c7cbd1;
+        border-radius: 8px;
+        display: none;
+        overflow: hidden;
+        zoom: 1;
+        -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .resultpanel.active { display: block; }
+    .res-thumb { display: block; max-width: 120px; max-height: 120px; float: right; margin: 0 0 8px 10px; border-radius: 6px; border: 1px solid #c7cbd1; }
+    .res-title { font-size: 17px; font-weight: bold; color: #1c1c1e; display: block; margin-bottom: 6px; }
+    .res-extract { font-size: 13px; line-height: 1.5; color: #333; display: block; }
+    .res-link { display: block; margin-top: 10px; font-size: 12px; color: #4d4d4d; font-weight: bold; }
+
+    .footnote { font-size: 11.5px; color: #6d6f74; text-align: center; padding: 12px 16px 0 16px; }
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../index.html">&larr; Arcade</a></div>
+<div class="wrap">
+    <div class="ios-navbar">
+        <h1>Wikipedia</h1>
+        <div class="sub">The free encyclopedia, one lookup at a time</div>
+    </div>
+
+    <div class="searchpanel">
+        <input type="text" id="q" placeholder="Search Wikipedia..." />
+        <span class="ios-btn" id="go">Search</span>
+    </div>
+
+    <div class="resultpanel" id="resultpanel">
+        <img class="res-thumb" id="resthumb" src="" alt="" style="display:none;" />
+        <span class="res-title" id="restitle"></span>
+        <span class="res-extract" id="resextract"></span>
+        <a class="res-link" id="reslink" href="#" target="_blank">Read full article &rarr;</a>
+    </div>
+    <div class="footnote" id="status"></div>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+(function () {
+    function xhrGet(url, cb) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) { return; }
+            if (xhr.status === 200) {
+                try { cb(null, JSON.parse(xhr.responseText)); }
+                catch (e) { cb('Bad response from server.'); }
+            } else {
+                cb('Search failed (status ' + xhr.status + ').');
+            }
+        };
+        xhr.send(null);
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function setStatus(msg) { $('status').innerHTML = msg || ''; }
+
+    function showResult(data) {
+        $('restitle').innerHTML = escapeHtml(data.title);
+        $('resextract').innerHTML = escapeHtml(data.extract);
+        var link = $('reslink');
+        link.href = data.url || '#';
+        var thumb = $('resthumb');
+        if (data.thumb) {
+            thumb.src = '/api/wiki/thumb?url=' + encodeURIComponent(data.thumb);
+            thumb.style.display = 'block';
+        } else {
+            thumb.style.display = 'none';
+            thumb.src = '';
+        }
+        $('resultpanel').className = 'resultpanel active';
+    }
+
+    function doSearch() {
+        var q = $('q').value.replace(/^\s+|\s+$/g, '');
+        if (!q) { setStatus('Type something to search for.'); return; }
+        setStatus('Searching...');
+        $('resultpanel').className = 'resultpanel';
+        xhrGet('/api/wiki/search?q=' + encodeURIComponent(q), function (err, data) {
+            if (err) { setStatus(err); return; }
+            if (data.error) {
+                setStatus(data.message || 'No matching article found.');
+                return;
+            }
+            setStatus('');
+            showResult(data);
+        });
+    }
+
+    onTap($('go'), doSearch);
+    on($('q'), 'keydown', function (e) {
+        if (e.keyCode === 13 || e.key === 'Enter') { doSearch(); }
+    });
+})();
+</script>
+</body>
+</html>
