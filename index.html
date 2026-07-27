@@ -131,6 +131,12 @@
         background-image: -webkit-linear-gradient(top, #7a7a7a 0%, #5c5c5c 46%, #4d4d4d 46%, #262626 100%);
         background-image: linear-gradient(to bottom, #7a7a7a 0%, #5c5c5c 46%, #4d4d4d 46%, #262626 100%);
     }
+    .app-badge.snake {
+        background-color: #7cb342;
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #a5d76e), color-stop(0.46, #8bc34a), color-stop(0.46, #7cb342), color-stop(1, #558b2f));
+        background-image: -webkit-linear-gradient(top, #a5d76e 0%, #8bc34a 46%, #7cb342 46%, #558b2f 100%);
+        background-image: linear-gradient(to bottom, #a5d76e 0%, #8bc34a 46%, #7cb342 46%, #558b2f 100%);
+    }
 
     .app-info { display: block; margin-left: 68px; }
     .app-title { display: block; font-size: 16px; font-weight: bold; color: #1c1c1e; }
@@ -180,6 +186,15 @@
             <span class="app-info">
                 <span class="app-title">Wordle</span>
                 <span class="app-desc">Guess the 5-letter word in 6 tries. A fresh random word every time you load the page.</span>
+                <span class="app-cta">Play &rarr;</span>
+            </span>
+        </a>
+
+        <a class="appcard" href="games/snake.html">
+            <span class="app-badge snake">&#128013;</span>
+            <span class="app-info">
+                <span class="app-title">Snake</span>
+                <span class="app-desc">The classic, reworked: wrap-around edges, power-up food, combo multipliers, obstacles, and selectable skins.</span>
                 <span class="app-cta">Play &rarr;</span>
             </span>
         </a>
