@@ -384,6 +384,42 @@
         z-index: 30;
     }
     #toast.show { opacity: 1; }
+
+    /* Performance Mode: strips gradients, shadows and transitions for slow
+       hardware. Every element below already has a flat background-color
+       set as a fallback, so nothing goes unstyled when the gradient is
+       switched off. */
+    body.perfmode .wrap,
+    body.perfmode .ios-navbar,
+    body.perfmode #buffbanner,
+    body.perfmode .statuscell,
+    body.perfmode .meterbar,
+    body.perfmode .meterfill,
+    body.perfmode #coinbtn,
+    body.perfmode .goldentoken,
+    body.perfmode .bugtoken,
+    body.perfmode .abilitem,
+    body.perfmode .segitem,
+    body.perfmode .segitem.active,
+    body.perfmode .grouptitle,
+    body.perfmode .grouplist,
+    body.perfmode .row-icon,
+    body.perfmode .ios-switch,
+    body.perfmode .ios-switch.on,
+    body.perfmode .ios-switch .thumb,
+    body.perfmode .ach,
+    body.perfmode .ios-btn,
+    body.perfmode #toast {
+        background-image: none !important;
+        -webkit-box-shadow: none !important;
+        box-shadow: none !important;
+        -webkit-transition: none !important;
+        transition: none !important;
+    }
+    body.perfmode .floattext {
+        -webkit-transition: none !important;
+        transition: none !important;
+    }
 </style>
 </head>
 <body>
@@ -435,6 +471,8 @@
         <div class="grouptitle">Building Levels (spend Insight)</div>
         <div class="grouplist" id="levels"></div>
         <div class="footnote" id="nolevels">Own a building to start leveling it up.</div>
+        <div class="grouptitle">Overclocking</div>
+        <div class="grouplist" id="overclock"></div>
     </div>
 
     <div class="tabpanel" id="panel-achievements">
@@ -477,6 +515,7 @@
 
     var OPT_SHORT = true;
     var OPT_FLOATTEXT = true;
+    var OPT_PERF = false;
 
     var SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
     function addCommas(n) {
@@ -573,6 +612,18 @@
         { name: 'Get Lucky', desc: 'Golden tokens stay on screen 50% longer before they vanish.', cost: 9000000 }
     ];
     var LUCK_ICON = '🎰';
+
+    var FRENZY_OVERCLOCK_COST = 1000000000;
+    var FRENZY_BASE_MULT = 7;
+    var FRENZY_BASE_DURATION = 30000;
+    var FRENZY_MIN_DURATION = 500;
+    var OVERCLOCK_ICON = '⏫';
+
+    function frenzyOverclockLevel() { return state.frenzyOverclock || 0; }
+    function frenzyMultiplier() { return FRENZY_BASE_MULT * Math.pow(2, frenzyOverclockLevel()); }
+    function frenzyDurationMs() {
+        return Math.max(FRENZY_MIN_DURATION, Math.floor(FRENZY_BASE_DURATION / Math.pow(2, frenzyOverclockLevel())));
+    }
 
     var CYCLES_CAP_BASE = 100;
     var CYCLES_REFILL_SECONDS = 90;
@@ -777,6 +828,27 @@
             icon: '🏆',
             check: function (s) { return (CYCLES_CAP_BASE + s.weights * 5) >= 150; }
         });
+        ACHIEVEMENTS.push({
+            id: 'foc_1',
+            name: 'Nitro Injected',
+            desc: 'Buy Frenzy Overclock for the first time.',
+            icon: OVERCLOCK_ICON,
+            check: function (s) { return (s.frenzyOverclock || 0) >= 1; }
+        });
+        ACHIEVEMENTS.push({
+            id: 'foc_5',
+            name: 'Ludicrous Speed',
+            desc: 'Stack Frenzy Overclock 5 times.',
+            icon: OVERCLOCK_ICON,
+            check: function (s) { return (s.frenzyOverclock || 0) >= 5; }
+        });
+        ACHIEVEMENTS.push({
+            id: 'foc_10',
+            name: 'Blink And You Will Miss It',
+            desc: 'Stack Frenzy Overclock 10 times.',
+            icon: OVERCLOCK_ICON,
+            check: function (s) { return (s.frenzyOverclock || 0) >= 10; }
+        });
     })();
 
     function zeros(n) {
@@ -821,7 +893,9 @@
             bugsPopped: 0,
             cycles: 0,
             abilitiesCast: 0,
-            opt: { shortNumbers: true, floatText: true },
+            frenzyOverclock: 0,
+            bestFrenzyMult: 0,
+            opt: { shortNumbers: true, floatText: true, perfMode: false },
             playStart: now,
             lastSave: now,
             buff: null,
@@ -860,15 +934,19 @@
         if (typeof state.bugsPopped !== 'number') { state.bugsPopped = 0; }
         if (typeof state.cycles !== 'number') { state.cycles = 0; }
         if (typeof state.abilitiesCast !== 'number') { state.abilitiesCast = 0; }
-        if (!state.opt) { state.opt = { shortNumbers: true, floatText: true }; }
+        if (typeof state.frenzyOverclock !== 'number') { state.frenzyOverclock = 0; }
+        if (typeof state.bestFrenzyMult !== 'number') { state.bestFrenzyMult = 0; }
+        if (!state.opt) { state.opt = { shortNumbers: true, floatText: true, perfMode: false }; }
         if (typeof state.opt.shortNumbers !== 'boolean') { state.opt.shortNumbers = true; }
         if (typeof state.opt.floatText !== 'boolean') { state.opt.floatText = true; }
+        if (typeof state.opt.perfMode !== 'boolean') { state.opt.perfMode = false; }
         if (!state.playStart) { state.playStart = (new Date()).getTime(); }
         if (!state.goldenAt) { state.goldenAt = (new Date()).getTime() + randRange(20000, 45000); }
         state.saveVersion = SAVE_VERSION;
 
         OPT_SHORT = state.opt.shortNumbers;
         OPT_FLOATTEXT = state.opt.floatText;
+        OPT_PERF = state.opt.perfMode;
 
         for (var bi = 0; bi < state.bugs.length; bi++) {
             if (state.bugs[bi].id >= nextBugId) { nextBugId = state.bugs[bi].id + 1; }
@@ -912,6 +990,10 @@
     function save() {
         state.lastSave = (new Date()).getTime();
         Store.set(SAVE_KEY, state);
+    }
+
+    function applyPerfMode() {
+        document.body.className = OPT_PERF ? 'perfmode' : '';
     }
 
     function tierCount(i) {
@@ -964,7 +1046,7 @@
             sum += state.owned[i] * BUILDINGS[i].cps * tMult * lMult;
         }
         var globalMult = (1 + alignBonus() + masteryBonus()) * prestigeMult();
-        var buffMult = (buffActive() && state.buff.type === 'frenzy') ? 7 : 1;
+        var buffMult = (buffActive() && state.buff.type === 'frenzy') ? (state.buff.mult || FRENZY_BASE_MULT) : 1;
         return sum * globalMult * buffMult;
     }
 
@@ -1013,7 +1095,7 @@
         var banner = $('buffbanner');
         if (buffActive()) {
             var left = Math.ceil((state.buff.until - (new Date()).getTime()) / 1000);
-            var label = state.buff.type === 'frenzy' ? 'TOKEN FRENZY! Production x7' : 'PROMPT FRENZY! Taps x7';
+            var label = state.buff.type === 'frenzy' ? ('TOKEN FRENZY! Production x' + (state.buff.mult || FRENZY_BASE_MULT)) : 'PROMPT FRENZY! Taps x7';
             banner.innerHTML = label + ' &middot; ' + left + 's left';
             banner.style.display = 'block';
         } else {
@@ -1145,6 +1227,38 @@
     function renderResearch() {
         renderRowList('upgrades', 'noupgrades', availableUpgrades());
         renderRowList('levels', 'nolevels', buildingLevelUps());
+        renderOverclock();
+    }
+
+    function renderOverclock() {
+        var wrap = $('overclock');
+        var n = frenzyOverclockLevel();
+        var mult = frenzyMultiplier();
+        var durSec = frenzyDurationMs() / 1000;
+        var nextMult = FRENZY_BASE_MULT * Math.pow(2, n + 1);
+        var nextDurSec = Math.max(FRENZY_MIN_DURATION, Math.floor(FRENZY_BASE_DURATION / Math.pow(2, n + 1))) / 1000;
+        var cost = FRENZY_OVERCLOCK_COST;
+        var div = document.createElement('div');
+        div.className = 'row' + (state.tokens < cost ? ' disabled' : '');
+        div.innerHTML =
+            '<span class="row-icon">' + OVERCLOCK_ICON + '</span>' +
+            '<div class="row-body">' +
+            '<div class="row-title">Frenzy Overclock (' + n + ')</div>' +
+            '<div class="row-desc">Compresses Token Frenzy into a shorter, far more intense burst. Now: x' + mult + ' for ~' + fmtDec(durSec) + 's. Next buy: x' + nextMult + ' for ~' + fmtDec(nextDurSec) + 's. Stacks infinitely.</div>' +
+            '<div class="row-cost">' + fmt(cost) + ' tokens</div>' +
+            '</div>';
+        wrap.innerHTML = '';
+        wrap.appendChild(div);
+        onTap(div, buyFrenzyOverclock);
+    }
+
+    function buyFrenzyOverclock() {
+        if (state.tokens < FRENZY_OVERCLOCK_COST) { return; }
+        state.tokens -= FRENZY_OVERCLOCK_COST;
+        state.frenzyOverclock = frenzyOverclockLevel() + 1;
+        save();
+        checkAchievements();
+        renderAll();
     }
 
     function renderAchievements() {
@@ -1200,6 +1314,8 @@
             statRow('Compute units owned', fmt(totalBuildings)) +
             statRow('Bugs squashed', fmt(state.bugsPopped)) +
             statRow('Insight earned (lifetime)', fmt(state.insightLifetime)) +
+            statRow('Frenzy Overclock level', fmt(frenzyOverclockLevel())) +
+            statRow('Best Token Frenzy seen', state.bestFrenzyMult ? ('x' + fmt(state.bestFrenzyMult)) : 'None yet') +
             statRow('Weights', fmt(state.weights) + ' (+' + Math.round((prestigeMult() - 1) * 100) + '%)') +
             statRow('Fine-tunes completed', fmt(state.prestigeCount)) +
             statRow('Achievements', unlocked + ' / ' + ACHIEVEMENTS.length) +
@@ -1216,7 +1332,8 @@
         var opts = $('more-options');
         opts.innerHTML =
             '<div class="optrow"><span class="row-title">Short Numbers (1.2K)</span><span class="ios-switch' + (OPT_SHORT ? ' on' : '') + '" id="sw-short"><span class="thumb"></span></span></div>' +
-            '<div class="optrow"><span class="row-title">Floating Tap Numbers</span><span class="ios-switch' + (OPT_FLOATTEXT ? ' on' : '') + '" id="sw-float"><span class="thumb"></span></span></div>';
+            '<div class="optrow"><span class="row-title">Floating Tap Numbers</span><span class="ios-switch' + (OPT_FLOATTEXT ? ' on' : '') + '" id="sw-float"><span class="thumb"></span></span></div>' +
+            '<div class="optrow"><span class="row-title">Performance Mode</span><span class="ios-switch' + (OPT_PERF ? ' on' : '') + '" id="sw-perf"><span class="thumb"></span></span></div>';
         onTap($('sw-short'), function () {
             OPT_SHORT = !OPT_SHORT;
             state.opt.shortNumbers = OPT_SHORT;
@@ -1226,6 +1343,13 @@
         onTap($('sw-float'), function () {
             OPT_FLOATTEXT = !OPT_FLOATTEXT;
             state.opt.floatText = OPT_FLOATTEXT;
+            save();
+            renderMore();
+        });
+        onTap($('sw-perf'), function () {
+            OPT_PERF = !OPT_PERF;
+            state.opt.perfMode = OPT_PERF;
+            applyPerfMode();
             save();
             renderMore();
         });
@@ -1372,8 +1496,11 @@
         var luckyMult = state.purchased.luck_1 ? 1.5 : 1;
         var roll = Math.random();
         if (roll < 0.4) {
-            state.buff = { type: 'frenzy', until: now + Math.floor(30000 * luckyMult) };
-            showToast('TOKEN FRENZY! Production x7 for ' + Math.floor(30 * luckyMult) + ' seconds!');
+            var mult = frenzyMultiplier();
+            var dur = Math.floor(frenzyDurationMs() * luckyMult);
+            state.buff = { type: 'frenzy', until: now + dur, mult: mult };
+            if (mult > (state.bestFrenzyMult || 0)) { state.bestFrenzyMult = mult; }
+            showToast('TOKEN FRENZY! Production x' + mult + ' for ' + fmtDec(dur / 1000) + ' seconds!');
         } else if (roll < 0.75) {
             state.buff = { type: 'clickfrenzy', until: now + Math.floor(15000 * luckyMult) };
             showToast('PROMPT FRENZY! Taps x7 for ' + Math.floor(15 * luckyMult) + ' seconds!');
@@ -1506,6 +1633,7 @@
         state.lifetimeTokens = 0;
         state.owned = zeros(BUILDINGS.length);
         state.purchased = {};
+        state.frenzyOverclock = 0;
         state.buff = null;
         removeGolden();
         save();
@@ -1527,6 +1655,8 @@
         state = defaultState();
         OPT_SHORT = true;
         OPT_FLOATTEXT = true;
+        OPT_PERF = false;
+        applyPerfMode();
         save();
         renderAll();
     }
@@ -1611,6 +1741,7 @@
     setInterval(rotateTicker, 7000);
 
     load();
+    applyPerfMode();
     mountBugs();
     rotateTicker();
     renderAll();
