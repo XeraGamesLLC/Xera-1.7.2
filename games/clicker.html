@@ -1870,6 +1870,10 @@
 
     setInterval(function () {
         var now = (new Date()).getTime();
+        if (currentTab === 'save') {
+            state.insightAt = now;
+            return;
+        }
         var wasBuffed = buffActive();
         if (state.buff && state.buff.until <= now) {
             state.buff = null;
