@@ -202,6 +202,7 @@
         -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.35);
         box-shadow: 0 1px 3px rgba(0,0,0,0.35);
     }
+    .segitem.wide { width: 96%; clear: left; margin: 6px 1% 0 1%; }
 
     .tabpanel { display: none; }
     .tabpanel.active { display: block; }
@@ -307,6 +308,35 @@
         transition: left 0.15s;
     }
     .ios-switch.on .thumb { left: 22px; }
+
+    .save-input {
+        float: right;
+        width: 120px;
+        padding: 6px 8px;
+        font-size: 13px;
+        border: 1px solid #b6b9bd;
+        border-radius: 5px;
+        background-color: #fff;
+        color: #1c1c1e;
+        -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .save-input.small { width: 70px; }
+    .jsonwrap { padding: 10px 12px; }
+    .save-textarea {
+        display: block;
+        width: 100%;
+        height: 140px;
+        font-family: Menlo, Consolas, monospace;
+        font-size: 11px;
+        padding: 8px;
+        border: 1px solid #b6b9bd;
+        border-radius: 6px;
+        background-color: #fff;
+        color: #1c1c1e;
+        -webkit-box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
 
     .ach-grid { overflow: hidden; zoom: 1; padding: 10px 8px; background-color: #fff; }
     .ach {
@@ -456,6 +486,7 @@
             <span class="segitem" id="tab-achievements">Awards</span>
             <span class="segitem" id="tab-stats">Stats</span>
             <span class="segitem" id="tab-more">More</span>
+            <span class="segitem wide" id="tab-save">Save Editor</span>
         </div>
     </div>
 
@@ -492,6 +523,22 @@
         <div class="grouplist" id="more-options"></div>
         <div class="grouptitle">Data</div>
         <div class="grouplist" id="more-data"></div>
+    </div>
+
+    <div class="tabpanel" id="panel-save">
+        <div class="grouptitle">Quick Edit</div>
+        <div class="grouplist" id="save-quick"></div>
+        <span class="ios-btn" id="save-apply">Apply Changes</span>
+
+        <div class="grouptitle">Buildings Owned</div>
+        <div class="grouplist" id="save-buildings"></div>
+        <span class="ios-btn" id="save-apply-buildings">Apply Buildings</span>
+
+        <div class="grouptitle">Import / Export Save (JSON)</div>
+        <div class="grouplist"><div class="jsonwrap"><textarea id="save-json" class="save-textarea"></textarea></div></div>
+        <span class="ios-btn" id="save-refresh">Refresh Text From Current Save</span>
+        <span class="ios-btn" id="save-load">Load Save From Text Above</span>
+        <div class="footnote">Copy the text above somewhere safe as a backup. Pasting a save here and loading it, or applying edits above, replaces your current progress and cannot be undone.</div>
     </div>
 
     <div class="grouptitle">Fine-Tuning</div>
@@ -1360,6 +1407,126 @@
         onTap($('more-reset'), doReset);
     }
 
+    var SAVE_QUICK_FIELDS = [
+        { key: 'tokens', label: 'Tokens' },
+        { key: 'allTimeTokens', label: 'All-Time Tokens' },
+        { key: 'weights', label: 'Weights' },
+        { key: 'insight', label: 'Insight' },
+        { key: 'cycles', label: 'Cycles' },
+        { key: 'totalClicks', label: 'Total Taps' }
+    ];
+
+    function readNum(id, fallback) {
+        var v = parseFloat($(id).value);
+        if (isNaN(v) || v < 0) { return fallback; }
+        return v;
+    }
+
+    function refreshSaveJson() {
+        $('save-json').value = JSON.stringify(state, null, 2);
+    }
+
+    function renderSaveEditor() {
+        var i, wrap = $('save-quick');
+        var html = '';
+        for (i = 0; i < SAVE_QUICK_FIELDS.length; i++) {
+            var f = SAVE_QUICK_FIELDS[i];
+            var val = f.key === 'cycles' ? Math.floor(state.cycles) : state[f.key];
+            html += '<div class="optrow"><span class="row-title">' + f.label + '</span>' +
+                '<input type="number" min="0" class="save-input" id="qf-' + f.key + '" value="' + Math.floor(val) + '" /></div>';
+        }
+        wrap.innerHTML = html;
+
+        var bwrap = $('save-buildings');
+        var bhtml = '';
+        for (i = 0; i < BUILDINGS.length; i++) {
+            bhtml += '<div class="row"><span class="row-icon">' + BUILDINGS[i].icon + '</span>' +
+                '<div class="row-body"><span class="row-title">' + BUILDINGS[i].name + '</span>' +
+                '<input type="number" min="0" class="save-input small" id="qb-' + i + '" value="' + state.owned[i] + '" /></div></div>';
+        }
+        bwrap.innerHTML = bhtml;
+
+        refreshSaveJson();
+    }
+
+    function applyQuickEdits() {
+        var i;
+        for (i = 0; i < SAVE_QUICK_FIELDS.length; i++) {
+            var f = SAVE_QUICK_FIELDS[i];
+            var v = readNum('qf-' + f.key, f.key === 'cycles' ? state.cycles : state[f.key]);
+            if (f.key === 'cycles') { state.cycles = Math.min(cyclesCap(), v); }
+            else { state[f.key] = v; }
+        }
+        if (state.lifetimeTokens < state.tokens) { state.lifetimeTokens = state.tokens; }
+        save();
+        checkAchievements();
+        renderAll();
+        showToast('Save updated.');
+    }
+
+    function applyBuildingEdits() {
+        for (var i = 0; i < BUILDINGS.length; i++) {
+            var v = parseInt($('qb-' + i).value, 10);
+            if (!isNaN(v) && v >= 0) { state.owned[i] = v; }
+        }
+        save();
+        checkAchievements();
+        renderAll();
+        showToast('Buildings updated.');
+    }
+
+    function sanitizeImportedState(obj) {
+        var fresh = defaultState();
+        if (!obj || typeof obj !== 'object') { return fresh; }
+        var numFields = ['tokens', 'lifetimeTokens', 'allTimeTokens', 'totalClicks', 'weights',
+            'prestigeCount', 'insight', 'insightLifetime', 'bugsPopped', 'cycles', 'abilitiesCast',
+            'frenzyOverclock', 'bestFrenzyMult'];
+        for (var i = 0; i < numFields.length; i++) {
+            var k = numFields[i];
+            if (typeof obj[k] === 'number' && isFinite(obj[k]) && obj[k] >= 0) { fresh[k] = obj[k]; }
+        }
+        fresh.owned = fixArray(obj.owned, BUILDINGS.length);
+        fresh.levels = fixArray(obj.levels, BUILDINGS.length);
+        if (obj.purchased && typeof obj.purchased === 'object') { fresh.purchased = obj.purchased; }
+        if (obj.achievements && typeof obj.achievements === 'object') { fresh.achievements = obj.achievements; }
+        if (obj.opt && typeof obj.opt === 'object') {
+            if (typeof obj.opt.shortNumbers === 'boolean') { fresh.opt.shortNumbers = obj.opt.shortNumbers; }
+            if (typeof obj.opt.floatText === 'boolean') { fresh.opt.floatText = obj.opt.floatText; }
+            if (typeof obj.opt.perfMode === 'boolean') { fresh.opt.perfMode = obj.opt.perfMode; }
+        }
+        fresh.playStart = (typeof obj.playStart === 'number') ? obj.playStart : fresh.playStart;
+        return fresh;
+    }
+
+    function doImportSave() {
+        var raw = $('save-json').value;
+        var parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch (e) {
+            showToast('Invalid JSON - could not parse.');
+            return;
+        }
+        var ok = window.confirm('Load this save? This replaces your current tokens, buildings and progress.');
+        if (!ok) { return; }
+
+        state = sanitizeImportedState(parsed);
+        removeGolden();
+        for (var id in bugEls) {
+            if (bugEls[id] && bugEls[id].parentNode) { bugEls[id].parentNode.removeChild(bugEls[id]); }
+        }
+        bugEls = {};
+        nextBugId = 1;
+        OPT_SHORT = state.opt.shortNumbers;
+        OPT_FLOATTEXT = state.opt.floatText;
+        OPT_PERF = state.opt.perfMode;
+        applyPerfMode();
+        save();
+        checkAchievements();
+        renderAll();
+        showToast('Save loaded!');
+    }
+
     function renderPrestige() {
         var potential = weightsFromAllTime(state.allTimeTokens);
         var gain = potential - state.weights;
@@ -1381,6 +1548,7 @@
         else if (currentTab === 'achievements') { renderAchievements(); }
         else if (currentTab === 'stats') { renderStats(); }
         else if (currentTab === 'more') { renderMore(); }
+        else if (currentTab === 'save') { renderSaveEditor(); }
     }
 
     function renderAll() {
@@ -1664,7 +1832,7 @@
     /* ---- tabs ---- */
 
     function showTab(name) {
-        var tabs = ['compute', 'research', 'achievements', 'stats', 'more'];
+        var tabs = ['compute', 'research', 'achievements', 'stats', 'more', 'save'];
         for (var i = 0; i < tabs.length; i++) {
             var t = tabs[i];
             $('tab-' + t).className = 'segitem' + (t === name ? ' active' : '');
@@ -1679,9 +1847,14 @@
     onTap($('tab-achievements'), function () { showTab('achievements'); });
     onTap($('tab-stats'), function () { showTab('stats'); });
     onTap($('tab-more'), function () { showTab('more'); });
+    onTap($('tab-save'), function () { showTab('save'); });
 
     onTap($('coinbtn'), doClick);
     onTap($('prestigebtn'), doPrestige);
+    onTap($('save-apply'), applyQuickEdits);
+    onTap($('save-apply-buildings'), applyBuildingEdits);
+    onTap($('save-refresh'), function () { refreshSaveJson(); showToast('Refreshed from current save.'); });
+    onTap($('save-load'), doImportSave);
 
     /* ---- ticker ---- */
 

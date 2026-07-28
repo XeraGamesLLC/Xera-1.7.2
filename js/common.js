@@ -83,10 +83,29 @@ function attachSwipe(el, onSwipe) {
 }
 
 /* Makes an element respond to tap without the ~300ms click delay feeling
-   sluggish, and avoids the "ghost click" double fire on old iOS. */
+   sluggish, and avoids the "ghost click" double fire on old iOS. Tracks
+   finger movement so scrolling the page with a finger that started on a
+   button (and lifted off it) does not also fire the button's tap. */
 function onTap(el, fn) {
     var fired = false;
+    var startX = 0, startY = 0, moved = false;
+    var TAP_SLOP = 10;
+
+    on(el, 'touchstart', function (e) {
+        moved = false;
+        if (e.touches && e.touches.length === 1) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }
+    });
+    on(el, 'touchmove', function (e) {
+        if (!e.touches || e.touches.length !== 1) { return; }
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (Math.sqrt(dx * dx + dy * dy) > TAP_SLOP) { moved = true; }
+    });
     on(el, 'touchend', function (e) {
+        if (moved) { return; }
         fired = true;
         e.preventDefault();
         fn(e);
